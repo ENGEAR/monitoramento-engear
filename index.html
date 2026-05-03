@@ -332,7 +332,7 @@ async function entrar(){
 
 async function obterToken(){
   if(token&&Date.now()<tokenExp)return;
-  var r=await fetch('https://login.microsoftonline.com/'+CFG.tenantId+'/oauth2/v2.0/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'client_credentials',client_id:CFG.clientId,client_secret:CFG.clientSecret,scope:'https://graph.microsoft.com/.default'})});
+  var r=await fetch('https://engear-auth.red-cell-b560.workers.dev/token');
   var d=await r.json();if(!d.access_token)throw new Error(d.error_description||'Token inválido');
   token=d.access_token;tokenExp=Date.now()+(d.expires_in-60)*1000;
 }
@@ -883,7 +883,7 @@ async function uploadFotos(dados){
       var nome=dados.data+'_'+pid+'_'+Date.now()+'.'+ext;
       var cliente=(dados.cliente||'Sem_Cliente').replace(/[^a-zA-Z0-9 _-]/g,'').trim()||'Sem_Cliente';
       var pastaFoto=CFG.fotosPath+'/'+cliente;
-      await fetch('https://graph.microsoft.com/v1.0/drives/'+drive.id+'/root:'+pastaFoto+'/'+nome+':/content',{method:'PUT',headers:{Authorization:'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:await f.arrayBuffer()});
+      await fetch('https://engear-auth.red-cell-b560.workers.dev/graph/drives/'+drive.id+'/root:'+pastaFoto+'/'+nome+':/content',{method:'PUT',headers:{Authorization:'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:await f.arrayBuffer()});
     }
   }
 }
@@ -899,8 +899,8 @@ async function appendLinha(vals, sheetName){
   var rangePath='/drives/'+drive.id+'/items/'+item.id+'/workbook/worksheets/'+encodeURIComponent(sheetName)+'/range(address=\'A'+row+':'+col+row+'\')';
   await gPatch(rangePath,{values:[vals]});
 }
-async function gGet(path){var r=await fetch('https://graph.microsoft.com/v1.0'+path,{headers:{Authorization:'Bearer '+token}});if(!r.ok)throw new Error(r.status+'');return r.json();}
-async function gPatch(path,body){var r=await fetch('https://graph.microsoft.com/v1.0'+path,{method:'PATCH',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error(r.status+'');return r.json();}
+async function gGet(path){var r=await fetch('https://engear-auth.red-cell-b560.workers.dev/graph'+path,{headers:{Authorization:'Bearer '+token}});if(!r.ok)throw new Error(r.status+'');return r.json();}
+async function gPatch(path,body){var r=await fetch('https://engear-auth.red-cell-b560.workers.dev/graph'+path,{method:'PATCH',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error(r.status+'');return r.json();}
 
 document.addEventListener('input', function(e) {
   if(e.target && e.target.type === 'number') {
@@ -1303,4 +1303,4 @@ function toast(msg,err,suc){
 }
 </script>
 </body>
-</html>
+</html>  
