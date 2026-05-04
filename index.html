@@ -1407,55 +1407,167 @@ function fecharPendencias(){
 function gerarPDF(){
   var d=_ultimoDados;
   if(!d){toast('Nenhum registro para gerar PDF');return;}
-  var tipos={ruido:'Ruído',sismo:'Vibração',qar:'QAR Externo',opacidade:'Opacidade',qarint:'QAR Interno',outro:'Outro'};
+  var tipos={ruido:'Ruído',sismo:'Vibração',qar:'Qualidade do Ar Externo',opacidade:'Opacidade',qarint:'Qualidade do Ar Interno',outro:'Outro'};
   var tipoLabel=tipos[d.tipo]||d.tipo||'—';
 
-  var linhas=[
-    '<h2 style="color:#2d7db3;margin-bottom:4px">ENGEAR Laboratório</h2>',
-    '<h3 style="margin-bottom:16px;color:#444">Registro de Monitoramento Ambiental</h3>',
-    '<hr style="margin-bottom:16px">',
-    '<table style="width:100%;border-collapse:collapse;font-size:13px;">',
-    _pdfRow('Tipo','<b>'+tipoLabel+'</b>'),
-    _pdfRow('Data',d.data||'—'),
-    _pdfRow('Hora início',d.hora||'—'),
-    _pdfRow('Hora fim',d.horaFim||'—'),
-    _pdfRow('Técnico',d.tecnico||'—'),
-    _pdfRow('Cliente',d.cliente||'—'),
-    _pdfRow('Cidade/Estado',d.cidade||'—'),
-  ];
+  function row(label,val){
+    if(val===undefined||val===null||val==='')return '';
+    return '<tr><td style="padding:5px 8px;border:1px solid #ddd;background:#f8fafc;font-weight:500;width:38%;vertical-align:top">'+label+'</td><td style="padding:5px 8px;border:1px solid #ddd;vertical-align:top">'+val+'</td></tr>';
+  }
+  function secao(titulo){
+    return '<tr><td colspan="2" style="background:#2d7db3;color:white;font-weight:bold;padding:7px 10px;border:1px solid #2d7db3;font-size:13px;">'+titulo+'</td></tr>';
+  }
+  function ponto(titulo){
+    return '<tr><td colspan="2" style="background:#e8f4fd;color:#1e5f8a;font-weight:bold;padding:6px 10px;border:1px solid #bee3f8;">'+titulo+'</td></tr>';
+  }
+  function bool(v){ return v?'✅ Sim':'☐ Não'; }
 
-  if(d.finalidade) linhas.push(_pdfRow('Finalidade',d.finalidade));
+  var linhas=['<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">'];
 
-  if(d.pontos && d.pontos.length>0){
+  // Cabeçalho
+  linhas.push(secao('IDENTIFICAÇÃO'));
+  linhas.push(row('Tipo de monitoramento','<b>'+tipoLabel+'</b>'));
+  linhas.push(row('Data',d.data));
+  linhas.push(row('Hora início',d.hora));
+  linhas.push(row('Hora término',d.horaFim));
+  linhas.push(row('Técnico',d.tecnico));
+  linhas.push(row('Cliente',d.cliente));
+  linhas.push(row('Cidade / Estado',d.cidade));
+  if(d.finalidade) linhas.push(row('Finalidade',d.finalidade));
+
+  // ── RUÍDO ──
+  if(d.tipo==='ruido' && d.pontos){
     d.pontos.forEach(function(p,i){
-      linhas.push('<tr><td colspan="2" style="background:#e8f4fd;color:#1e5f8a;font-weight:bold;padding:6px 8px;border:1px solid #ddd;">Ponto '+(i+1)+(p.nome?' — '+p.nome:'')+'</td></tr>');
-      if(p.temp) linhas.push(_pdfRow('Temperatura',p.temp+'°C'));
-      if(p.umid) linhas.push(_pdfRow('Umidade',p.umid+'%'));
-      if(p.vento) linhas.push(_pdfRow('Vento',p.vento+' m/s'));
-      if(p.chkIni!==undefined) linhas.push(_pdfRow('Checagem inicial',p.chkIni+' dB'));
-      if(p.chkFim!==undefined) linhas.push(_pdfRow('Checagem final',p.chkFim+' dB'));
-      if(p.fontesEmpresa) linhas.push(_pdfRow('Fontes empresa',p.fontesEmpresa));
-      if(p.fontesAmbiente) linhas.push(_pdfRow('Fontes ambiente',p.fontesAmbiente));
-      if(p.obs) linhas.push(_pdfRow('Obs.',p.obs));
+      linhas.push(ponto('PONTO '+(i+1)+(p.nome?' — '+p.nome:'')));
+      linhas.push(row('Checagem inicial',p.chkIni+' dB'));
+      linhas.push(row('Checagem final',p.chkFim+' dB'));
+      if(p.chkIni&&p.chkFim){
+        var diff=Math.abs(parseFloat(p.chkFim)-parseFloat(p.chkIni));
+        linhas.push(row('Diferença',diff.toFixed(1)+' dB'+(diff>0.5?' ⚠️ Acima do limite':' ✅ OK')));
+      }
+      linhas.push(row('Temperatura',p.temp?p.temp+' °C':''));
+      linhas.push(row('Umidade',p.umid?p.umid+' %':''));
+      linhas.push(row('Vento',p.vento?p.vento+' m/s':''));
+      linhas.push(row('Ruído residual monitorado',bool(p.residual)));
+      linhas.push(row('Ruído total monitorado',bool(p.total)));
+      linhas.push(row('Fontes percebidas (empresa)',p.fontesEmpresa));
+      linhas.push(row('Fontes percebidas (ambiente)',p.fontesAmbiente));
+      linhas.push(row('Observações',p.obs));
     });
   }
 
-  if(d.veiculos && d.veiculos.length>0){
+  // ── VIBRAÇÃO ──
+  if(d.tipo==='sismo' && d.pontos){
+    d.pontos.forEach(function(p,i){
+      linhas.push(ponto('PONTO '+(i+1)+(p.nome?' — '+p.nome:'')));
+      linhas.push(row('Fonte de vibração',p.fonte));
+      linhas.push(row('Auto verificação',bool(p.autov)));
+      linhas.push(row('Temperatura',p.temp?p.temp+' °C':''));
+      linhas.push(row('Umidade',p.umid?p.umid+' %':''));
+      linhas.push(row('Trigger configurado (0,05 mm/s)',bool(p.trigger)));
+      linhas.push(row('Memória verificada',bool(p.mem)));
+      linhas.push(row('Programação validada',bool(p.prog)));
+      linhas.push(row('Captação ativa',bool(p.capt)));
+      linhas.push(row('Intercorrências',p.interc||'Nenhuma'));
+    });
+  }
+
+  // ── QAR EXTERNO ──
+  if(d.tipo==='qar' && d.pontos){
+    d.pontos.forEach(function(p,i){
+      linhas.push(ponto('PONTO '+(i+1)+(p.nome?' — '+p.nome:'')));
+      linhas.push(row('Calibração aprovada',bool(p.calibAprovada)));
+      if(p.coletas){
+        p.coletas.forEach(function(c,ci){
+          if(!c.dini&&!c.dfim)return;
+          linhas.push(row('<b>'+(ci+1)+'ª Coleta — Dados iniciais</b>',''));
+          linhas.push(row('Data / Hora inicial',c.dini+' '+c.hini));
+          linhas.push(row('Horímetro inicial',c.horamIni));
+          linhas.push(row('Temperatura / Umidade / Pressão',(c.tini||'—')+' °C / '+(c.uini||'—')+' % / '+(c.pini||'—')));
+          linhas.push(row('<b>'+(ci+1)+'ª Coleta — Dados finais</b>',''));
+          linhas.push(row('Data / Hora final',c.dfim+' '+c.hfim));
+          linhas.push(row('Horímetro final',c.horamFim));
+          linhas.push(row('Temperatura / Umidade / Pressão',(c.tfim||'—')+' °C / '+(c.ufim||'—')+' % / '+(c.pfim||'—')));
+        });
+      }
+    });
+  }
+
+  // ── OPACIDADE ──
+  if(d.tipo==='opacidade' && d.veiculos){
     d.veiculos.forEach(function(v,i){
-      linhas.push('<tr><td colspan="2" style="background:#e8f4fd;color:#1e5f8a;font-weight:bold;padding:6px 8px;border:1px solid #ddd;">Veículo '+(i+1)+(v.placa?' — '+v.placa:'')+'</td></tr>');
-      if(v.obs) linhas.push(_pdfRow('Obs.',v.obs));
+      linhas.push(ponto('VEÍCULO '+(i+1)+(v.placa?' — '+v.placa:'')));
+      linhas.push(row('Equip. conectado e calibrado',bool(v.calibrado)));
+      linhas.push(row('Acelerações preliminares',bool(v.acel)));
+      linhas.push(row('Ensaio conforme método',bool(v.ensaio)));
+      linhas.push(row('3 leituras válidas',bool(v.leituras)));
+      linhas.push(row('Dados registrados',bool(v.dados)));
+      linhas.push(row('Observações',v.obs));
     });
   }
 
-  if(d.obsGeral) linhas.push(_pdfRow('Observações gerais',d.obsGeral));
+  // ── QAR INTERNO ──
+  if(d.tipo==='qarint' && d.pontos){
+    linhas.push(secao('PARÂMETROS'));
+    linhas.push(row('Área da sala',d.area?d.area+' m²':''));
+    linhas.push(row('Nº de pontos necessários',d.pontos.length));
+    d.pontos.forEach(function(p,i){
+      linhas.push(ponto('PONTO '+(i+1)+(p.nome?' — '+p.nome:'')));
+      linhas.push(row('Plano de amostragem conferido',bool(p.plano)));
+      linhas.push(row('Equipamentos calibrados',bool(p.equip)));
+      linhas.push(row('Pontos posicionados',bool(p.posic)));
+      linhas.push(row('Coletas realizadas',bool(p.coleta)));
+      linhas.push(row('CO₂',p.co2?p.co2+' ppm':''));
+      linhas.push(row('Temperatura',p.temp?p.temp+' °C':''));
+      linhas.push(row('UR',p.ur?p.ur+' %':''));
+      linhas.push(row('Velocidade do ar',p.vento?p.vento+' m/s':''));
+      linhas.push(row('Conformidade verificada',bool(p.conformidade)));
+      linhas.push(row('Amostras armazenadas',bool(p.amostras)));
+      linhas.push(row('Observações',p.obs));
+    });
+  }
+
+  // ── OUTRO ──
+  if(d.tipo==='outro'){
+    linhas.push(secao('DADOS DO MONITORAMENTO'));
+    linhas.push(row('Tipo específico',d.tipoEspecifico));
+    linhas.push(row('Local / Ponto',d.local));
+    linhas.push(row('Temperatura',d.temp?d.temp+' °C':''));
+    linhas.push(row('Umidade',d.umid?d.umid+' %':''));
+    linhas.push(row('Vento',d.vento?d.vento+' m/s':''));
+    linhas.push(row('Equipamento',d.equip));
+    linhas.push(row('Observações',d.obs));
+  }
+
+  // Observações gerais
+  if(d.obsGeral){
+    linhas.push(secao('OBSERVAÇÕES GERAIS'));
+    linhas.push(row('',d.obsGeral));
+  }
 
   linhas.push('</table>');
-  linhas.push('<hr style="margin-top:20px"><p style="font-size:11px;color:#999;text-align:center;">Gerado em '+new Date().toLocaleString('pt-BR')+' — Engear Laboratório</p>');
 
-  var conteudo=linhas.join('');
+  var html_pdf='<html><head><title>Registro Engear — '+tipoLabel+' — '+d.data+'</title>'+
+    '<style>'+
+    'body{font-family:Arial,sans-serif;padding:24px;max-width:750px;margin:0 auto;color:#1a202c;}'+
+    '@media print{.no-print{display:none}body{padding:0}}'+
+    'h1{color:#2d7db3;font-size:20px;margin:0}'+
+    'h2{color:#718096;font-size:13px;font-weight:400;margin:4px 0 16px}'+
+    '.header{display:flex;align-items:center;gap:16px;margin-bottom:20px;padding-bottom:12px;border-bottom:3px solid #2d7db3;}'+
+    '</style></head><body>'+
+    '<div class="header">'+
+    '<div><h1>ENGEAR Laboratório</h1><h2>Registro de Monitoramento — '+tipoLabel+'</h2></div>'+
+    '</div>'+
+    linhas.join('')+
+    '<p style="font-size:11px;color:#999;text-align:center;margin-top:20px;">Gerado em '+new Date().toLocaleString('pt-BR')+' pelo app Engear Monitoramento</p>'+
+    '<div class="no-print" style="text-align:center;margin-top:20px;">'+
+    '<button onclick="window.print()" style="background:#2d7db3;color:white;border:none;padding:12px 28px;border-radius:8px;cursor:pointer;font-size:15px;font-weight:600;">🖨️ Imprimir / Salvar PDF</button>'+
+    '</div>'+
+    '</body></html>';
+
   var win=window.open('','_blank');
-  win.document.write('<html><head><title>Registro Engear</title><style>body{font-family:Arial,sans-serif;padding:24px;max-width:700px;margin:0 auto;}@media print{button{display:none}}</style></head><body>'+conteudo+'<br><button onclick="window.print()" style="background:#2d7db3;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">🖨️ Imprimir / Salvar PDF</button></body></html>');
-  win.document.close();
+  if(win){win.document.write(html_pdf);win.document.close();}
+  else{toast('Permita popups para gerar o PDF');}
 }
 
 function _pdfRow(label,val){
