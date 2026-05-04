@@ -874,16 +874,27 @@ async function uploadFotosCliente(dados){
 }
 async function uploadFotos(dados){
   if(!token)return;
-  var site=await gGet('/sites/'+CFG.siteHost+':'+CFG.sitePath);
-  var drive=await gGet('/sites/'+site.id+'/drive');
+  // Buscar site e drive correto
+  var siteResp = await gGet('/sites/engearlaboratorio.sharepoint.com:/sites/EngearLaboratorio');
+  var siteId = siteResp.id;
+  var drivesResp = await gGet('/sites/'+siteId+'/drives');
+  var drive = drivesResp.value.find(function(d){ return d.name === 'Documentos' || d.name === 'Documents'; });
+  if(!drive) drive = drivesResp.value[0];
+  var driveId = drive.id;
+  var cliente = (dados.cliente||'Sem_Cliente').replace(/[^a-zA-Z0-9 _-]/g,'').trim()||'Sem_Cliente';
+  var pastaBase = '/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/Fotos/'+cliente;
   for(var pid in fotosAnexadas){
-    var files=fotosAnexadas[pid];
+    var files = fotosAnexadas[pid];
     for(var i=0;i<files.length;i++){
-      var f=files[i];var ext=f.name.split('.').pop()||'jpg';
-      var nome=dados.data+'_'+pid+'_'+Date.now()+'.'+ext;
-      var cliente=(dados.cliente||'Sem_Cliente').replace(/[^a-zA-Z0-9 _-]/g,'').trim()||'Sem_Cliente';
-      var pastaFoto=CFG.fotosPath+'/'+cliente;
-      await fetch('https://engear-auth.red-cell-b560.workers.dev/graph/drives/'+drive.id+'/root:'+pastaFoto+'/'+nome+':/content',{method:'PUT',headers:{Authorization:'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:await f.arrayBuffer()});
+      var f = files[i];
+      var ext = f.name.split('.').pop()||'jpg';
+      var nome = dados.data+'_'+pid+'_'+Date.now()+'.'+ext;
+      var buf = await f.arrayBuffer();
+      await fetch('https://engear-auth.red-cell-b560.workers.dev/graph/drives/'+driveId+'/root:'+pastaBase+'/'+nome+':/content',{
+        method:'PUT',
+        headers:{Authorization:'Bearer '+token,'Content-Type':f.type||'image/jpeg'},
+        body:buf
+      });
     }
   }
 }
