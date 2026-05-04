@@ -26,18 +26,18 @@
 var BASE = 'https://engear.github.io/monitoramento-engear/normas/ruido/';
 var VIEWER = 'https://docs.google.com/viewer?url=';
 var docs = [
-  {nome:"NBR10151.pdf", desc:"Medição e avaliação de níveis de pressão sonora em áreas habitadas"},
-  {nome:"NBR10152.pdf", desc:"Níveis de pressão sonora em ambientes internos a edificações"},
-  {nome:"NBR16425-1.pdf", desc:"Ruído — Sistema de Transporte Geral"},
-  {nome:"NBR16425-2.pdf", desc:"Ruído — Sistema Aéreo"},
-  {nome:"NBR16425-4.pdf", desc:"Ruído — Sistema Ferroviário"}
+  {nome:'NBR10151 - Medição e avaliação de níveis de pressão sonora em áreas habitadas.pdf', label:'NBR 10151', desc:'Medição e avaliação de níveis de pressão sonora em áreas habitadas'},
+  {nome:'NBR10152 - Níveis de pressão sonora em ambientes internos a edificações.pdf', label:'NBR 10152', desc:'Níveis de pressão sonora em ambientes internos a edificações'},
+  {nome:'NBR16425-1 - Ruido Sistema Transporte Geral.pdf', label:'NBR 16425-1', desc:'Ruído — Sistema de Transporte Geral'},
+  {nome:'NBR16425-2 - Ruido Sistema Aéreo.pdf', label:'NBR 16425-2', desc:'Ruído — Sistema Aéreo'},
+  {nome:'NBR16425-4 - Ruido Sistema Ferroviario.pdf', label:'NBR 16425-4', desc:'Ruído — Sistema Ferroviário'},
 ];
 document.getElementById('lista').innerHTML = docs.map(function(d){
-  var pdfUrl = BASE + d.nome;
+  var pdfUrl = BASE + encodeURIComponent(d.nome);
   var viewUrl = VIEWER + encodeURIComponent(pdfUrl);
   return '<div class="doc-item" onclick="window.open(\''+viewUrl+'\',\'_blank\')">'+
     '<span class="doc-icon">📄</span>'+
-    '<div><div class="doc-name">'+d.nome.replace('.pdf','')+'</div>'+
+    '<div><div class="doc-name">'+d.label+'</div>'+
     '<div class="doc-desc">'+d.desc+'</div></div>'+
     '</div>';
 }).join('');
