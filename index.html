@@ -345,7 +345,18 @@ function atualizarSteps(p){
 }
 function mostrar(id){['passo1','passo2','passo3','sucesso'].forEach(function(p){document.getElementById(p).classList.add('hidden');});document.getElementById(id).classList.remove('hidden');}
 function irP1(){mostrar('passo1');atualizarSteps(1);}
-function irP2(){if(!tipoSel){toast('Selecione o tipo de monitoramento');return;}fotosAnexadas={};renderForm();mostrar('passo2');atualizarSteps(2);}
+function irP2(){
+  if(!tipoSel){toast('Selecione o tipo de monitoramento');return;}
+  // Só renderiza o form se o tipo mudou ou ainda não foi renderizado
+  var formAtual = document.getElementById('form-dinamico');
+  if(!formAtual || formAtual.innerHTML==='' || formAtual.getAttribute('data-tipo')!==tipoSel){
+    fotosAnexadas={};
+    renderForm();
+    formAtual = document.getElementById('form-dinamico');
+    if(formAtual) formAtual.setAttribute('data-tipo', tipoSel);
+  }
+  mostrar('passo2');atualizarSteps(2);
+}
 function irP3(){mostrar('passo3');atualizarSteps(3);}
 function selecionarTipo(el,t){document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});el.classList.add('selected');tipoSel=t;}
 
@@ -873,29 +884,39 @@ async function uploadFotosCliente(dados){
   return uploadFotos(dados);
 }
 async function uploadFotos(dados){
-  if(!token)return;
-  // Buscar site e drive correto
-  var siteResp = await gGet('/sites/engearlaboratorio.sharepoint.com:/sites/EngearLaboratorio');
-  var siteId = siteResp.id;
-  var drivesResp = await gGet('/sites/'+siteId+'/drives');
-  var drive = drivesResp.value.find(function(d){ return d.name === 'Documentos' || d.name === 'Documents'; });
-  if(!drive) drive = drivesResp.value[0];
-  var driveId = drive.id;
-  var cliente = (dados.cliente||'Sem_Cliente').replace(/[^a-zA-Z0-9 _-]/g,'').trim()||'Sem_Cliente';
-  var pastaBase = '/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/Fotos/'+cliente;
-  for(var pid in fotosAnexadas){
-    var files = fotosAnexadas[pid];
-    for(var i=0;i<files.length;i++){
-      var f = files[i];
-      var ext = f.name.split('.').pop()||'jpg';
-      var nome = dados.data+'_'+pid+'_'+Date.now()+'.'+ext;
-      var buf = await f.arrayBuffer();
-      await fetch('https://engear-auth.red-cell-b560.workers.dev/graph/drives/'+driveId+'/root:'+pastaBase+'/'+nome+':/content',{
-        method:'PUT',
-        headers:{Authorization:'Bearer '+token,'Content-Type':f.type||'image/jpeg'},
-        body:buf
-      });
+  if(!token) return;
+  if(Object.keys(fotosAnexadas).length === 0) return;
+  try {
+    var siteResp = await gGet('/sites/engearlaboratorio.sharepoint.com:/sites/EngearLaboratorio');
+    var drivesResp = await gGet('/sites/'+siteResp.id+'/drives');
+    var drive = drivesResp.value.find(function(d){ return d.name==='Documentos'||d.name==='Documents'; });
+    if(!drive) drive = drivesResp.value[0];
+    var driveId = drive.id;
+    var cliente = (dados.cliente||'Sem_Cliente').replace(/[^a-zA-Z0-9 _-]/g,'').trim()||'Sem_Cliente';
+    for(var pid in fotosAnexadas){
+      var files = fotosAnexadas[pid];
+      for(var i=0;i<files.length;i++){
+        var f = files[i];
+        var ext = (f.name.split('.').pop()||'jpg').toLowerCase();
+        var nome = (dados.data||'foto')+'_'+pid+'_'+Date.now()+'.'+ext;
+        var fotoPath = '/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/Fotos/'+cliente+'/'+nome;
+        var buf = await f.arrayBuffer();
+        var r = await fetch('https://engear-auth.red-cell-b560.workers.dev/graph/drives/'+driveId+'/root:'+encodeURI(fotoPath)+':/content',{
+          method: 'PUT',
+          headers: {
+            Authorization: 'Bearer '+token,
+            'Content-Type': f.type||'image/jpeg'
+          },
+          body: buf
+        });
+        if(!r.ok){
+          var err = await r.text();
+          console.error('Erro foto:', r.status, err);
+        }
+      }
     }
+  } catch(e){
+    console.error('Erro upload fotos:', e);
   }
 }
 
