@@ -218,7 +218,7 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
     <div class="step-label" id="step-label">Passo 1 de 3 — Identificação</div>
   </div>
   <div class="offline-bar" id="offline-bar">
-    <span>📴 Offline — <span id="pending-count">0</span> pendente(s)</span>
+    <span onclick="verPendencias()" style="cursor:pointer;text-decoration:underline;">📴 <span id="pending-count">0</span> pendente(s) — ver</span>
     <button class="sync-btn" onclick="sincronizar()">Sincronizar</button>
   </div>
   <div class="content">
@@ -269,8 +269,22 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
       <p id="sucesso-msg">Dados gravados com sucesso na planilha do SharePoint.</p>
       <div class="saved-info" id="saved-info"></div>
       <button class="btn-full" onclick="novoRegistro()">+ Novo registro</button>
+      <button class="btn-outline" style="background:#fff!important;color:#1a202c!important;-webkit-text-fill-color:#1a202c!important;margin-top:10px;" onclick="gerarPDF()">📄 Gerar PDF para compartilhar</button>
 
     </div>
+
+    <!-- PENDÊNCIAS -->
+    <div id="pendencias" class="hidden">
+      <div class="card">
+        <div class="card-title blue">Registros pendentes</div>
+        <div id="pendencias-lista"></div>
+        <div style="margin-top:1rem;display:flex;gap:10px;">
+          <button class="btn-back" onclick="fecharPendencias()">← Voltar</button>
+          <button class="btn-next" onclick="sincronizar()">Sincronizar todos</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 <div id="toast"></div>
@@ -377,7 +391,39 @@ function toggleCheck(el){el.classList.toggle('checked');}
 function isChk(id){var el=document.getElementById(id);return el?el.classList.contains('checked'):false;}
 function v(id){var el=document.getElementById(id);return el?el.value:'';}
 function triggerFoto(area){var pid=area.getAttribute('data-pid');document.getElementById('fi-'+pid).click();}
-function previewFotoCb(input){var pid=input.getAttribute('data-pid');if(!fotosAnexadas[pid])fotosAnexadas[pid]=[];var prev=document.getElementById('fp-'+pid);Array.from(input.files).forEach(function(f){fotosAnexadas[pid].push(f);var img=document.createElement('img');img.src=URL.createObjectURL(f);img.className='foto-thumb';prev.appendChild(img);});}
+function previewFotoCb(input){
+  var pid=input.getAttribute('data-pid');
+  if(!fotosAnexadas[pid])fotosAnexadas[pid]=[];
+  var prev=document.getElementById('fp-'+pid);
+  Array.from(input.files).forEach(function(f){
+    var idx=fotosAnexadas[pid].length;
+    fotosAnexadas[pid].push(f);
+    var wrap=document.createElement('div');
+    wrap.style.cssText='position:relative;display:inline-block;';
+    var img=document.createElement('img');
+    img.src=URL.createObjectURL(f);
+    img.className='foto-thumb';
+    var btn=document.createElement('button');
+    btn.innerHTML='&times;';
+    btn.setAttribute('data-pid',pid);
+    btn.setAttribute('data-idx',idx);
+    btn.style.cssText='position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#e53e3e;color:white;border:none;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;';
+    btn.onclick=function(e){
+      e.stopPropagation();
+      var p=this.getAttribute('data-pid');
+      var i=parseInt(this.getAttribute('data-idx'));
+      fotosAnexadas[p].splice(i,1);
+      this.parentElement.remove();
+      // Reindexar botões
+      var btns=document.getElementById('fp-'+p).querySelectorAll('button');
+      btns.forEach(function(b,ni){b.setAttribute('data-idx',ni);});
+    };
+    wrap.appendChild(img);
+    wrap.appendChild(btn);
+    prev.appendChild(wrap);
+  });
+  input.value='';
+}
 function previewFoto(pid,input){previewFotoCb(input);}
 
 function toggleInterc(sel){var p=sel.getAttribute('data-ponto');var el=document.getElementById(p+'-interc-desc-field');if(el)el.classList.toggle('hidden',sel.value!=='sim');}
@@ -872,7 +918,9 @@ async function sincronizar(){
   }catch(e){toast('Erro: '+e.message,true);}
 }
 
+var _ultimoDados = null;
 function mostrarSucesso(d,offline){
+  _ultimoDados = d;
   var tipos={ruido:'Ruído',sismo:'Sismografia',qar:'Qualidade do Ar Externo',opacidade:'Opacidade',qarint:'Ar Interno',outro:'Outro'};
   document.getElementById('sucesso-titulo').textContent=offline?'Salvo offline!':'Registro salvo!';
   document.getElementById('sucesso-msg').textContent=offline?'Dados salvos no dispositivo. Serão enviados quando conectar.':'Dados gravados com sucesso na planilha do SharePoint.';
@@ -1325,6 +1373,94 @@ function coletarQarint(){
   return pontos;
 }
 
+
+function verPendencias(){
+  var lista=document.getElementById('pendencias-lista');
+  if(pending.length===0){
+    lista.innerHTML='<p style="color:var(--muted);font-size:14px;text-align:center;padding:1rem;">Nenhum registro pendente.</p>';
+  } else {
+    var tipos={ruido:'Ruído',sismo:'Vibração',qar:'QAR Externo',opacidade:'Opacidade',qarint:'QAR Interno',outro:'Outro'};
+    lista.innerHTML=pending.map(function(r,i){
+      var d=r.dados||{};
+      var dt=new Date(r.ts||Date.now());
+      var hora=dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      var data=d.data||dt.toLocaleDateString('pt-BR');
+      return '<div class="saved-info" style="margin-bottom:8px;">'+
+        '<div class="saved-row"><span>Data</span><span>'+data+'</span></div>'+
+        '<div class="saved-row"><span>Hora</span><span>'+hora+'</span></div>'+
+        '<div class="saved-row"><span>Técnico</span><span>'+(d.tecnico||'—')+'</span></div>'+
+        '<div class="saved-row"><span>Tipo</span><span>'+(tipos[d.tipo]||d.tipo||'—')+'</span></div>'+
+        '<div class="saved-row"><span>Cliente</span><span>'+(d.cliente||'—')+'</span></div>'+
+        '</div>';
+    }).join('');
+  }
+  ['passo1','passo2','passo3','sucesso'].forEach(function(p){document.getElementById(p).classList.add('hidden');});
+  document.getElementById('pendencias').classList.remove('hidden');
+}
+
+function fecharPendencias(){
+  document.getElementById('pendencias').classList.add('hidden');
+  mostrar('passo1');
+  atualizarSteps(1);
+}
+
+function gerarPDF(){
+  var d=_ultimoDados;
+  if(!d){toast('Nenhum registro para gerar PDF');return;}
+  var tipos={ruido:'Ruído',sismo:'Vibração',qar:'QAR Externo',opacidade:'Opacidade',qarint:'QAR Interno',outro:'Outro'};
+  var tipoLabel=tipos[d.tipo]||d.tipo||'—';
+
+  var linhas=[
+    '<h2 style="color:#2d7db3;margin-bottom:4px">ENGEAR Laboratório</h2>',
+    '<h3 style="margin-bottom:16px;color:#444">Registro de Monitoramento Ambiental</h3>',
+    '<hr style="margin-bottom:16px">',
+    '<table style="width:100%;border-collapse:collapse;font-size:13px;">',
+    _pdfRow('Tipo','<b>'+tipoLabel+'</b>'),
+    _pdfRow('Data',d.data||'—'),
+    _pdfRow('Hora início',d.hora||'—'),
+    _pdfRow('Hora fim',d.horaFim||'—'),
+    _pdfRow('Técnico',d.tecnico||'—'),
+    _pdfRow('Cliente',d.cliente||'—'),
+    _pdfRow('Cidade/Estado',d.cidade||'—'),
+  ];
+
+  if(d.finalidade) linhas.push(_pdfRow('Finalidade',d.finalidade));
+
+  if(d.pontos && d.pontos.length>0){
+    d.pontos.forEach(function(p,i){
+      linhas.push('<tr><td colspan="2" style="background:#e8f4fd;color:#1e5f8a;font-weight:bold;padding:6px 8px;border:1px solid #ddd;">Ponto '+(i+1)+(p.nome?' — '+p.nome:'')+'</td></tr>');
+      if(p.temp) linhas.push(_pdfRow('Temperatura',p.temp+'°C'));
+      if(p.umid) linhas.push(_pdfRow('Umidade',p.umid+'%'));
+      if(p.vento) linhas.push(_pdfRow('Vento',p.vento+' m/s'));
+      if(p.chkIni!==undefined) linhas.push(_pdfRow('Checagem inicial',p.chkIni+' dB'));
+      if(p.chkFim!==undefined) linhas.push(_pdfRow('Checagem final',p.chkFim+' dB'));
+      if(p.fontesEmpresa) linhas.push(_pdfRow('Fontes empresa',p.fontesEmpresa));
+      if(p.fontesAmbiente) linhas.push(_pdfRow('Fontes ambiente',p.fontesAmbiente));
+      if(p.obs) linhas.push(_pdfRow('Obs.',p.obs));
+    });
+  }
+
+  if(d.veiculos && d.veiculos.length>0){
+    d.veiculos.forEach(function(v,i){
+      linhas.push('<tr><td colspan="2" style="background:#e8f4fd;color:#1e5f8a;font-weight:bold;padding:6px 8px;border:1px solid #ddd;">Veículo '+(i+1)+(v.placa?' — '+v.placa:'')+'</td></tr>');
+      if(v.obs) linhas.push(_pdfRow('Obs.',v.obs));
+    });
+  }
+
+  if(d.obsGeral) linhas.push(_pdfRow('Observações gerais',d.obsGeral));
+
+  linhas.push('</table>');
+  linhas.push('<hr style="margin-top:20px"><p style="font-size:11px;color:#999;text-align:center;">Gerado em '+new Date().toLocaleString('pt-BR')+' — Engear Laboratório</p>');
+
+  var conteudo=linhas.join('');
+  var win=window.open('','_blank');
+  win.document.write('<html><head><title>Registro Engear</title><style>body{font-family:Arial,sans-serif;padding:24px;max-width:700px;margin:0 auto;}@media print{button{display:none}}</style></head><body>'+conteudo+'<br><button onclick="window.print()" style="background:#2d7db3;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">🖨️ Imprimir / Salvar PDF</button></body></html>');
+  win.document.close();
+}
+
+function _pdfRow(label,val){
+  return '<tr><td style="padding:5px 8px;border:1px solid #ddd;background:#f8fafc;font-weight:500;width:40%">'+label+'</td><td style="padding:5px 8px;border:1px solid #ddd;">'+val+'</td></tr>';
+}
 function novoRegistro(){
   tipoSel='';fotosAnexadas={};
   document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
