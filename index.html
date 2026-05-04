@@ -890,15 +890,23 @@ async function uploadFotos(dados){
 
 async function appendLinha(vals, sheetName){
   sheetName = sheetName || 'Outro';
-  var siteResp=await gGet('/sites/engearlaboratorio.sharepoint.com:/sites/EngearLaboratorio');
-  var drive=await gGet('/sites/'+siteResp.id+'/drive');
-  var encodedPath=CFG.filePath.split('/').map(function(s){return encodeURIComponent(s);}).join('/');
-  var item=await gGet('/drives/'+drive.id+'/root:'+CFG.filePath);
-  var used=await gGet('/drives/'+drive.id+'/items/'+item.id+'/workbook/worksheets/'+encodeURIComponent(sheetName)+'/usedRange');
-  var row=(used.rowCount||1)+1;
-  var col=String.fromCharCode(64+vals.length);
-  var rangePath='/drives/'+drive.id+'/items/'+item.id+'/workbook/worksheets/'+encodeURIComponent(sheetName)+'/range(address=\'A'+row+':'+col+row+'\')';
-  await gPatch(rangePath,{values:[vals]});
+  // Buscar site
+  var siteResp = await gGet('/sites/engearlaboratorio.sharepoint.com:/sites/EngearLaboratorio');
+  var siteId = siteResp.id;
+  // Buscar drives do site e pegar o drive de documentos
+  var drivesResp = await gGet('/sites/'+siteId+'/drives');
+  var drive = drivesResp.value.find(function(d){ return d.name === 'Documentos' || d.name === 'Documents'; });
+  if(!drive) drive = drivesResp.value[0];
+  var driveId = drive.id;
+  // Buscar arquivo
+  var item = await gGet('/drives/'+driveId+'/root:/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/monitoramento.xlsx');
+  var itemId = item.id;
+  // Buscar última linha usada
+  var used = await gGet('/drives/'+driveId+'/items/'+itemId+'/workbook/worksheets/'+encodeURIComponent(sheetName)+'/usedRange');
+  var row = (used.rowCount || 1) + 1;
+  var col = String.fromCharCode(64 + vals.length);
+  var rangePath = '/drives/'+driveId+'/items/'+itemId+'/workbook/worksheets/'+encodeURIComponent(sheetName)+'/range(address=\'A'+row+':'+col+row+'\')';
+  await gPatch(rangePath, {values: [vals]});
 }
 async function gGet(path){var r=await fetch('https://engear-auth.red-cell-b560.workers.dev/graph'+path,{headers:{Authorization:'Bearer '+token}});if(!r.ok)throw new Error(r.status+'');return r.json();}
 async function gPatch(path,body){var r=await fetch('https://engear-auth.red-cell-b560.workers.dev/graph'+path,{method:'PATCH',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error(r.status+'');return r.json();}
