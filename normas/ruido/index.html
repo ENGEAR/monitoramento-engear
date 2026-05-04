@@ -12,10 +12,8 @@
   .content{padding:1.25rem;max-width:430px;margin:0 auto;}
   .doc-item{background:white;border-radius:12px;padding:1rem;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);display:flex;align-items:center;gap:12px;cursor:pointer;text-decoration:none;}
   .doc-icon{font-size:28px;flex-shrink:0;}
-  .doc-name{font-size:14px;font-weight:500;color:#1e5f8a;}
-  .doc-size{font-size:12px;color:#718096;margin-top:2px;}
-  .empty{text-align:center;padding:3rem 1rem;color:#718096;}
-  .empty-icon{font-size:40px;margin-bottom:12px;}
+  .doc-name{font-size:13px;font-weight:600;color:#1e5f8a;}
+  .doc-desc{font-size:12px;color:#718096;margin-top:3px;line-height:1.4;}
 </style>
 </head>
 <body>
@@ -23,30 +21,22 @@
   <span class="back" onclick="window.close()">← Fechar</span>
   <h1>Normas — Ruído</h1>
 </div>
-<div class="content">
-  <div id="lista">
-    <div class="empty">
-      <div class="empty-icon">📂</div>
-      <p>Nenhum documento disponível ainda.</p>
-      <p style="font-size:12px;margin-top:8px;">Faça upload dos PDFs nesta pasta no GitHub.</p>
-    </div>
-  </div>
-</div>
+<div class="content" id="lista"></div>
 <script>
-// Lista de documentos — adicione aqui os nomes dos PDFs que subir
 var docs = [
-  // Exemplo: {nome: 'NBR 10151.pdf', desc: 'Acústica - Avaliação do ruído'}
+  {nome:'NBR10151.pdf', desc:'Medição e avaliação de níveis de pressão sonora em áreas habitadas'},
+  {nome:'NBR10152.pdf', desc:'Níveis de pressão sonora em ambientes internos a edificações'},
+  {nome:'NBR16425-1.pdf', desc:'Ruído — Sistema de Transporte Geral'},
+  {nome:'NBR16425-2.pdf', desc:'Ruído — Sistema Aéreo'},
+  {nome:'NBR16425-4.pdf', desc:'Ruído — Sistema Ferroviário'},
 ];
-
-if(docs.length > 0) {
-  document.getElementById('lista').innerHTML = docs.map(function(d) {
-    return '<a class="doc-item" href="' + d.nome + '" target="_blank">' +
-      '<span class="doc-icon">📄</span>' +
-      '<div><div class="doc-name">' + d.nome.replace('.pdf','') + '</div>' +
-      '<div class="doc-size">' + (d.desc||'') + '</div></div>' +
-      '</a>';
-  }).join('');
-}
+document.getElementById('lista').innerHTML = docs.map(function(d){
+  return '<a class="doc-item" href="'+d.nome+'" target="_blank">'+
+    '<span class="doc-icon">📄</span>'+
+    '<div><div class="doc-name">'+d.nome.replace('.pdf','')+'</div>'+
+    '<div class="doc-desc">'+d.desc+'</div></div>'+
+    '</a>';
+}).join('');
 </script>
 </body>
 </html>
