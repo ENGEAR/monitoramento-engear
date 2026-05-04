@@ -1,0 +1,24 @@
+{
+  "name": "Engear Monitoramento Ambiental",
+  "short_name": "Engear Lab",
+  "description": "Registro de dados de campo para t\u00e9cnicos Engear",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1e5f8a",
+  "theme_color": "#2d7db3",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
