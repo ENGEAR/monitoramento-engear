@@ -10,35 +10,30 @@
   .header h1{font-size:16px;font-weight:600;margin:0;}
   .back{font-size:13px;opacity:.8;cursor:pointer;margin-bottom:6px;display:block;}
   .content{padding:1.25rem;max-width:430px;margin:0 auto;}
-  .doc-item{background:white;border-radius:12px;padding:1rem;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);display:flex;align-items:center;gap:12px;cursor:pointer;}
+  .doc-item{background:white;border-radius:12px;padding:1rem;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);display:flex;align-items:center;gap:12px;text-decoration:none;}
   .doc-icon{font-size:28px;flex-shrink:0;}
   .doc-name{font-size:13px;font-weight:600;color:#1e5f8a;}
   .doc-desc{font-size:12px;color:#718096;margin-top:3px;line-height:1.4;}
+  .doc-badge{font-size:11px;background:#e8f4fd;color:#2d7db3;border-radius:4px;padding:2px 6px;margin-top:4px;display:inline-block;}
 </style>
 </head>
 <body>
 <div class="header">
-  <span class="back" onclick="window.close()">← Fechar</span>
+  <span class="back" onclick="history.length>1?history.back():window.close()">← Voltar</span>
   <h1>Normas — Opacidade</h1>
 </div>
 <div class="content" id="lista"></div>
 <script>
 var BASE = 'https://engear.github.io/monitoramento-engear/normas/opacidade/';
-var VIEWER = 'https://docs.google.com/viewer?url=';
-var docs = [
-  {nome:'NBR6016 - Gás de escapamento de motor Diesel — Avaliação.pdf', label:'NBR 6016', desc:'Gás de escapamento de motor Diesel — Avaliação'},
-  {nome:'NBR12897 - Emprego do opacímetro para medição do teor de fuligem de motor Diesel.pdf', label:'NBR 12897', desc:'Emprego do opacímetro para medição do teor de fuligem de motor Diesel'},
-  {nome:'IN IBAMA No 6 - Estabelece a sequência de teste padronizada para determinar o nível de fumaça.pdf', label:'IN IBAMA Nº 6', desc:'Sequência de teste padronizada para determinar o nível de fumaça'},
-  {nome:'Resolucao CONAMA 418-09 - Disciplina o uso de opacímetros para medição de fumaça.pdf', label:'Resolução CONAMA 418/09', desc:'Disciplina o uso de opacímetros para medição de fumaça'},
-];
+var docs = [{"nome": "NBR6016 - Gás de escapamento de motor Diesel — Avaliação.pdf", "label": "NBR 6016", "desc": "Gás de escapamento de motor Diesel — Avaliação"}, {"nome": "NBR12897 - Emprego do opacímetro para medição do teor de fuligem de motor Diesel.pdf", "label": "NBR 12897", "desc": "Emprego do opacímetro para medição do teor de fuligem de motor Diesel"}, {"nome": "IN IBAMA No 6 - Estabelece a sequência de teste padronizada para determinar o nível de fumaça.pdf", "label": "IN IBAMA Nº 6", "desc": "Sequência de teste padronizada para determinar o nível de fumaça"}, {"nome": "Resolucao CONAMA 418-09 - Disciplina o uso de opacímetros para medição de fumaça.pdf", "label": "Resolução CONAMA 418/09", "desc": "Disciplina o uso de opacímetros para medição de fumaça"}];
 document.getElementById('lista').innerHTML = docs.map(function(d){
-  var pdfUrl = BASE + encodeURIComponent(d.nome);
-  var viewUrl = VIEWER + encodeURIComponent(pdfUrl);
-  return '<div class="doc-item" onclick="window.open(\''+viewUrl+'\',\'_blank\')">'+
+  var url = BASE + encodeURIComponent(d.nome);
+  return '<a class="doc-item" href="'+url+'" target="_blank">'+
     '<span class="doc-icon">📄</span>'+
     '<div><div class="doc-name">'+d.label+'</div>'+
-    '<div class="doc-desc">'+d.desc+'</div></div>'+
-    '</div>';
+    '<div class="doc-desc">'+d.desc+'</div>'+
+    '<span class="doc-badge">Toque para abrir</span></div>'+
+    '</a>';
 }).join('');
 </script>
 </body>
