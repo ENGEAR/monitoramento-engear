@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Normas — Qualidade do Ar Interno</title>
+<style>
+  body{font-family:Arial,sans-serif;background:#f0f4f8;margin:0;padding:0;}
+  .header{background:linear-gradient(135deg,#1e5f8a,#2d7db3);color:white;padding:1rem 1.25rem;}
+  .header h1{font-size:16px;font-weight:600;margin:0;}
+  .back{font-size:13px;opacity:.8;cursor:pointer;margin-bottom:6px;display:block;}
+  .content{padding:1.25rem;max-width:430px;margin:0 auto;}
+  .doc-item{background:white;border-radius:12px;padding:1rem;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);display:flex;align-items:center;gap:12px;cursor:pointer;}
+  .doc-icon{font-size:28px;flex-shrink:0;}
+  .doc-name{font-size:13px;font-weight:600;color:#1e5f8a;}
+  .doc-desc{font-size:12px;color:#718096;margin-top:3px;line-height:1.4;}
+</style>
+</head>
+<body>
+<div class="header">
+  <span class="back" onclick="window.close()">← Fechar</span>
+  <h1>Normas — Qualidade do Ar Interno</h1>
+</div>
+<div class="content" id="lista"></div>
+<script>
+var BASE = 'https://engear.github.io/monitoramento-engear/normas/qualidade-ar-interno/';
+var VIEWER = 'https://docs.google.com/viewer?url=';
+var docs = [
+  {nome:'NBR17037 - QAr ambiente climatizado.pdf', label:'NBR 17037', desc:'Qualidade do ar em ambiente climatizado'},
+  {nome:'NBR12085_Agentes químicos no ar - Coleta de aerodispersóides por filtração - Método de ensaio.pdf', label:'NBR 12085', desc:'Agentes químicos no ar — Coleta de aerodispersóides por filtração — Método de ensaio'},
+  {nome:'NIT-Dicla-57_04 - CRITÉRIOS PARA ACREDITAÇÃO DA AMOSTRAGEM.pdf', label:'NIT-Dicla-57/04', desc:'Critérios para acreditação da amostragem'},
+];
+document.getElementById('lista').innerHTML = docs.map(function(d){
+  var pdfUrl = BASE + encodeURIComponent(d.nome);
+  var viewUrl = VIEWER + encodeURIComponent(pdfUrl);
+  return '<div class="doc-item" onclick="window.open(\''+viewUrl+'\',\'_blank\')">'+
+    '<span class="doc-icon">📄</span>'+
+    '<div><div class="doc-name">'+d.label+'</div>'+
+    '<div class="doc-desc">'+d.desc+'</div></div>'+
+    '</div>';
+}).join('');
+</script>
+</body>
+</html>
