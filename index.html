@@ -1048,6 +1048,7 @@ var _qarDados = {}; // salva dados de cada ponto ao navegar
 function renderQAR(){
   _qarN = 1; _qarIdx = 1; _qarDados = {};
   return '<div class="card"><div class="card-title blue">Qualidade do Ar Externo</div>' +
+    sel('qar-objetivo','Objetivo do monitoramento',['Operações da Empresa','Impacto do Ambiente (Background)'])+
     '<div class="field"><label>Quantidade de pontos</label>' +
     '<select id="qar-npontos" onchange="_qarSetN(parseInt(this.value)||1)" style="width:140px;"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select>' +
     '</div></div>' +
