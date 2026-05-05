@@ -10,10 +10,11 @@
   .header h1{font-size:16px;font-weight:600;margin:0;}
   .back{font-size:13px;opacity:.8;cursor:pointer;margin-bottom:6px;display:block;}
   .content{padding:1.25rem;max-width:430px;margin:0 auto;}
-  .doc-item{background:white;border-radius:12px;padding:1rem;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);display:flex;align-items:center;gap:12px;cursor:pointer;}
+  .doc-item{background:white;border-radius:12px;padding:1rem;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);display:flex;align-items:center;gap:12px;text-decoration:none;}
   .doc-icon{font-size:28px;flex-shrink:0;}
   .doc-name{font-size:13px;font-weight:600;color:#1e5f8a;}
   .doc-desc{font-size:12px;color:#718096;margin-top:3px;line-height:1.4;}
+  .doc-badge{font-size:11px;background:#e8f4fd;color:#2d7db3;border-radius:4px;padding:2px 6px;margin-top:4px;display:inline-block;}
 </style>
 </head>
 <body>
@@ -24,25 +25,15 @@
 <div class="content" id="lista"></div>
 <script>
 var BASE = 'https://engear.github.io/monitoramento-engear/normas/qualidade-ar-externo/';
-var VIEWER = 'https://docs.google.com/viewer?url=';
-var docs = [
-  {nome:'ABNT NBR 13412 - 1995 - Material Particulado em suspensão na atmosfera.pdf', label:'ABNT NBR 13412', desc:'Material Particulado em suspensão na atmosfera'},
-  {nome:'NBR 9547 - MP em suspensão no ar ambiente - método AGV.pdf', label:'NBR 9547', desc:'MP em suspensão no ar ambiente — Método AGV'},
-  {nome:'NBR12065 - Determinação de Poeira Sedimentaveis.pdf', label:'NBR 12065', desc:'Determinação de Poeira Sedimentáveis'},
-  {nome:'NBR12085 - Agentes químicos no ar - coleta de aerodispersóides por filtração.pdf', label:'NBR 12085', desc:'Agentes químicos no ar — Coleta de aerodispersóides por filtração'},
-  {nome:'NBR12979 - Determinação de SO2 ar ambiente.pdf', label:'NBR 12979', desc:'Determinação de SO₂ no ar ambiente'},
-  {nome:'asnzs-3580-9-142013 Determinação de material particulado em suspensão PM2,5.pdf', label:'AS/NZS 3580.9.14:2013', desc:'Determinação de material particulado em suspensão PM2,5'},
-  {nome:'Guia_Tecnico_para_o_Monitoramento_e_Avaliacao_da_Qualidade_do_Ar.pdf', label:'Guia Técnico', desc:'Monitoramento e Avaliação da Qualidade do Ar'},
-  {nome:'CONAMA 506_24 - Padrão de Qualidade do Ar Vigente.pdf', label:'CONAMA 506/24', desc:'Padrão de Qualidade do Ar Vigente'},
-];
+var docs = [{"nome": "ABNT NBR 13412 - 1995 - Material Particulado em suspensão na atmosfera.pdf", "label": "ABNT NBR 13412", "desc": "Material Particulado em suspensão na atmosfera"}, {"nome": "NBR 9547 - MP em suspensão no ar ambiente - método AGV.pdf", "label": "NBR 9547", "desc": "MP em suspensão no ar ambiente — Método AGV"}, {"nome": "NBR12065 - Determinação de Poeira Sedimentaveis.pdf", "label": "NBR 12065", "desc": "Determinação de Poeira Sedimentáveis"}, {"nome": "NBR12085 - Agentes químicos no ar - coleta de aerodispersóides por filtração.pdf", "label": "NBR 12085", "desc": "Agentes químicos no ar — Coleta de aerodispersóides por filtração"}, {"nome": "NBR12979 - Determinação de SO2 ar ambiente.pdf", "label": "NBR 12979", "desc": "Determinação de SO₂ no ar ambiente"}, {"nome": "asnzs-3580-9-142013 Determinação de material particulado em suspensão PM2,5.pdf", "label": "AS/NZS 3580.9.14:2013", "desc": "Determinação de material particulado em suspensão PM2,5"}, {"nome": "Guia_Tecnico_para_o_Monitoramento_e_Avaliacao_da_Qualidade_do_Ar.pdf", "label": "Guia Técnico", "desc": "Monitoramento e Avaliação da Qualidade do Ar"}, {"nome": "CONAMA 506_24 - Padrão de Qualidade do Ar Vigente.pdf", "label": "CONAMA 506/24", "desc": "Padrão de Qualidade do Ar Vigente"}];
 document.getElementById('lista').innerHTML = docs.map(function(d){
-  var pdfUrl = BASE + encodeURIComponent(d.nome);
-  var viewUrl = VIEWER + encodeURIComponent(pdfUrl);
-  return '<div class="doc-item" onclick="window.open(\''+viewUrl+'\',\'_blank\')">'+
+  var url = BASE + encodeURIComponent(d.nome);
+  return '<a class="doc-item" href="'+url+'" target="_blank">'+
     '<span class="doc-icon">📄</span>'+
     '<div><div class="doc-name">'+d.label+'</div>'+
-    '<div class="doc-desc">'+d.desc+'</div></div>'+
-    '</div>';
+    '<div class="doc-desc">'+d.desc+'</div>'+
+    '<span class="doc-badge">Toque para abrir</span></div>'+
+    '</a>';
 }).join('');
 </script>
 </body>
