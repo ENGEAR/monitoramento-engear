@@ -6,15 +6,18 @@
 <title>Visualizador</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:Arial,sans-serif;background:#1a1a2e;height:100vh;display:flex;flex-direction:column;}
-  .toolbar{background:linear-gradient(135deg,#1e5f8a,#2d7db3);color:white;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
-  .btn-back{background:rgba(255,255,255,0.2);border:none;color:white;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;}
-  .btn-back:active{opacity:.8;}
-  .doc-title{font-size:13px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  iframe{flex:1;border:none;width:100%;height:100%;}
-  .fallback{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;text-align:center;padding:2rem;gap:16px;}
-  .fallback p{font-size:14px;opacity:.8;line-height:1.5;}
-  .btn-download{background:#00b894;color:white;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block;}
+  body{font-family:Arial,sans-serif;background:#f0f4f8;min-height:100vh;display:flex;flex-direction:column;}
+  .toolbar{background:linear-gradient(135deg,#1e5f8a,#2d7db3);color:white;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+  .btn-back{background:rgba(255,255,255,0.2);border:none;color:white;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;}
+  .doc-title{font-size:14px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .content{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;gap:20px;}
+  .doc-icon{font-size:64px;}
+  .doc-name{font-size:17px;font-weight:600;color:#1e5f8a;line-height:1.4;max-width:320px;}
+  .doc-desc{font-size:13px;color:#718096;line-height:1.5;max-width:300px;}
+  .btn-abrir{background:#2d7db3;color:white;border:none;border-radius:12px;padding:14px 32px;font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block;margin-top:8px;}
+  .btn-baixar{background:#00b894;color:white;border:none;border-radius:12px;padding:14px 32px;font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block;}
+  .btns{display:flex;flex-direction:column;gap:12px;width:100%;max-width:280px;}
+  .hint{font-size:12px;color:#a0aec0;margin-top:4px;}
 </style>
 </head>
 <body>
@@ -22,42 +25,28 @@
   <button class="btn-back" onclick="history.back()">← Voltar</button>
   <span class="doc-title" id="doc-title">Documento</span>
 </div>
-<div id="viewer-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+<div class="content">
+  <div class="doc-icon">📄</div>
+  <div class="doc-name" id="nome-doc">Carregando...</div>
+  <div class="doc-desc">Toque em "Abrir PDF" para visualizar o documento no seu dispositivo.</div>
+  <div class="btns">
+    <a id="btn-abrir" class="btn-abrir" href="#" target="_blank">📖 Abrir PDF</a>
+    <a id="btn-baixar" class="btn-baixar" href="#" download>⬇️ Baixar PDF</a>
+  </div>
+  <p class="hint">O PDF abrirá no visualizador padrão do seu dispositivo</p>
 </div>
 <script>
 var params = new URLSearchParams(window.location.search);
-var url = params.get('url');
+var url = params.get('url') || '';
 var nome = params.get('nome') || 'Documento';
 document.getElementById('doc-title').textContent = nome;
-
-if(url) {
-  var content = document.getElementById('viewer-content');
-  // Tentar iframe direto
-  var iframe = document.createElement('iframe');
-  iframe.src = url;
-  iframe.style.cssText = 'flex:1;border:none;width:100%;height:100%;';
-  iframe.onerror = function() { mostrarFallback(url, nome); };
-  content.appendChild(iframe);
-  // Se o iframe não carregar em 3s, mostrar fallback
-  setTimeout(function() {
-    try {
-      var doc = iframe.contentDocument || iframe.contentWindow.document;
-      if(!doc || doc.title === '') mostrarFallback(url, nome);
-    } catch(e) {
-      mostrarFallback(url, nome);
-    }
-  }, 3000);
+document.getElementById('nome-doc').textContent = nome;
+if(url){
+  document.getElementById('btn-abrir').href = url;
+  document.getElementById('btn-baixar').href = url;
 } else {
-  mostrarFallback('', 'Arquivo não encontrado');
-}
-
-function mostrarFallback(url, nome) {
-  var content = document.getElementById('viewer-content');
-  content.innerHTML = '<div class="fallback">' +
-    '<div style="font-size:48px">📄</div>' +
-    '<p>Não foi possível exibir o documento aqui.<br>Toque no botão abaixo para abrir ou baixar.</p>' +
-    (url ? '<a class="btn-download" href="'+url+'" target="_blank" download>⬇️ Abrir / Baixar PDF</a>' : '') +
-    '</div>';
+  document.getElementById('btn-abrir').style.display='none';
+  document.getElementById('btn-baixar').style.display='none';
 }
 </script>
 </body>
