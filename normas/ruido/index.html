@@ -3,62 +3,41 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Visualizador</title>
+<title>Normas — Ruído</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:Arial,sans-serif;background:#1a1a2e;height:100vh;display:flex;flex-direction:column;}
-  .toolbar{background:linear-gradient(135deg,#1e5f8a,#2d7db3);color:white;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
-  .btn-back{background:rgba(255,255,255,0.2);border:none;color:white;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;}
-  .btn-back:active{opacity:.8;}
-  .doc-title{font-size:13px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  iframe{flex:1;border:none;width:100%;height:100%;}
-  .fallback{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;text-align:center;padding:2rem;gap:16px;}
-  .fallback p{font-size:14px;opacity:.8;line-height:1.5;}
-  .btn-download{background:#00b894;color:white;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block;}
+  body{font-family:Arial,sans-serif;background:#f0f4f8;margin:0;padding:0;}
+  .header{background:linear-gradient(135deg,#1e5f8a,#2d7db3);color:white;padding:1rem 1.25rem;}
+  .header h1{font-size:16px;font-weight:600;margin:0;}
+  .back{font-size:13px;opacity:.8;cursor:pointer;margin-bottom:6px;display:block;border:none;background:none;color:white;padding:0;}
+  .content{padding:1.25rem;max-width:430px;margin:0 auto;}
+  .doc-item{background:white;border-radius:12px;padding:1rem;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);display:flex;align-items:center;gap:12px;cursor:pointer;}
+  .doc-icon{font-size:28px;flex-shrink:0;}
+  .doc-name{font-size:13px;font-weight:600;color:#1e5f8a;}
+  .doc-desc{font-size:12px;color:#718096;margin-top:3px;line-height:1.4;}
+  .doc-badge{font-size:11px;background:#e8f4fd;color:#2d7db3;border-radius:4px;padding:2px 6px;margin-top:4px;display:inline-block;}
 </style>
 </head>
 <body>
-<div class="toolbar">
-  <button class="btn-back" onclick="history.back()">← Voltar</button>
-  <span class="doc-title" id="doc-title">Documento</span>
+<div class="header">
+  <button class="back" onclick="history.length>1?history.back():window.close()">← Voltar</button>
+  <h1>Normas — Ruído</h1>
 </div>
-<div id="viewer-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
-</div>
+<div class="content" id="lista"></div>
 <script>
-var params = new URLSearchParams(window.location.search);
-var url = params.get('url');
-var nome = params.get('nome') || 'Documento';
-document.getElementById('doc-title').textContent = nome;
+var docs = [{"nome": "NBR10151 - Medição e avaliação de níveis de pressão sonora em áreas habitadas.pdf", "label": "NBR 10151", "desc": "Medição e avaliação de níveis de pressão sonora em áreas habitadas"}, {"nome": "NBR10152 - Níveis de pressão sonora em ambientes internos a edificações.pdf", "label": "NBR 10152", "desc": "Níveis de pressão sonora em ambientes internos a edificações"}, {"nome": "NBR16425-1 - Ruido Sistema Transporte Geral.pdf", "label": "NBR 16425-1", "desc": "Ruído — Sistema de Transporte Geral"}, {"nome": "NBR16425-2 - Ruido Sistema Aéreo.pdf", "label": "NBR 16425-2", "desc": "Ruído — Sistema Aéreo"}, {"nome": "NBR16425-4 - Ruido Sistema Ferroviario.pdf", "label": "NBR 16425-4", "desc": "Ruído — Sistema Ferroviário"}];
+var BASE = 'https://engear.github.io/monitoramento-engear/normas/ruido/';
+var VIEWER = 'https://engear.github.io/monitoramento-engear/indices/viewer.html';
 
-if(url) {
-  var content = document.getElementById('viewer-content');
-  // Tentar iframe direto
-  var iframe = document.createElement('iframe');
-  iframe.src = url;
-  iframe.style.cssText = 'flex:1;border:none;width:100%;height:100%;';
-  iframe.onerror = function() { mostrarFallback(url, nome); };
-  content.appendChild(iframe);
-  // Se o iframe não carregar em 3s, mostrar fallback
-  setTimeout(function() {
-    try {
-      var doc = iframe.contentDocument || iframe.contentWindow.document;
-      if(!doc || doc.title === '') mostrarFallback(url, nome);
-    } catch(e) {
-      mostrarFallback(url, nome);
-    }
-  }, 3000);
-} else {
-  mostrarFallback('', 'Arquivo não encontrado');
-}
-
-function mostrarFallback(url, nome) {
-  var content = document.getElementById('viewer-content');
-  content.innerHTML = '<div class="fallback">' +
-    '<div style="font-size:48px">📄</div>' +
-    '<p>Não foi possível exibir o documento aqui.<br>Toque no botão abaixo para abrir ou baixar.</p>' +
-    (url ? '<a class="btn-download" href="'+url+'" target="_blank" download>⬇️ Abrir / Baixar PDF</a>' : '') +
+document.getElementById('lista').innerHTML = docs.map(function(d) {
+  var pdfUrl = BASE + encodeURIComponent(d.nome);
+  var viewUrl = VIEWER + '?url=' + encodeURIComponent(pdfUrl) + '&nome=' + encodeURIComponent(d.label);
+  return '<div class="doc-item" onclick="window.location.href=\''+viewUrl+'\'">'+
+    '<span class="doc-icon">📄</span>'+
+    '<div><div class="doc-name">'+d.label+'</div>'+
+    '<div class="doc-desc">'+d.desc+'</div>'+
+    '<span class="doc-badge">Toque para abrir</span></div>'+
     '</div>';
-}
+}).join('');
 </script>
 </body>
 </html>
