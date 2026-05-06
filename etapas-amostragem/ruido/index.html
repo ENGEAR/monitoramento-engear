@@ -54,6 +54,11 @@
         <div><div class="card-name">Ambientes internos (NBR 10152)</div><div class="card-sub">Checklist de campo</div></div>
       </div><span class="arrow">›</span>
     </div>
+    <div class="card" onclick="irPara('v-aero','Ruído Aeroporto (NBR 16425-2)')">
+      <div class="card-info"><span class="card-icon">✈️</span>
+        <div><div class="card-name">Ruído Aeroporto (NBR 16425-2)</div><div class="card-sub">Receptores críticos · Monitoramento operacional</div></div>
+      </div><span class="arrow">›</span>
+    </div>
   </div>
 
   <!-- NÍVEL 2: NBR 10151 -->
@@ -281,10 +286,125 @@
   </div>
 
 </div>
+
+  <!-- NÍVEL 2: Aeroporto -->
+  <div id="v-aero" class="view">
+    <div class="card" onclick="irPara('v-aero-receptor','Receptores Potencialmente Críticos')">
+      <div class="card-info"><span class="card-icon">🏘️</span><div><div class="card-name">Receptores Potencialmente Críticos</div><div class="card-sub">Monitoramento externo ao aeródromo</div></div></div><span class="arrow">›</span>
+    </div>
+    <div class="card" onclick="irPara('v-aero-op','Monitoramento Operacional no Aeródromo')">
+      <div class="card-info"><span class="card-icon">🛬</span><div><div class="card-name">Monitoramento Operacional</div><div class="card-sub">Monitoramento dentro do aeródromo</div></div></div><span class="arrow">›</span>
+    </div>
+  </div>
+
+  <!-- CHECKLIST: Receptores Críticos -->
+  <div id="v-aero-receptor" class="view">
+    <div class="prog-wrap"><div class="prog-label"><span>Progresso</span><span id="pl-aero-receptor">0 / 0</span></div><div class="prog-bar"><div class="prog-fill" id="pf-aero-receptor"></div></div></div>
+    <div class="secao"><div class="secao-titulo">📍 Posicionamento do microfone</div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Altura entre 1,2 m e 1,5 m do solo</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Para longa duração: microfone preferencialmente ≥ 4 m do solo</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Distância mínima de 2 m de superfícies refletoras</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Uso obrigatório de protetor de vento</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Microfone direcionado para a trajetória das aeronaves</span></div>
+    </div>
+    <div class="secao"><div class="secao-titulo">✅ Validação do ponto</div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar se o ruído residual é pelo menos 10 dB menor que o ruído de impacto das aeronaves</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Caso a diferença seja menor que 10 dB: técnico acompanhando para anotar influências das aeronaves</span></div>
+    </div>
+    <div class="secao"><div class="secao-titulo">⚙️ Montagem do equipamento</div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Instalar em tripé estável</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Garantir ausência de vibrações</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Configurar ponderação A</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Configurar tempo de medição</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Configurar filtro de 1/3 de oitava</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Ativar registro de áudio</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar bateria e funcionamento geral</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Conferir espaço de armazenamento</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Conferir data e horário do equipamento</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar cabo de extensão (quando aplicável)</span></div>
+    </div>
+    <div class="secao"><div class="secao-titulo">🌦️ Condições ambientais</div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar temperatura</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar umidade relativa</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar velocidade do vento</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar direção do vento</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar se condições ambientais estão dentro da faixa operacional</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Não monitorar com chuva</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Não monitorar durante trovoadas</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Não monitorar com vento > 5 m/s</span></div>
+    </div>
+    <div class="secao"><div class="secao-titulo">⏱️ Procedimentos</div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Realizar checagem inicial com calibrador no local da medição</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Ajustar sonômetro antes da série de medições</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Usar protetor de vento no microfone</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Definir tempo de medição representativo das operações aeronáuticas</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Fotografar ponto de medição</span></div>
+      <div class="ci" onclick="chk(this,'aero-receptor')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Realizar checagem final e verificar diferença ≤ ±0,5 dB. Se ultrapassar: invalidar medições e repetir</span></div>
+    </div>
+    <button class="reset-btn" onclick="resetView('aero-receptor')">↺ Reiniciar checklist</button>
+  </div>
+
+  <!-- CHECKLIST: Monitoramento Operacional -->
+  <div id="v-aero-op" class="view">
+    <div class="prog-wrap"><div class="prog-label"><span>Progresso</span><span id="pl-aero-op">0 / 0</span></div><div class="prog-bar"><div class="prog-fill" id="pf-aero-op"></div></div></div>
+    <div class="secao"><div class="secao-titulo">📍 Posicionamento do microfone</div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Altura de 6 m do solo</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Distância mínima de 10 m de superfícies refletoras</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Uso obrigatório de protetor de vento</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Microfone direcionado para a trajetória das aeronaves</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Linha de visada livre para operações aéreas</span></div>
+    </div>
+    <div class="secao"><div class="secao-titulo">⚙️ Montagem do equipamento</div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Instalar em tripé estável</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Garantir ausência de vibrações</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Configurar ponderação A</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Configurar tempo de medição</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Configurar filtro de 1/3 de oitava</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Ativar registro de áudio</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar bateria e funcionamento geral</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Conferir espaço de armazenamento</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Conferir data e horário do equipamento</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar cabo de extensão (quando aplicável)</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar proteção contra intempéries</span></div>
+    </div>
+    <div class="secao"><div class="secao-titulo">🌦️ Condições ambientais</div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar temperatura</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar umidade relativa</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar velocidade do vento</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar direção do vento</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar se condições ambientais estão dentro da faixa operacional</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Não monitorar com chuva</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Não monitorar durante trovoadas</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Não monitorar com vento > 5 m/s</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar estabilidade climática durante a medição</span></div>
+    </div>
+    <div class="secao"><div class="secao-titulo">⏱️ Procedimentos</div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Realizar checagem inicial com calibrador no local da medição</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Ajustar sonômetro antes da série de medições</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Usar protetor de vento no microfone</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Definir tempo de medição representativo das operações aeronáuticas</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Fotografar ponto de medição</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Realizar checagem final e verificar diferença ≤ ±0,5 dB. Se ultrapassar: invalidar medições e repetir</span></div>
+    </div>
+    <div class="secao"><div class="secao-titulo">📊 Monitoramento de longa duração</div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Instalar estrutura elevada e estável (quando aplicável)</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Conferir autonomia energética</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar funcionamento da estação meteorológica</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Programar verificações elétricas automáticas</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Configurar armazenamento contínuo</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Validar sincronismo entre áudio, ruído e meteorologia</span></div>
+      <div class="ci" onclick="chk(this,'aero-op')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Confirmar transmissão/coleta remota de dados</span></div>
+    </div>
+    <button class="reset-btn" onclick="resetView('aero-op')">↺ Reiniciar checklist</button>
+  </div>
+
 <a class="app-btn" href="https://engear.github.io/monitoramento-engear/">🏠 Voltar ao App</a>
 <script>
 var pilha = ['v0'];
 var titulos = {
+  'v-aero': 'Ruído Aeroporto (NBR 16425-2)',
+  'v-aero-receptor': 'Receptores Potencialmente Críticos',
+  'v-aero-op': 'Monitoramento Operacional no Aeródromo',
   'v0':'Etapas de Amostragem — Ruído',
   'v1':'Áreas habitadas (NBR 10151)',
   'v-externo':'Ambiente Externo',
@@ -322,7 +442,7 @@ function chk(el, vid) {
 function atualizarProg(vid) {
   var viewId = 'v-' + vid;
   var el = document.getElementById(viewId);
-  if(!el) { viewId = 'v-10152'; el = document.getElementById(viewId); }
+  if(!el) el = document.getElementById('v-' + vid);
   if(!el) return;
   var total = el.querySelectorAll('.ci').length;
   var done = el.querySelectorAll('.ci.chk').length;
