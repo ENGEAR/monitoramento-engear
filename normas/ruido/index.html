@@ -10,11 +10,10 @@
   .header h1{font-size:16px;font-weight:600;margin:0;}
   .back{font-size:13px;opacity:.8;cursor:pointer;margin-bottom:6px;display:block;border:none;background:none;color:white;padding:0;}
   .content{padding:1.25rem;max-width:430px;margin:0 auto;}
-  .doc-item{background:white;border-radius:12px;padding:1rem;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);display:flex;align-items:center;gap:12px;cursor:pointer;}
+  .doc-item{background:white;border-radius:12px;padding:1rem;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);display:flex;align-items:center;gap:12px;text-decoration:none;}
   .doc-icon{font-size:28px;flex-shrink:0;}
   .doc-name{font-size:13px;font-weight:600;color:#1e5f8a;}
   .doc-desc{font-size:12px;color:#718096;margin-top:3px;line-height:1.4;}
-  .doc-badge{font-size:11px;background:#e8f4fd;color:#2d7db3;border-radius:4px;padding:2px 6px;margin-top:4px;display:inline-block;}
 </style>
 </head>
 <body>
@@ -26,17 +25,13 @@
 <script>
 var docs = [{"nome": "NBR10151 - Medição e avaliação de níveis de pressão sonora em áreas habitadas.pdf", "label": "NBR 10151", "desc": "Medição e avaliação de níveis de pressão sonora em áreas habitadas"}, {"nome": "NBR10152 - Níveis de pressão sonora em ambientes internos a edificações.pdf", "label": "NBR 10152", "desc": "Níveis de pressão sonora em ambientes internos a edificações"}, {"nome": "NBR16425-1 - Ruido Sistema Transporte Geral.pdf", "label": "NBR 16425-1", "desc": "Ruído — Sistema de Transporte Geral"}, {"nome": "NBR16425-2 - Ruido Sistema Aéreo.pdf", "label": "NBR 16425-2", "desc": "Ruído — Sistema Aéreo"}, {"nome": "NBR16425-4 - Ruido Sistema Ferroviario.pdf", "label": "NBR 16425-4", "desc": "Ruído — Sistema Ferroviário"}];
 var BASE = 'https://engear.github.io/monitoramento-engear/normas/ruido/';
-var VIEWER = 'https://engear.github.io/monitoramento-engear/indices/viewer.html';
-
 document.getElementById('lista').innerHTML = docs.map(function(d) {
-  var pdfUrl = BASE + encodeURIComponent(d.nome);
-  var viewUrl = VIEWER + '?url=' + encodeURIComponent(pdfUrl) + '&nome=' + encodeURIComponent(d.label);
-  return '<div class="doc-item" onclick="window.location.href=\''+viewUrl+'\'">'+
+  var url = BASE + encodeURIComponent(d.nome);
+  return '<a class="doc-item" href="'+url+'" target="_blank">'+
     '<span class="doc-icon">📄</span>'+
     '<div><div class="doc-name">'+d.label+'</div>'+
-    '<div class="doc-desc">'+d.desc+'</div>'+
-    '<span class="doc-badge">Toque para abrir</span></div>'+
-    '</div>';
+    '<div class="doc-desc">'+d.desc+'</div></div>'+
+    '</a>';
 }).join('');
 </script>
 </body>
