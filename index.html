@@ -709,9 +709,8 @@ function mostrarSucesso(d,offline){
 async function uploadFotos(dados){
   if(!token||Object.keys(fotosAnexadas).length===0)return;
   try{
-    var siteResp=await gGet('/sites/engearlaboratorio.sharepoint.com:/sites/EngearLaboratorio');
-    var drivesResp=await gGet('/sites/'+siteResp.id+'/drives');
-    var drive=drivesResp.value.find(function(d){return d.name==='Documentos'||d.name==='Documents';})||drivesResp.value[0];
+    await getXlsxIds();
+    var drive = {id: _xlsxDriveId};
     var cliente=(dados.cliente||'Sem_Cliente').replace(/[^a-zA-Z0-9 _-]/g,'').trim()||'Sem_Cliente';
     var pastaBase='/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/Fotos/'+cliente;
     for(var pid in fotosAnexadas){for(var i=0;i<fotosAnexadas[pid].length;i++){
