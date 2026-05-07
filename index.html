@@ -853,29 +853,57 @@ function mostrarSucesso(d,offline){
 async function uploadFotos(dados){
   if(!token||Object.keys(fotosAnexadas).length===0)return;
   try{
-    await getXlsxIds();
-    var drive = {id: _xlsxDriveId};
+    var site=await gGet('/sites/engearlaboratorio.sharepoint.com:/sites/EngearLaboratorio');
+    var drives=await gGet('/sites/'+site.id+'/drives');
+    var drive=drives.value.find(function(d){return d.name==='Documentos'||d.name==='Documents';})||drives.value[0];
     var cliente=(dados.cliente||'Sem_Cliente').replace(/[^a-zA-Z0-9 _-]/g,'').trim()||'Sem_Cliente';
-    var pastaBase='/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/Fotos/'+cliente;
-    for(var pid in fotosAnexadas){for(var i=0;i<fotosAnexadas[pid].length;i++){
-      var f=fotosAnexadas[pid][i];var ext=(f.name.split('.').pop()||'jpg').toLowerCase();
-      var nome=(dados.data||'foto')+'_'+pid+'_'+Date.now()+'.'+ext;
-      var buf=await f.arrayBuffer();
-      await fetch(CFG.workerUrl+'/graph/drives/'+drive.id+'/root:'+encodeURI(pastaBase+'/'+nome)+':/content',{method:'PUT',headers:{Authorization:'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:buf});
-    }}
+    var pastaBase='/LABORAT%C3%93RIO/SERVI%C3%87OS/0%20INFO%20CAMPO%20-%20APP/Fotos/'+encodeURIComponent(cliente);
+    for(var pid in fotosAnexadas){
+      for(var i=0;i<fotosAnexadas[pid].length;i++){
+        var f=fotosAnexadas[pid][i];
+        var ext=(f.name.split('.').pop()||'jpg').toLowerCase();
+        var nome=(dados.data||'foto')+'_'+pid+'_'+Date.now()+'.'+ext;
+        var buf=await f.arrayBuffer();
+        await fetch(CFG.workerUrl+'/graph/drives/'+drive.id+'/root:'+pastaBase+'/'+encodeURIComponent(nome)+':/content',{
+          method:'PUT',
+          headers:{Authorization:'Bearer '+token,'Content-Type':f.type||'image/jpeg'},
+          body:buf
+        });
+      }
+    }
   }catch(e){console.error('Erro upload fotos:',e);}
 }
 
 // GRAPH API
 async function appendLinha(vals,sheetName){
   sheetName=sheetName||'Outro';
+  // Buscar site
   var site=await gGet('/sites/engearlaboratorio.sharepoint.com:/sites/EngearLaboratorio');
-  var drives=await gGet('/sites/'+site.id+'/drives');
+  var siteId=site.id;
+  // Buscar drive de documentos
+  var drives=await gGet('/sites/'+siteId+'/drives');
   var drive=drives.value.find(function(d){return d.name==='Documentos'||d.name==='Documents';})||drives.value[0];
-  var item=await gGet('/drives/'+drive.id+'/root:'+CFG.filePath);
-  var used=await gGet('/drives/'+drive.id+'/items/'+item.id+'/workbook/worksheets/'+encodeURIComponent(sheetName)+'/usedRange');
-  var row=(used.rowCount||1)+1;var col=String.fromCharCode(64+vals.length);
-  var rangePath='/drives/'+drive.id+'/items/'+item.id+'/workbook/worksheets/'+encodeURIComponent(sheetName)+'/range(address=\'A'+row+':'+col+row+'\')';
+  var driveId=drive.id;
+  // Buscar o arquivo monitoramento.xlsx por search (mais robusto que caminho)
+  var itemId=null;
+  try{
+    var search=await gGet('/drives/'+driveId+"/root/search(q='monitoramento.xlsx')");
+    var found=(search.value||[]).find(function(i){return i.name==='monitoramento.xlsx';});
+    if(found)itemId=found.id;
+  }catch(e){console.log('Search falhou:',e.message);}
+  // Fallback: tentar pelo caminho usando o siteId
+  if(!itemId){
+    try{
+      var r=await gGet('/sites/'+siteId+'/drive/root:/LABORAT%C3%93RIO/SERVI%C3%87OS/0%20INFO%20CAMPO%20-%20APP/monitoramento.xlsx');
+      itemId=r.id;
+    }catch(e){console.log('Caminho falhou:',e.message);}
+  }
+  if(!itemId)throw new Error('monitoramento.xlsx não encontrado');
+  // Buscar linha usada e escrever
+  var used=await gGet('/drives/'+driveId+'/items/'+itemId+'/workbook/worksheets/'+encodeURIComponent(sheetName)+'/usedRange');
+  var row=(used.rowCount||1)+1;
+  var col=String.fromCharCode(64+vals.length);
+  var rangePath='/drives/'+driveId+'/items/'+itemId+'/workbook/worksheets/'+encodeURIComponent(sheetName)+"/range(address='A"+row+":"+col+row+"')";
   await gPatch(rangePath,{values:[vals]});
 }
 async function gGet(path){var r=await fetch(CFG.workerUrl+'/graph'+path,{headers:{Authorization:'Bearer '+token}});if(!r.ok)throw new Error(r.status+'');return r.json();}
