@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Etapas de Amostragem — Opacidade</title>
+<style>
+  body{font-family:Arial,sans-serif;background:#f0f4f8;margin:0;padding:0;color:#1a202c;}
+  .header{background:linear-gradient(135deg,#1e5f8a,#2d7db3);color:white;padding:1rem 1.25rem;position:sticky;top:0;z-index:100;}
+  .header h1{font-size:15px;font-weight:600;margin:0;}
+  .back{font-size:13px;opacity:.8;cursor:pointer;margin-bottom:6px;display:block;border:none;background:none;color:white;padding:0;}
+  .content{padding:1.25rem;max-width:430px;margin:0 auto;padding-bottom:5rem;}
+  .card{background:white;border-radius:12px;padding:1rem;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);cursor:pointer;display:flex;align-items:center;justify-content:space-between;}
+  .card-info{display:flex;align-items:center;gap:12px;}
+  .card-icon{font-size:22px;}
+  .card-name{font-size:14px;font-weight:600;color:#1e5f8a;}
+  .card-sub{font-size:12px;color:#718096;margin-top:2px;}
+  .arrow{color:#718096;font-size:18px;}
+  .view{display:none;}
+  .secao{background:white;border-radius:12px;padding:1rem 1.25rem;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+  .secao-titulo{font-size:14px;font-weight:700;color:#1e5f8a;margin-bottom:10px;}
+  .sub{font-size:12px;font-weight:600;color:#2d7db3;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em;}
+  .ci{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid #f0f4f8;cursor:pointer;}
+  .ci:last-child{border-bottom:none;}
+  .cb{width:22px;height:22px;min-width:22px;border-radius:6px;border:2px solid #cbd5e0;display:flex;align-items:center;justify-content:center;transition:all .15s;margin-top:1px;flex-shrink:0;}
+  .ci.chk .cb{background:#00b894;border-color:#00b894;}
+  .cm{display:none;color:white;font-size:12px;font-weight:bold;}
+  .ci.chk .cm{display:block;}
+  .ct{font-size:13px;line-height:1.5;}
+  .prog-wrap{background:white;border-radius:12px;padding:.75rem 1rem;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+  .prog-bar{height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;margin-top:6px;}
+  .prog-fill{height:100%;background:#00b894;border-radius:4px;transition:width .3s;}
+  .prog-label{font-size:12px;color:#718096;display:flex;justify-content:space-between;}
+  .reset-btn{width:100%;background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px;font-size:13px;color:#718096;cursor:pointer;margin-top:4px;}
+  .app-btn{position:fixed;bottom:20px;right:20px;z-index:999;background:#2d7db3;color:white;border-radius:30px;padding:10px 18px;font-family:Arial,sans-serif;font-size:13px;font-weight:600;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,0.2);}
+</style>
+</head>
+<body>
+<div class="header">
+  <button class="back" id="btn-back" onclick="voltar()">← Fechar</button>
+  <h1 id="titulo">Etapas de Amostragem — Opacidade</h1>
+</div>
+<div class="content">
+
+  <!-- NÍVEL 1 -->
+  <div id="v0">
+    <div class="card" onclick="irPara('v-opacimetro','Opacímetro')">
+      <div class="card-info"><span class="card-icon">🔬</span>
+        <div><div class="card-name">Opacímetro</div><div class="card-sub">Checklist de campo</div></div>
+      </div><span class="arrow">›</span>
+    </div>
+  </div>
+
+  <!-- CHECKLIST: Opacímetro -->
+  <div id="v-opacimetro" class="view">
+    <div class="prog-wrap"><div class="prog-label"><span>Progresso</span><span id="pl-opacimetro">0 / 0</span></div><div class="prog-bar"><div class="prog-fill" id="pf-opacimetro"></div></div></div>
+
+    <div class="secao"><div class="secao-titulo">✅ Verificações iniciais</div>
+      <div class="sub">Documentação e calibração:</div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Certificado de calibração válido</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Bateria carregada</span></div>
+    </div>
+
+    <div class="secao"><div class="secao-titulo">🔍 Inspeção do veículo</div>
+      <div class="sub">Condições do veículo:</div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Veículo estacionado em local seguro</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Freio de estacionamento acionado</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Transmissão em neutro/ponto morto</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Motor em temperatura normal de operação</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sem vazamentos aparentes</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Quantidade suficiente de combustível</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Acelerador funcionando corretamente</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Ar-condicionado desligado</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Freio motor desligado</span></div>
+    </div>
+
+    <div class="secao"><div class="secao-titulo">⚙️ Preparação do equipamento</div>
+      <div class="sub">Montagem e conexão:</div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Cabo conectado corretamente</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Conectores rosqueados adequadamente</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Cabo sem torções ou danos</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sonda corretamente instalada</span></div>
+      <div class="sub">Escolha do redutor:</div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Até 50 mm → com redutor</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Acima de 50 mm → sem redutor</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Tripé utilizado quando necessário</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sonda alinhada ao eixo do escapamento</span></div>
+      <div class="sub">Limpeza e verificação da sonda:</div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Lentes limpas</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sem excesso de fuligem</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Furos calibrados desobstruídos</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Equipamento sem mensagem "ECO"</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Zeramento realizado com sucesso</span></div>
+    </div>
+
+    <div class="secao"><div class="secao-titulo">🌡️ Condições ambientais</div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Área ventilada</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Escape não direcionado para ambiente fechado</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sem chuva intensa</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sem excesso de poeira</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Condições seguras para operação</span></div>
+    </div>
+
+    <div class="secao"><div class="secao-titulo">🚦 Execução do ensaio</div>
+      <div class="sub">Preparação do escapamento:</div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Realizadas acelerações preliminares</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Tubulação limpa de fuligem acumulada</span></div>
+      <div class="ci" onclick="chk(this,'opacimetro')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Quantidade de acelerações preliminares: 3</span></div>
+    </div>
+
+    <button class="reset-btn" onclick="resetView('opacimetro')">↺ Reiniciar checklist</button>
+  </div>
+
+</div>
+<a class="app-btn" href="https://engear.github.io/monitoramento-engear/">🏠 Voltar ao App</a>
+<script>
+var pilha=['v0'];
+var titulos={'v0':'Etapas de Amostragem — Opacidade','v-opacimetro':'Opacímetro'};
+
+function irPara(id,titulo){
+  document.getElementById(pilha[pilha.length-1]).style.display='none';
+  pilha.push(id);document.getElementById(id).style.display='block';
+  document.getElementById('titulo').textContent=titulos[id]||titulo;
+  document.getElementById('btn-back').textContent='← Voltar';
+  atualizarProg(id.replace('v-',''));window.scrollTo(0,0);
+}
+function voltar(){
+  if(pilha.length<=1){window.close();return;}
+  document.getElementById(pilha[pilha.length-1]).style.display='none';pilha.pop();
+  var ant=pilha[pilha.length-1];document.getElementById(ant).style.display='block';
+  document.getElementById('titulo').textContent=titulos[ant]||'';
+  document.getElementById('btn-back').textContent=pilha.length<=1?'← Fechar':'← Voltar';
+  window.scrollTo(0,0);
+}
+function chk(el,vid){el.classList.toggle('chk');atualizarProg(vid);}
+function atualizarProg(vid){
+  var el=document.getElementById('v-'+vid);if(!el)return;
+  var total=el.querySelectorAll('.ci').length;var done=el.querySelectorAll('.ci.chk').length;
+  var pct=total>0?Math.round(done/total*100):0;
+  var pf=document.getElementById('pf-'+vid);var pl=document.getElementById('pl-'+vid);
+  if(pf)pf.style.width=pct+'%';if(pl)pl.textContent=done+' / '+total;
+}
+function resetView(vid){
+  var el=document.getElementById('v-'+vid);if(!el)return;
+  el.querySelectorAll('.ci.chk').forEach(function(i){i.classList.remove('chk');});
+  atualizarProg(vid);
+}
+</script>
+</body>
+</html>
