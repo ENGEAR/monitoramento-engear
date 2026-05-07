@@ -419,24 +419,25 @@ function _renderSubRuido(sub){
     h+='</div><div id="rp-cont"></div>';
   } else if(sub==='interno'){
     h+='<div class="card"><div class="card-title blue">Ruído Interno</div>';
-    h+='<div class="field"><label>Condição das esquadrias</label><div style="display:flex;gap:8px;margin-top:6px;"><button id="btn-esq-aberta" class="hist-btn" onclick="selEsq(\'aberta\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Aberta</button><button id="btn-esq-fechada" class="hist-btn" onclick="selEsq(\'fechada\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Fechada</button></div><input type="hidden" id="r-esquadria"/></div>';
+    h+='<div class="field"><label>Condição das esquadrias</label><div style="display:flex;gap:8px;margin-top:6px;"><button id="btn-esq-aberta" onclick="selEsq(\'aberta\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Aberta</button><button id="btn-esq-fechada" onclick="selEsq(\'fechada\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Fechada</button></div><input type="hidden" id="r-esquadria"/></div>';
     h+='<div class="field"><label>Condição do ambiente</label><div style="display:flex;gap:8px;margin-top:6px;"><button id="btn-amb-vazio" onclick="selAmb(\'vazio\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Sala vazia</button><button id="btn-amb-pessoas" onclick="selAmb(\'pessoas\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Com pessoas</button></div><input type="hidden" id="r-ambiente-cond"/></div>';
     h+='<div class="field"><label>Área do ambiente monitorado (m²)</label><input type="number" id="r-area-int" placeholder="Ex: 45"/></div>';
     h+='<div class="field"><button class="btn-next" style="width:100%" onclick="calcPontosRuidoInt()">Calcular pontos necessários</button></div>';
     h+='<div id="r-int-resultado" class="hidden"><div class="chk-alerta" style="background:#e8f4fd;border-color:#2d7db3;color:#1e5f8a;margin-bottom:10px;" id="r-int-msg"></div></div>';
-    h+='</div><div id="rp-cont-int"></div>';
-    h+='<div class="card" style="margin-top:10px"><div class="card-title blue">📐 Layout da sala</div>';
-    h+='<p style="font-size:12px;color:#718096;margin-bottom:8px;">Toque para adicionar pontos ou paredes no layout da sala</p>';
+    h+='</div>';
+    h+='<div id="rp-cont-int"></div>';
+    h+='<div id="sala-canvas-wrap" class="hidden"><div class="card"><div class="card-title blue">📐 Layout da sala</div>';
+    h+='<p style="font-size:12px;color:#718096;margin-bottom:8px;">Desenhe o layout e posicione os pontos de monitoramento</p>';
     h+='<canvas id="sala-canvas" style="width:100%;height:250px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;display:block;touch-action:none;"></canvas>';
-    h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:8px;">';
-    h+='<button id="btn-modo-ponto" onclick="canvasMode(\'ponto\')" style="background:#2d7db3;color:white;border:none;border-radius:8px;padding:8px;font-size:11px;font-weight:600;cursor:pointer;">📍<br>Ponto</button>';
-    h+='<button id="btn-modo-paredeH" onclick="canvasMode(\'paredeH\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px;font-size:11px;font-weight:600;cursor:pointer;">━<br>Parede H</button>';
-    h+='<button id="btn-modo-paredeV" onclick="canvasMode(\'paredeV\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px;font-size:11px;font-weight:600;cursor:pointer;">┃<br>Parede V</button>';
-    h+='<button id="btn-modo-lapis" onclick="canvasMode(\'lapis\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px;font-size:11px;font-weight:600;cursor:pointer;">✏️<br>Lápis</button>';
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:5px;margin-top:8px;">';
+    h+='<button id="btn-modo-ponto" onclick="canvasMode(\'ponto\')" style="background:#2d7db3;color:white;border:none;border-radius:8px;padding:7px 4px;font-size:10px;font-weight:600;cursor:pointer;">📍<br>Ponto</button>';
+    h+='<button id="btn-modo-paredeH" onclick="canvasMode(\'paredeH\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;font-weight:600;cursor:pointer;">━<br>Parede H</button>';
+    h+='<button id="btn-modo-paredeV" onclick="canvasMode(\'paredeV\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;font-weight:600;cursor:pointer;">┃<br>Parede V</button>';
+    h+='<button id="btn-modo-lapis" onclick="canvasMode(\'lapis\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;font-weight:600;cursor:pointer;">✏️<br>Lápis</button>';
+    h+='<button id="btn-modo-borracha" onclick="canvasMode(\'borracha\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;font-weight:600;cursor:pointer;">🧹<br>Borracha</button>';
     h+='</div>';
-    h+='<button onclick="canvasLimpar()" style="width:100%;margin-top:6px;background:#fff3f3;color:#e53e3e;border:1px solid #fecaca;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;">🗑️ Limpar</button>';
-    h+='</div>';
-    setTimeout(function(){iniciarCanvas();},200);
+    h+='<button onclick="canvasLimpar()" style="width:100%;margin-top:6px;background:#fff3f3;color:#e53e3e;border:1px solid #fecaca;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;">🗑️ Limpar tudo</button>';
+    h+='</div></div>';
   } else if(sub==='ferroviario'){
     h+='<div class="card"><div class="card-title blue">Ruído Ferroviário</div>';
     h+='<div class="field"><label>Finalidade do monitoramento</label><select id="r-finalidade-ferro" onchange="renderFerroSub(this.value)"><option value="">Selecione...</option><option>Passagem de composição ferroviária</option><option>Operações em pátios / manobras / cruzamentos</option></select></div>';
@@ -460,9 +461,14 @@ function calcPontosRuidoInt(){
   var n=area<=30?3:3+Math.ceil((area-30)/30);
   document.getElementById('r-int-resultado').classList.remove('hidden');
   document.getElementById('r-int-msg').textContent='Área: '+area+' m² → '+n+' ponto(s) necessário(s)';
-  // Só re-renderiza os pontos, NÃO recria o canvas
   var cont=document.getElementById('rp-cont-int');
   if(cont) cont.innerHTML=renderPontosRuidoInt(n);
+  // Mostrar canvas após definir pontos
+  var wrap=document.getElementById('sala-canvas-wrap');
+  if(wrap){
+    wrap.classList.remove('hidden');
+    setTimeout(function(){iniciarCanvas();},200);
+  }
 }
 function renderPontosRuidoInt(n){var h='';for(var i=1;i<=n;i++){var p='rpi'+i;h+='<div class="ponto-card"><div class="ponto-header">Ponto '+i+'</div><div class="ponto-body">';h+=inp(p+'-nome','Nome / identificação do ponto','text','');h+=gpsBlock(p);h+=inp(p+'-alt','Altura do sonômetro (m)','number','');h+=chk(p+'-slow','Sonômetro configurado em Slow (S)');h+=inp(p+'-chkini','Checagem inicial (dB)','number','');h+=inp(p+'-chkfim','Checagem final (dB)','number','');h+='<div id="'+p+'-chk-alerta" class="chk-alerta hidden">⚠️ Diferença acima de 0,5 dB</div>';h+=fotoBlock(p);h+='<div class="row3">'+inp(p+'-temp','Temp. (°C)','number','')+inp(p+'-umid','Umidade (%)','number','')+inp(p+'-vento','Vento (m/s)','number','')+'</div>';h+=chk(p+'-residual','Ruído residual monitorado');h+=chk(p+'-total','Ruído total monitorado');h+=inp(p+'-obs','Observações','text','');h+='</div></div>';}return h;}
 
@@ -476,12 +482,22 @@ function iniciarCanvas(){
     var r=c.getBoundingClientRect();
     var x=(e.clientX-r.left)*(c.width/r.width);
     var y=(e.clientY-r.top)*(c.height/r.height);
+    if(_canvasMode==='borracha'){
+      // Apagar o item mais próximo do clique
+      var minDist=30,minIdx=-1;
+      _canvasItems.forEach(function(item,i){
+        var dx=item.x-x,dy=item.y-y,dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<minDist){minDist=dist;minIdx=i;}
+      });
+      if(minIdx>=0){_canvasItems.splice(minIdx,1);desenharCanvas();}
+      return;
+    }
     _canvasItems.push({tipo:_canvasMode,x:x,y:y});
     desenharCanvas();
   });
   // Lápis: touch e mouse
   function getLapXY(e,r){var src=e.touches?e.touches[0]:e;return{x:(src.clientX-r.left)*(c.width/r.width),y:(src.clientY-r.top)*(c.height/r.height)};}
-  function lapStart(e){if(_canvasMode!=='lapis')return;e.preventDefault();_lapisAtivo=true;var r=c.getBoundingClientRect();var pt=getLapXY(e,r);_lapisPts=[[pt.x,pt.y]];}
+  function lapStart(e){if(_canvasMode!=='lapis'&&_canvasMode!=='borracha')return;e.preventDefault();if(_canvasMode==='borracha')return;_lapisAtivo=true;var r=c.getBoundingClientRect();var pt=getLapXY(e,r);_lapisPts=[[pt.x,pt.y]];}
   function lapMove(e){if(!_lapisAtivo||_canvasMode!=='lapis')return;e.preventDefault();var r=c.getBoundingClientRect();var pt=getLapXY(e,r);_lapisPts.push([pt.x,pt.y]);desenharCanvas();}
   function lapEnd(e){if(!_lapisAtivo)return;_lapisAtivo=false;if(_lapisPts.length>1)_canvasItems.push({tipo:'lapis',pts:_lapisPts.slice()});_lapisPts=[];desenharCanvas();}
   c.addEventListener('mousedown',lapStart);c.addEventListener('mousemove',lapMove);c.addEventListener('mouseup',lapEnd);
@@ -490,7 +506,7 @@ function iniciarCanvas(){
 }
 function canvasMode(m){
   _canvasMode=m;
-  var modos=['ponto','paredeH','paredeV','lapis'];
+  var modos=['ponto','paredeH','paredeV','lapis','borracha'];
   modos.forEach(function(mo){var b=document.getElementById('btn-modo-'+mo);if(b){b.style.background=m===mo?'#2d7db3':'#f0f4f8';b.style.color=m===mo?'white':'#1a202c';b.style.border=m===mo?'none':'1.5px solid #e2e8f0';}});
 }
 function canvasLimpar(){_canvasItems=[];_lapisPts=[];_lapisAtivo=false;desenharCanvas();}
