@@ -49,6 +49,11 @@
         <div><div class="card-name">Opacímetro</div><div class="card-sub">Checklist de campo</div></div>
       </div><span class="arrow">›</span>
     </div>
+    <div class="card" onclick="irPara('v-ringelmann','Escala Ringelmann')">
+      <div class="card-info"><span class="card-icon">📏</span>
+        <div><div class="card-name">Escala Ringelmann</div><div class="card-sub">Checklist de campo</div></div>
+      </div><span class="arrow">›</span>
+    </div>
   </div>
 
   <!-- CHECKLIST: Opacímetro -->
@@ -112,6 +117,73 @@
   </div>
 
 </div>
+
+  <!-- CHECKLIST: Escala Ringelmann -->
+  <div id="v-ringelmann" class="view">
+    <div class="prog-wrap"><div class="prog-label"><span>Progresso</span><span id="pl-ringelmann">0 / 0</span></div><div class="prog-bar"><div class="prog-fill" id="pf-ringelmann"></div></div></div>
+
+    <div class="secao"><div class="secao-titulo">🧰 Equipamentos e materiais</div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Escala Ringelmann reduzida em boas condições</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Prancheta</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Caneta/lápis</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Cronômetro ou relógio</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Envelope/proteção da escala Ringelmann</span></div>
+    </div>
+
+    <div class="secao"><div class="secao-titulo">🚛 Condições do veículo/equipamento</div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Veículo parado em local seguro</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Motor em condição normal de operação</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Se necessário, motor operado por pelo menos 10 minutos antes do ensaio</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Caixa de marcha em neutro</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Pedal da embreagem não pressionado</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sistema de escapamento sem vazamentos aparentes</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sem entrada falsa de ar no escapamento</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Combustível compatível com especificação do veículo</span></div>
+    </div>
+
+    <div class="secao"><div class="secao-titulo">🌤️ Condições ambientais</div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Boa iluminação natural</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Fundo claro para visualização da fumaça</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sem incidência direta do sol nos olhos do técnico</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Área segura para execução do ensaio</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sem obstáculos prejudicando a visualização da fumaça</span></div>
+    </div>
+
+    <div class="secao"><div class="secao-titulo">📏 Posicionamento do técnico</div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Distância entre 20 m e 50 m do escapamento</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Linha de visada preferencialmente perpendicular ao fluxo do escapamento</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Escala Ringelmann posicionada com braço estendido</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Observação realizada através da abertura da escala</span></div>
+    </div>
+
+    <div class="secao"><div class="secao-titulo">⚙️ Execução do ensaio</div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Motor inicialmente em marcha lenta</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Acelerador acionado rapidamente até o final do curso</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Mantida aceleração até rotação máxima estabilizada</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Retorno à marcha lenta após aceleração</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Intervalo entre ciclos entre 2 e 10 segundos</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Total de 10 ciclos realizados consecutivamente</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Leituras iniciadas a partir do 4º ciclo</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Grau de enegrecimento anotado corretamente</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Observações adicionais registradas</span></div>
+    </div>
+
+    <div class="secao"><div class="secao-titulo">🧹 Pós-monitoramento</div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Escala Ringelmann armazenada corretamente</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Equipamentos conferidos antes de sair do local</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Fotos salvas e identificadas</span></div>
+    </div>
+
+    <div class="secao"><div class="secao-titulo">⚠️ Cuidados importantes</div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Não dobrar a Escala Ringelmann</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Não plastificar</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Não tocar diretamente nos padrões impressos</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Evitar exposição prolongada ao sol e umidade</span></div>
+      <div class="ci" onclick="chk(this,'ringelmann')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Manter protegida em envelope durante transporte e armazenamento</span></div>
+    </div>
+
+    <button class="reset-btn" onclick="resetView('ringelmann')">&#8635; Reiniciar checklist</button>
+  </div>
 <a class="app-btn" href="https://engear.github.io/monitoramento-engear/">🏠 Voltar ao App</a>
 <script>
 var pilha=['v0'];
