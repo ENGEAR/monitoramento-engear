@@ -426,7 +426,7 @@ function _renderSubRuido(sub){
     h+='<div id="r-int-resultado" class="hidden"><div class="chk-alerta" style="background:#e8f4fd;border-color:#2d7db3;color:#1e5f8a;margin-bottom:10px;" id="r-int-msg"></div></div>';
     h+='</div>';
     h+='<div id="rp-cont-int"></div>';
-    h+='<div id="sala-canvas-wrap" class="hidden"><div class="card"><div class="card-title blue">📐 Layout da sala</div>';
+    h+='<div id="sala-canvas-wrap" style="display:none"><div class="card"><div class="card-title blue">📐 Layout da sala</div>';
     h+='<p style="font-size:12px;color:#718096;margin-bottom:8px;">Desenhe o layout e posicione os pontos de monitoramento</p>';
     h+='<canvas id="sala-canvas" style="width:100%;height:250px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;display:block;touch-action:none;"></canvas>';
     h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:5px;margin-top:8px;">';
@@ -466,7 +466,7 @@ function calcPontosRuidoInt(){
   // Mostrar canvas após definir pontos
   var wrap=document.getElementById('sala-canvas-wrap');
   if(wrap){
-    wrap.classList.remove('hidden');
+    wrap.style.display='block';
     setTimeout(function(){iniciarCanvas();},200);
   }
 }
@@ -751,7 +751,7 @@ function coletarOutro(){_outroSave();var pontos=[];for(var i=1;i<=_outroN;i++){v
 function coletarDados(){
   var base={data:v('data'),hora:v('hora'),tecnico:v('tecnico'),cliente:v('cliente'),cidade:v('cidade'),tipo:tipoSel,horaFim:v('hora-fim'),obsGeral:v('obs-geral'),timestamp:new Date().toISOString()};
   var esp={};
-  if(tipoSel==='ruido'){
+  if(tipoSel==='ruido'){esp.subTipo=_subRuido||'externo';
     esp.finalidade=v('r-finalidade')==='Outros'?v('r-finalidade-outro'):v('r-finalidade');
     var nP=parseInt(v('r-npontos'))||0;esp.pontos=[];
     for(var i=1;i<=nP;i++){var p='rp'+i;esp.pontos.push({nome:v(p+'-nome'),gps:getGPS(p),chkIni:v(p+'-chkini'),chkFim:v(p+'-chkfim'),temp:v(p+'-temp'),umid:v(p+'-umid'),vento:v(p+'-vento'),residual:isChk(p+'-residual'),total:isChk(p+'-total'),fontesEmpresa:v(p+'-fontes-empresa'),fontesAmbiente:v(p+'-fontes-ambiente'),obs:v(p+'-obs')});}
@@ -888,13 +888,22 @@ function gerarPDF(){
     linhas.push(secao('IDENTIFICAÇÃO'));
     linhas.push(row('Tipo','<b>'+tipoLabel+'</b>'));linhas.push(row('Data',d.data));linhas.push(row('Hora início',d.hora));linhas.push(row('Hora término',d.horaFim));linhas.push(row('Técnico',d.tecnico));linhas.push(row('Cliente',d.cliente));linhas.push(row('Cidade / Estado',d.cidade));
     if(d.finalidade)linhas.push(row('Finalidade',d.finalidade));if(d.objetivo)linhas.push(row('Objetivo',d.objetivo));
-    if(d.tipo==='ruido'&&d.pontos){d.pontos.forEach(function(p,i){linhas.push(ponto('PONTO '+(i+1)+(p.nome?' — '+p.nome:'')));if(p.gps&&p.gps.e)linhas.push(row('Coordenadas UTM',gpsStr(p.gps)));linhas.push(row('Checagem inicial',p.chkIni+' dB'));linhas.push(row('Checagem final',p.chkFim+' dB'));if(p.chkIni&&p.chkFim){var diff=Math.abs(parseFloat(p.chkFim)-parseFloat(p.chkIni));linhas.push(row('Diferença',diff.toFixed(1)+' dB'+(diff>0.5?' ⚠️ Acima do limite':' ✅ OK')));}linhas.push(row('Temperatura',p.temp?p.temp+' °C':''));linhas.push(row('Umidade',p.umid?p.umid+' %':''));linhas.push(row('Vento',p.vento?p.vento+' m/s':''));linhas.push(row('Ruído residual',bool(p.residual)));linhas.push(row('Ruído total',bool(p.total)));linhas.push(row('Fontes empresa',p.fontesEmpresa));linhas.push(row('Fontes ambiente',p.fontesAmbiente));linhas.push(row('Observações',p.obs));});}
+    // Canvas do layout da sala no PDF
+var canvasDataUrl='';
+try{var canvasEl=document.getElementById('sala-canvas');if(canvasEl)canvasDataUrl=canvasEl.toDataURL('image/png');}catch(e){}
+
+if(d.tipo==='ruido'&&d.pontos){d.pontos.forEach(function(p,i){linhas.push(ponto('PONTO '+(i+1)+(p.nome?' — '+p.nome:'')));if(p.gps&&p.gps.e)linhas.push(row('Coordenadas UTM',gpsStr(p.gps)));linhas.push(row('Checagem inicial',p.chkIni+' dB'));linhas.push(row('Checagem final',p.chkFim+' dB'));if(p.chkIni&&p.chkFim){var diff=Math.abs(parseFloat(p.chkFim)-parseFloat(p.chkIni));linhas.push(row('Diferença',diff.toFixed(1)+' dB'+(diff>0.5?' ⚠️ Acima do limite':' ✅ OK')));}linhas.push(row('Temperatura',p.temp?p.temp+' °C':''));linhas.push(row('Umidade',p.umid?p.umid+' %':''));linhas.push(row('Vento',p.vento?p.vento+' m/s':''));linhas.push(row('Ruído residual',bool(p.residual)));linhas.push(row('Ruído total',bool(p.total)));linhas.push(row('Fontes empresa',p.fontesEmpresa));linhas.push(row('Fontes ambiente',p.fontesAmbiente));linhas.push(row('Observações',p.obs));});}
     if(d.tipo==='sismo'&&d.pontos){d.pontos.forEach(function(p,i){linhas.push(ponto('PONTO '+(i+1)+(p.nome?' — '+p.nome:'')));if(p.gps&&p.gps.e)linhas.push(row('Coordenadas UTM',gpsStr(p.gps)));linhas.push(row('Fonte de vibração',p.fonte));linhas.push(row('Auto verificação',bool(p.autov)));linhas.push(row('Temperatura',p.temp?p.temp+' °C':''));linhas.push(row('Umidade',p.umid?p.umid+' %':''));linhas.push(row('Trigger',bool(p.trigger)));linhas.push(row('Memória',bool(p.mem)));linhas.push(row('Programação',bool(p.prog)));linhas.push(row('Captação',bool(p.capt)));linhas.push(row('Intercorrências',p.interc||'Nenhuma'));});}
     if(d.tipo==='qar'&&d.pontos){d.pontos.forEach(function(p,i){linhas.push(ponto('PONTO '+(i+1)+(p.nome?' — '+p.nome:'')));if(p.gps&&p.gps.e)linhas.push(row('Coordenadas UTM',gpsStr(p.gps)));linhas.push(row('Calibração aprovada',bool(p.calibAprovada)));if(p.coletas){p.coletas.forEach(function(c,ci){if(!c.dini&&!c.dfim)return;linhas.push(row('<b>'+(ci+1)+'ª Coleta — Dados iniciais</b>',''));linhas.push(row('Data / Hora',c.dini+' '+c.hini));linhas.push(row('Horímetro',c.horamIni));linhas.push(row('Temp/Umid/Press',(c.tini||'—')+' °C / '+(c.uini||'—')+' % / '+(c.pini||'—')));linhas.push(row('<b>'+(ci+1)+'ª Coleta — Dados finais</b>',''));linhas.push(row('Data / Hora',c.dfim+' '+c.hfim));linhas.push(row('Horímetro',c.horamFim));linhas.push(row('Temp/Umid/Press',(c.tfim||'—')+' °C / '+(c.ufim||'—')+' % / '+(c.pfim||'—')));});}});}
     if(d.tipo==='opacidade'&&d.veiculos){d.veiculos.forEach(function(ve,i){linhas.push(ponto('VEÍCULO '+(i+1)+(ve.placa?' — '+ve.placa:'')));if(ve.gps&&ve.gps.e)linhas.push(row('Coordenadas UTM',gpsStr(ve.gps)));linhas.push(row('Equip. calibrado',bool(ve.calibrado)));linhas.push(row('Acelerações',bool(ve.acel)));linhas.push(row('Ensaio',bool(ve.ensaio)));linhas.push(row('3 leituras',bool(ve.leituras)));linhas.push(row('Dados registrados',bool(ve.dados)));linhas.push(row('Observações',ve.obs));});}
     if(d.tipo==='qarint'&&d.pontos){linhas.push(secao('PARÂMETROS'));linhas.push(row('Área da sala',d.area?d.area+' m²':''));linhas.push(row('Nº de pontos',d.pontos.length));d.pontos.forEach(function(p,i){linhas.push(ponto('PONTO '+(i+1)+(p.nome?' — '+p.nome:'')));if(p.gps&&p.gps.e)linhas.push(row('Coordenadas UTM',gpsStr(p.gps)));linhas.push(row('Plano conferido',bool(p.plano)));linhas.push(row('Equip. calibrados',bool(p.equip)));linhas.push(row('Pontos posicionados',bool(p.posic)));linhas.push(row('Coletas realizadas',bool(p.coleta)));linhas.push(row('CO₂',p.co2?p.co2+' ppm':''));linhas.push(row('Temperatura',p.temp?p.temp+' °C':''));linhas.push(row('UR',p.ur?p.ur+' %':''));linhas.push(row('Vel. do ar',p.vento?p.vento+' m/s':''));linhas.push(row('Conformidade',bool(p.conformidade)));linhas.push(row('Amostras',bool(p.amostras)));linhas.push(row('Observações',p.obs));});}
     if(d.tipo==='outro'&&d.pontos){linhas.push(secao('DADOS DO MONITORAMENTO'));linhas.push(row('Tipo específico',d.tipoEspecifico));linhas.push(row('Objetivo',d.objetivo));d.pontos.forEach(function(p,i){linhas.push(ponto('PONTO '+(i+1)+(p.nome?' — '+p.nome:'')));if(p.gps&&p.gps.e)linhas.push(row('Coordenadas UTM',gpsStr(p.gps)));linhas.push(row('Temperatura',p.temp?p.temp+' °C':''));linhas.push(row('Umidade',p.umid?p.umid+' %':''));linhas.push(row('Medição',p.medicao));linhas.push(row('Equipamento',p.equip));linhas.push(row('Observações',p.obs));});}
     if(d.obsGeral){linhas.push(secao('OBSERVAÇÕES GERAIS'));linhas.push(row('',d.obsGeral));}
+    // Layout da sala no PDF (apenas ruído interno)
+    if(d.tipo==='ruido'&&d.subTipo==='interno'&&canvasDataUrl){
+      linhas.push(secao('LAYOUT DA SALA'));
+      linhas.push('<tr><td colspan="2" style="padding:10px;text-align:center;border:1px solid #ddd;"><img src="'+canvasDataUrl+'" style="max-width:100%;border-radius:8px;border:1px solid #e2e8f0;"/></td></tr>');
+    }
     linhas.push('</table>');
     var fotosHtml='';if(fotosB64.length>0){fotosHtml='<h3 style="color:#2d7db3;margin:20px 0 10px">Evidências fotográficas</h3><div style="display:flex;flex-wrap:wrap;gap:12px;">'+fotosB64.map(function(b64,i){return '<div style="text-align:center"><img src="'+b64+'" style="max-width:280px;max-height:280px;border-radius:8px;border:1px solid #ddd;object-fit:cover"/><p style="font-size:11px;color:#999;margin-top:4px">Foto '+(i+1)+'</p></div>';}).join('')+'</div>';}
     var nomeArq='Engear_'+tipoLabel.replace(/ /g,'_')+'_'+(d.cliente||'').replace(/ /g,'_')+'_'+(d.data||'')+'.html';
