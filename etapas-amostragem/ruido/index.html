@@ -59,6 +59,11 @@
         <div><div class="card-name">Ruído Aeroporto (NBR 16425-2)</div><div class="card-sub">Receptores críticos · Monitoramento operacional</div></div>
       </div><span class="arrow">›</span>
     </div>
+    <div class="card" onclick="irPara('v-ferro','Ruído Ferroviário (NBR 16425-4)')">
+      <div class="card-info"><span class="card-icon">🚆</span>
+        <div><div class="card-name">Ruído Ferroviário (NBR 16425-4)</div><div class="card-sub">Passagem de composição · Pátios/Manobras/Cruzamentos</div></div>
+      </div><span class="arrow">›</span>
+    </div>
   </div>
 
   <!-- NÍVEL 2: NBR 10151 -->
@@ -398,10 +403,122 @@
     <button class="reset-btn" onclick="resetView('aero-op')">↺ Reiniciar checklist</button>
   </div>
 
+
+  <!-- NÍVEL 2: Ferroviário -->
+  <div id="v-ferro" class="view">
+    <div class="card" onclick="irPara('v-ferro-passagem','Passagem de Composição Férrea')">
+      <div class="card-info"><span class="card-icon">🚂</span><div><div class="card-name">Passagem de Composição Férrea</div></div></div><span class="arrow">›</span>
+    </div>
+    <div class="card" onclick="irPara('v-ferro-patio','Pátios / Manobras / Cruzamentos')">
+      <div class="card-info"><span class="card-icon">🚧</span><div><div class="card-name">Pátios / Manobras / Cruzamentos</div></div></div><span class="arrow">›</span>
+    </div>
+  </div>
+
+  <!-- CHECKLIST: Passagem de Composição Férrea -->
+  <div id="v-ferro-passagem" class="view">
+    <div class="prog-wrap"><div class="prog-label"><span>Progresso</span><span id="pl-ferro-passagem">0 / 0</span></div><div class="prog-bar"><div class="prog-fill" id="pf-ferro-passagem"></div></div></div>
+    <div class="secao"><div class="secao-titulo">📍 Posicionamento do microfone</div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Altura entre 1,2 m e 1,5 m do solo</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Para longa duração: microfone preferencialmente ≥ 4 m do solo</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Distância mínima de 2 m de superfícies refletoras</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Uso obrigatório de protetor de vento</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Microfone direcionado para a trajetória do tráfego ferroviário</span></div>
+    </div>
+    <div class="secao"><div class="secao-titulo">🌦️ Condições ambientais</div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar temperatura</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar umidade relativa</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar velocidade do vento</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar direção do vento</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar se condições ambientais estão dentro da faixa operacional</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Não monitorar com chuva</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Não monitorar durante trovoadas</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Não monitorar com vento > 5 m/s</span></div>
+    </div>
+    <div class="secao"><div class="secao-titulo">⏱️ Procedimentos</div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Definir pontos de medição: locais críticos ao longo da linha férrea (casas, escolas, hospitais, etc.)</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Realizar checagem inicial com calibrador no local da medição</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Ajustar sonômetro antes da série de medições</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Usar protetor de vento no microfone</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Fotografar ponto de medição</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Realizar checagem final e verificar diferença ≤ ±0,5 dB. Se ultrapassar: invalidar medições e repetir</span></div>
+    </div>
+    <div class="secao"><div class="secao-titulo">🚆 Monitoramento de passagem de composição</div>
+      <div class="sub">Som residual — CURTO PERÍODO:</div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Pelo menos 15 min de medição (contínua ou não)</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitoramento antes ou após a passagem da composição</span></div>
+      <div class="sub">Som residual — LONGA DURAÇÃO:</div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Instalar o equipamento para monitoramento de longa duração</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Diurno: pelo menos 60 min de medição (contínua ou não)</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Noturno: pelo menos 30 min de medição (contínua ou não)</span></div>
+      <div class="sub">Som da passagem ferroviária:</div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Considerar todo o tempo da passagem ferroviária</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Mínimo de 3 passagens monitoradas</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Pelo menos 1 passagem em cada sentido</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Se densidade ≤ 3 composições/dia: medir pelo menos uma passagem</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">⚠️ NÃO realizar medições durante cruzamento de composições em linha dupla (mesmo que uma esteja parada)</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sirenes, sinos, buzinas e campainhas de passagem em nível = sons intrusivos</span></div>
+      <div class="ci" onclick="chk(this,'ferro-passagem')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Anotar as características das composições monitoradas (tipo)</span></div>
+    </div>
+    <button class="reset-btn" onclick="resetView('ferro-passagem')">↺ Reiniciar checklist</button>
+  </div>
+
+  <!-- CHECKLIST: Pátios / Manobras / Cruzamentos -->
+  <div id="v-ferro-patio" class="view">
+    <div class="prog-wrap"><div class="prog-label"><span>Progresso</span><span id="pl-ferro-patio">0 / 0</span></div><div class="prog-bar"><div class="prog-fill" id="pf-ferro-patio"></div></div></div>
+    <div class="secao"><div class="secao-titulo">📍 Posicionamento do microfone</div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Altura ≥ 4 m do solo</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Distância mínima de 2 m de superfícies refletoras</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Uso obrigatório de protetor de vento</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Microfone direcionado para a trajetória do tráfego ferroviário</span></div>
+    </div>
+    <div class="secao"><div class="secao-titulo">🌦️ Condições ambientais</div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar temperatura</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar umidade relativa</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar velocidade do vento</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Monitorar e registrar direção do vento</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar se condições ambientais estão dentro da faixa operacional</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Não monitorar com chuva</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Não monitorar durante trovoadas</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Não monitorar com vento > 5 m/s</span></div>
+    </div>
+    <div class="secao"><div class="secao-titulo">⏱️ Procedimentos</div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Definir os pontos de medição</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Realizar checagem inicial com calibrador no local da medição</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Ajustar sonômetro antes da série de medições</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Usar protetor de vento no microfone</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Fotografar ponto de medição</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Realizar checagem final e verificar diferença ≤ ±0,5 dB. Se ultrapassar: invalidar medições e repetir</span></div>
+    </div>
+    <div class="secao"><div class="secao-titulo">🚆 Monitoramento de som residual</div>
+      <div class="sub">Monitoramento 24 horas (sugerido):</div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Diurno: pelo menos 60 min de medição (contínua ou não)</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Noturno: pelo menos 30 min de medição (contínua ou não)</span></div>
+      <div class="sub">Monitoramento pontual:</div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Pelo menos 15 min de medição (contínua ou não)</span></div>
+    </div>
+    <div class="secao"><div class="secao-titulo">🚧 Operações em pátios / manobras / cruzamentos</div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sugerido: monitoramento 24 horas</span></div>
+      <div class="sub">Manobras:</div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Contemplar pelo menos uma manobra completa típica do local (diurno ou noturno)</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sons de passagens durante manobras = sons intrusivos</span></div>
+      <div class="sub">Composição parada:</div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Medir sem interferência de outras composições, cruzamentos, ultrapassagens ou manobras</span></div>
+      <div class="sub">Cruzamentos / Ultrapassagens:</div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Uma composição parada e a outra em movimento efetivando o cruzamento/ultrapassagem</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sons de manobra = sons intrusivos</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Pelo menos dois eventos de cruzamento ou ultrapassagem (diurno ou noturno)</span></div>
+      <div class="ci" onclick="chk(this,'ferro-patio')"><div class="cb"><span class="cm">✓</span></div><span class="ct">Mínimo de 30 eventos de operações de engates em período entre 60 min e 240 min — registrar LAFmax de cada evento</span></div>
+    </div>
+    <button class="reset-btn" onclick="resetView('ferro-patio')">↺ Reiniciar checklist</button>
+  </div>
+
 <a class="app-btn" href="https://engear.github.io/monitoramento-engear/">🏠 Voltar ao App</a>
 <script>
 var pilha = ['v0'];
 var titulos = {
+  'v-ferro': 'Ruído Ferroviário (NBR 16425-4)',
+  'v-ferro-passagem': 'Passagem de Composição Férrea',
+  'v-ferro-patio': 'Pátios / Manobras / Cruzamentos',
   'v-aero': 'Ruído Aeroporto (NBR 16425-2)',
   'v-aero-receptor': 'Receptores Potencialmente Críticos',
   'v-aero-op': 'Monitoramento Operacional no Aeródromo',
