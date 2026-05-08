@@ -623,10 +623,99 @@ function renderPontosQAR(n){
 // OPACIDADE
 var _opacN=1,_opacIdx=1,_opacDados={};
 function renderOpacidade(){
-  _opacIdx=1;_opacDados={};
-  return '<div class="card"><div class="card-title blue">Opacidade</div>'+
-    '<div class="field"><label>Número de veículos a serem verificados</label><select id="opac-nveiculos" onchange="_opacSetN(parseInt(this.value)||1)"><option value="">Selecionar...</option><option value="1">1 veículo</option><option value="2">2 veículos</option><option value="3">3 veículos</option><option value="4">4 veículos</option><option value="5">5 veículos</option><option value="6">6 veículos</option><option value="7">7 veículos</option><option value="8">8 veículos</option><option value="9">9 veículos</option><option value="10">10 veículos</option><option value="11">11 veículos</option><option value="12">12 veículos</option><option value="13">13 veículos</option><option value="14">14 veículos</option><option value="15">15 veículos</option><option value="16">16 veículos</option><option value="17">17 veículos</option><option value="18">18 veículos</option><option value="19">19 veículos</option><option value="20">20 veículos</option><option value="21">21 veículos</option><option value="22">22 veículos</option><option value="23">23 veículos</option><option value="24">24 veículos</option><option value="25">25 veículos</option><option value="26">26 veículos</option><option value="27">27 veículos</option><option value="28">28 veículos</option><option value="29">29 veículos</option><option value="30">30 veículos</option><option value="31">31 veículos</option><option value="32">32 veículos</option><option value="33">33 veículos</option><option value="34">34 veículos</option><option value="35">35 veículos</option><option value="36">36 veículos</option><option value="37">37 veículos</option><option value="38">38 veículos</option><option value="39">39 veículos</option><option value="40">40 veículos</option><option value="41">41 veículos</option><option value="42">42 veículos</option><option value="43">43 veículos</option><option value="44">44 veículos</option><option value="45">45 veículos</option><option value="46">46 veículos</option><option value="47">47 veículos</option><option value="48">48 veículos</option><option value="49">49 veículos</option><option value="50">50 veículos</option></select></div>'+
-    '</div><div id="opac-wrap"></div>';
+  _opacIdx=1;_opacDados={};_opacSubTipo='';
+  return '<div class="card"><div class="card-title blue">Opacidade — Tipo de ensaio</div>'+
+    '<div class="tipo-grid" style="grid-template-columns:1fr 1fr">'+
+      '<div class="tipo-btn" onclick="selecionarSubOpac(this,\'opacimetro\')"><span style="font-size:28px">🔬</span><span class="tn">Opacímetro</span></div>'+
+      '<div class="tipo-btn" onclick="selecionarSubOpac(this,\'ringelmann\')"><span style="font-size:28px">📏</span><span class="tn">Escala Ringelmann</span></div>'+
+    '</div></div>'+
+    '<div id="opac-sub-form"></div>';
+}
+
+var _opacSubTipo='';
+function selecionarSubOpac(el, sub){
+  document.querySelectorAll('#opac-sub-form').forEach(function(e){e.innerHTML='';});
+  document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
+  el.classList.add('selected');
+  _opacSubTipo=sub;
+  _opacIdx=1;_opacDados={};_opacN=1;
+  if(sub==='opacimetro'){
+    document.getElementById('opac-sub-form').innerHTML=
+      '<div class="card"><div class="card-title blue">Opacímetro</div>'+
+      '<div class="field"><label>Número de veículos a serem verificados</label>'+
+      '<select id="opac-nveiculos" onchange="_opacSetN(parseInt(this.value)||1)">'+
+      '<option value="">Selecionar...</option><option value="1">1 veículo</option><option value="2">2 veículos</option><option value="3">3 veículos</option><option value="4">4 veículos</option><option value="5">5 veículos</option><option value="6">6 veículos</option><option value="7">7 veículos</option><option value="8">8 veículos</option><option value="9">9 veículos</option><option value="10">10 veículos</option><option value="11">11 veículos</option><option value="12">12 veículos</option><option value="13">13 veículos</option><option value="14">14 veículos</option><option value="15">15 veículos</option><option value="16">16 veículos</option><option value="17">17 veículos</option><option value="18">18 veículos</option><option value="19">19 veículos</option><option value="20">20 veículos</option><option value="21">21 veículos</option><option value="22">22 veículos</option><option value="23">23 veículos</option><option value="24">24 veículos</option><option value="25">25 veículos</option><option value="26">26 veículos</option><option value="27">27 veículos</option><option value="28">28 veículos</option><option value="29">29 veículos</option><option value="30">30 veículos</option><option value="31">31 veículos</option><option value="32">32 veículos</option><option value="33">33 veículos</option><option value="34">34 veículos</option><option value="35">35 veículos</option><option value="36">36 veículos</option><option value="37">37 veículos</option><option value="38">38 veículos</option><option value="39">39 veículos</option><option value="40">40 veículos</option><option value="41">41 veículos</option><option value="42">42 veículos</option><option value="43">43 veículos</option><option value="44">44 veículos</option><option value="45">45 veículos</option><option value="46">46 veículos</option><option value="47">47 veículos</option><option value="48">48 veículos</option><option value="49">49 veículos</option><option value="50">50 veículos</option></select></div>'+
+      '</div><div id="opac-wrap"></div>';
+  } else {
+    document.getElementById('opac-sub-form').innerHTML=
+      '<div class="card"><div class="card-title blue">Escala Ringelmann</div>'+
+      '<div class="field"><label>Número de veículos a serem verificados</label>'+
+      '<select id="ring-nveiculos" onchange="_ringSetN(parseInt(this.value)||1)">'+
+      '<option value="">Selecionar...</option><option value="1">1 veículo</option><option value="2">2 veículos</option><option value="3">3 veículos</option><option value="4">4 veículos</option><option value="5">5 veículos</option><option value="6">6 veículos</option><option value="7">7 veículos</option><option value="8">8 veículos</option><option value="9">9 veículos</option><option value="10">10 veículos</option><option value="11">11 veículos</option><option value="12">12 veículos</option><option value="13">13 veículos</option><option value="14">14 veículos</option><option value="15">15 veículos</option><option value="16">16 veículos</option><option value="17">17 veículos</option><option value="18">18 veículos</option><option value="19">19 veículos</option><option value="20">20 veículos</option><option value="21">21 veículos</option><option value="22">22 veículos</option><option value="23">23 veículos</option><option value="24">24 veículos</option><option value="25">25 veículos</option><option value="26">26 veículos</option><option value="27">27 veículos</option><option value="28">28 veículos</option><option value="29">29 veículos</option><option value="30">30 veículos</option><option value="31">31 veículos</option><option value="32">32 veículos</option><option value="33">33 veículos</option><option value="34">34 veículos</option><option value="35">35 veículos</option><option value="36">36 veículos</option><option value="37">37 veículos</option><option value="38">38 veículos</option><option value="39">39 veículos</option><option value="40">40 veículos</option><option value="41">41 veículos</option><option value="42">42 veículos</option><option value="43">43 veículos</option><option value="44">44 veículos</option><option value="45">45 veículos</option><option value="46">46 veículos</option><option value="47">47 veículos</option><option value="48">48 veículos</option><option value="49">49 veículos</option><option value="50">50 veículos</option></select></div>'+
+      '</div><div id="ring-wrap"></div>';
+  }
+}
+
+// RINGELMANN - paginação por veículo
+var _ringN=1,_ringIdx=1,_ringDados={};
+function _ringSetN(n){_ringN=n;_ringIdx=1;_ringDados={};_ringRender();}
+function _ringRender(){var w=document.getElementById('ring-wrap');if(w)w.innerHTML=_ringPage(_ringIdx);}
+function _ringPrev(){if(_ringIdx>1){_ringSave();_ringIdx--;_ringRender();window.scrollTo(0,0);}}
+function _ringNext(){if(_ringIdx<_ringN){_ringSave();_ringIdx++;_ringRender();window.scrollTo(0,0);}}
+function _ringSave(){
+  var p='ringv'+_ringIdx;var saved={};
+  document.querySelectorAll('[id^="'+p+'-"]').forEach(function(el){
+    if(el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='TEXTAREA')saved[el.id]=el.value;
+  });
+  _ringDados[_ringIdx]=saved;
+}
+function _ringRestore(){
+  var saved=_ringDados[_ringIdx];if(!saved)return;
+  Object.keys(saved).forEach(function(k){var el=document.getElementById(k);if(el)el.value=saved[k];});
+}
+function _ringPage(idx){
+  var p='ringv'+idx;
+  var h='<div class="qar-nav">'+
+    '<button class="qar-nav-btn" onclick="_ringPrev()" '+(idx===1?'disabled':'')+'>&#8592;</button>'+
+    '<span class="qar-nav-label">Veículo '+idx+' de '+_ringN+'</span>'+
+    '<button class="qar-nav-btn" onclick="_ringNext()" '+(idx===_ringN?'disabled':'')+'>&#8594;</button>'+
+    '</div>';
+  h+='<div class="ponto-card"><div class="ponto-header">Veículo '+idx+'</div><div class="ponto-body">';
+  h+=inp(p+'-hora-ini','Horário inicial','time','');
+  h+=inp(p+'-placa','Placa / identificação do veículo','text','');
+  h+=inp(p+'-ano','Ano de fabricação','number','');
+  h+=gpsBlock(p);
+  h+='<div class="card-title blue" style="margin-bottom:10px;margin-top:4px;">Leituras (1 a 5)</div>';
+  h+='<p style="font-size:12px;color:#718096;margin-bottom:10px;">Escreva o número correspondente à densidade observada (1 a 5) para cada leitura</p>';
+  for(var i=1;i<=10;i++){
+    h+='<div class="field"><label>'+i+'ª leitura</label>'+
+      '<select id="'+p+'-L'+i+'">'+
+      '<option value="">—</option>'+
+      '<option value="0">0</option><option value="1">1</option><option value="2">2</option>'+
+      '<option value="3">3</option><option value="4">4</option><option value="5">5</option>'+
+      '</select></div>';
+  }
+  h+=inp(p+'-hora-fim','Horário final','time','');
+  h+=fotoBlock(p);
+  h+=inp(p+'-obs','Observações','text','');
+  h+='</div></div>';
+  setTimeout(function(){_ringRestore();},0);
+  return h;
+}
+function coletarRingelmann(){
+  _ringSave();
+  var veiculos=[];
+  for(var i=1;i<=_ringN;i++){
+    var saved=_ringDados[i]||{};var p='ringv'+i;
+    var leituras=[];
+    for(var l=1;l<=10;l++){leituras.push(saved[p+'-L'+l]||'');}
+    veiculos.push({
+      placa:saved[p+'-placa']||'',ano:saved[p+'-ano']||'',
+      horaIni:saved[p+'-hora-ini']||'',horaFim:saved[p+'-hora-fim']||'',
+      gps:getGPSFromSaved(saved,p),leituras:leituras,obs:saved[p+'-obs']||''
+    });
+  }
+  return veiculos;
 }
 function _opacSetN(n){_opacN=n;_opacIdx=1;_opacDados={};_opacRender();}
 function _opacRender(){var w=document.getElementById('opac-wrap');if(w)w.innerHTML=_opacPage(_opacIdx);}
@@ -803,7 +892,9 @@ function coletarDados(){
     var nP=parseInt(v('qar-npontos'))||0;esp.pontos=[];
     for(var i=1;i<=nP;i++){var p='qarp'+i;var coletas=[];for(var c=1;c<=7;c++){coletas.push({dini:v(p+'-c'+c+'-dini'),hini:v(p+'-c'+c+'-hini'),horamIni:v(p+'-c'+c+'-horamini'),tini:v(p+'-c'+c+'-tini'),uini:v(p+'-c'+c+'-uini'),pini:v(p+'-c'+c+'-pini'),dfim:v(p+'-c'+c+'-dfim'),hfim:v(p+'-c'+c+'-hfim'),horamFim:v(p+'-c'+c+'-horamfim'),tfim:v(p+'-c'+c+'-tfim'),ufim:v(p+'-c'+c+'-ufim'),pfim:v(p+'-c'+c+'-pfim')});}esp.pontos.push({nome:v(p+'-nome'),gps:getGPS(p),calibAprovada:isChk(p+'-calib'),coletas:coletas});}
   } else if(tipoSel==='opacidade'){
-    esp.veiculos=coletarOpacidade();
+    esp.subTipo=_opacSubTipo;
+    if(_opacSubTipo==='ringelmann'){esp.veiculos=coletarRingelmann();}
+    else{esp.veiculos=coletarOpacidade();}
   } else if(tipoSel==='qarint'){
     esp.area=v('qarint-area');esp.pontos=coletarQarint();
   } else {
@@ -953,7 +1044,9 @@ function gerarPDF(){
   Promise.all(fotoPromises).then(function(fotosB64){
     var linhas=['<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">'];
     linhas.push(secao('IDENTIFICAÇÃO'));
-    linhas.push(row('Tipo','<b>'+tipoLabel+'</b>'));linhas.push(row('Data',d.data));linhas.push(row('Hora início',d.hora));linhas.push(row('Hora término',d.horaFim));linhas.push(row('Técnico',d.tecnico));linhas.push(row('Cliente',d.cliente));linhas.push(row('Cidade / Estado',d.cidade));
+    linhas.push(row('Tipo','<b>'+tipoLabel+'</b>'));
+    if(d.numOS)linhas.push(row('Nº OS',d.numOS));
+    if(d.id)linhas.push(row('ID Unico',d.id));linhas.push(row('Data',d.data));linhas.push(row('Hora início',d.hora));linhas.push(row('Hora término',d.horaFim));linhas.push(row('Técnico',d.tecnico));linhas.push(row('Cliente',d.cliente));linhas.push(row('Cidade / Estado',d.cidade));
     if(d.finalidade)linhas.push(row('Finalidade',d.finalidade));if(d.objetivo)linhas.push(row('Objetivo',d.objetivo));
     // Canvas do layout da sala no PDF
 var canvasDataUrl='';
