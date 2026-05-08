@@ -595,6 +595,15 @@ function renderPontosQAR(n){
     h+='<div id="qar-ponto-'+i+'" class="qar-ponto" style="display:'+(i===1?'block':'none')+'">';
     h+='<div class="card"><div class="card-title blue">Ponto '+i+'</div>';
     h+=inp(p+'-nome','Nome / identificação do ponto','text','');
+    h+='<div class="field"><label>Tipo de equipamento</label>'+
+      '<select id="'+p+'-tipoequip" onchange="toggleOutroEquipQAR(\''+p+'\',this.value)">'+
+      '<option value="">Selecione...</option>'+
+      '<option>PTS</option><option>PM10</option><option>PM2,5</option><option>TRIGAS</option><option>Outro</option>'+
+      '</select></div>'+
+      '<div class="field hidden" id="'+p+'-tipoequip-outro-field">'+
+      '<label>Especifique o equipamento</label><input type="text" id="'+p+'-tipoequip-outro" placeholder="Descreva..."/>'+
+      '</div>';
+    h+=inp(p+'-numequip','N\u00ba do equipamento','text','');
     h+=gpsBlock(p);
     h+='<span class="passo-step">1\u00ba Passo \u2014 Aquecimento do motor</span>'+chk(p+'-motor','Motor aquecido');
     h+='<div class="divider"></div><span class="passo-step">2\u00ba Passo \u2014 Zerar Man\u00f4metro</span>'+chk(p+'-manz','Man\u00f4metro zerado')+chk(p+'-valv','V\u00e1lvulas fechadas');
