@@ -206,9 +206,8 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
     <div id="passo3" class="hidden">
       <div class="card">
-        <div class="card-title">Finalização</div>
-        <div class="field"><label>Hora de término</label><input type="time" id="hora-fim"/></div>
-        <div class="field"><label>Observações gerais</label><textarea id="obs-geral" placeholder="Condições gerais, intercorrências..."></textarea></div>
+        <div class="card-title">Finalizar e salvar</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:1rem;">Revise as informações e confirme o envio.</p>
       </div>
       <div class="btn-row"><button class="btn-back" onclick="irP2()">← Voltar</button><button class="btn-next" id="btn-salvar" onclick="salvar()">Salvar registro</button></div>
     </div>
@@ -399,167 +398,140 @@ function renderRuido(){
 }
 
 var _subRuido='';
+var _rpN=1,_rpIdx=1,_rpDados={};
+
 function selecionarSubRuido(el,sub){
   document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
-  el.classList.add('selected');
-  _subRuido=sub;
+  el.classList.add('selected');_subRuido=sub;
   document.getElementById('ruido-sub-form').innerHTML=_renderSubRuido(sub);
 }
 
 function _renderSubRuido(sub){
-  var OP='<select id="r-npontos" onchange="atualizarPontosRuido(parseInt(this.value)||1)"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select>';
   var h='';
   if(sub==='externo'){
-    h+='<div class="card"><div class="card-title blue">Ruído Externo</div>';
-    h+='<div class="field"><label>Finalidade do monitoramento</label><select id="r-finalidade" onchange="toggleOutroRuido(this.value)"><option value="">Selecione...</option><option>Laudo PBH</option><option>Obra</option><option>Background</option><option>Operações do empreendimento</option><option>Outros</option></select></div>';
+    h+='<div class="card"><div class="card-title blue">Ruido Externo</div>';
+    h+='<div class="field"><label>Finalidade do monitoramento</label><select id="r-finalidade" onchange="toggleOutroRuido(this.value)"><option value="">Selecione...</option><option>Laudo PBH</option><option>Obra</option><option>Background</option><option>Operacoes do empreendimento</option><option>Outros</option></select></div>';
     h+='<div class="field hidden" id="r-finalidade-outro-field"><label>Especifique</label><input type="text" id="r-finalidade-outro" placeholder="Descreva..."/></div>';
-    h+='<div class="field"><label>Quantidade de pontos</label>'+OP+'</div>';
-    h+='</div><div id="rp-cont"></div>';
+    h+='<div class="field"><label>Quantidade de pontos</label><select id="r-npontos" onchange="_rpSetN(parseInt(this.value)||1,\'externo\')"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>';
+    h+='</div><div id="rp-nav-wrap"></div><div id="rp-cont"></div>';
   } else if(sub==='interno'){
-    h+='<div class="card"><div class="card-title blue">Ruído Interno</div>';
-    h+='<div class="field"><label>Condição das esquadrias</label><div style="display:flex;gap:8px;margin-top:6px;"><button id="btn-esq-aberta" onclick="selEsq(\'aberta\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Aberta</button><button id="btn-esq-fechada" onclick="selEsq(\'fechada\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Fechada</button></div><input type="hidden" id="r-esquadria"/></div>';
-    h+='<div class="field"><label>Condição do ambiente</label><div style="display:flex;gap:8px;margin-top:6px;"><button id="btn-amb-vazio" onclick="selAmb(\'vazio\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Sala vazia</button><button id="btn-amb-pessoas" onclick="selAmb(\'pessoas\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Com pessoas</button></div><input type="hidden" id="r-ambiente-cond"/></div>';
-    h+='<div class="field"><label>Área do ambiente monitorado (m²)</label><input type="number" id="r-area-int" placeholder="Ex: 45"/></div>';
-    h+='<div class="field"><button class="btn-next" style="width:100%" onclick="calcPontosRuidoInt()">Calcular pontos necessários</button></div>';
+    h+='<div class="card"><div class="card-title blue">Ruido Interno</div>';
+    h+='<div class="field"><label>Condicao das esquadrias</label><div style="display:flex;gap:8px;margin-top:6px;"><button id="btn-esq-aberta" onclick="selEsq(\'aberta\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Aberta</button><button id="btn-esq-fechada" onclick="selEsq(\'fechada\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Fechada</button></div><input type="hidden" id="r-esquadria"/></div>';
+    h+='<div class="field"><label>Condicao do ambiente</label><div style="display:flex;gap:8px;margin-top:6px;"><button id="btn-amb-vazio" onclick="selAmb(\'vazio\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Sala vazia</button><button id="btn-amb-pessoas" onclick="selAmb(\'pessoas\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Com pessoas</button></div><input type="hidden" id="r-ambiente-cond"/></div>';
+    h+='<div class="field"><label>Area do ambiente monitorado (m2)</label><input type="number" id="r-area-int" placeholder="Ex: 45"/></div>';
+    h+='<div class="field"><button class="btn-next" style="width:100%" onclick="calcPontosRuidoInt()">Calcular pontos necessarios</button></div>';
     h+='<div id="r-int-resultado" class="hidden"><div class="chk-alerta" style="background:#e8f4fd;border-color:#2d7db3;color:#1e5f8a;margin-bottom:10px;" id="r-int-msg"></div></div>';
     h+='</div>';
-    h+='<div id="sala-canvas-wrap" style="display:none"><div class="card"><div class="card-title blue">📐 Layout da sala</div>';
-    h+='<p style="font-size:12px;color:#718096;margin-bottom:8px;">Desenhe o layout e posicione os pontos de monitoramento</p>';
+    h+='<div id="sala-canvas-wrap" style="display:none"><div class="card"><div class="card-title blue">Layout da sala</div>';
+    h+='<p style="font-size:12px;color:#718096;margin-bottom:8px;">Desenhe o layout e posicione os pontos</p>';
     h+='<canvas id="sala-canvas" style="width:100%;height:250px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;display:block;touch-action:none;"></canvas>';
     h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:5px;margin-top:8px;">';
-    h+='<button id="btn-modo-ponto" onclick="canvasMode(\'ponto\')" style="background:#2d7db3;color:white;border:none;border-radius:8px;padding:7px 4px;font-size:10px;font-weight:600;cursor:pointer;">📍<br>Ponto</button>';
-    h+='<button id="btn-modo-paredeH" onclick="canvasMode(\'paredeH\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;font-weight:600;cursor:pointer;">━<br>Parede H</button>';
-    h+='<button id="btn-modo-paredeV" onclick="canvasMode(\'paredeV\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;font-weight:600;cursor:pointer;">┃<br>Parede V</button>';
-    h+='<button id="btn-modo-lapis" onclick="canvasMode(\'lapis\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;font-weight:600;cursor:pointer;">✏️<br>Lápis</button>';
-    h+='<button id="btn-modo-borracha" onclick="canvasMode(\'borracha\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;font-weight:600;cursor:pointer;">🧹<br>Borracha</button>';
-    h+='</div>';
-    h+='<button onclick="canvasLimpar()" style="width:100%;margin-top:6px;background:#fff3f3;color:#e53e3e;border:1px solid #fecaca;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;">🗑️ Limpar tudo</button>';
+    h+='<button id="btn-modo-ponto" onclick="canvasMode(\'ponto\')" style="background:#2d7db3;color:white;border:none;border-radius:8px;padding:7px 4px;font-size:10px;font-weight:600;cursor:pointer;">Ponto</button>';
+    h+='<button id="btn-modo-paredeH" onclick="canvasMode(\'paredeH\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Parede H</button>';
+    h+='<button id="btn-modo-paredeV" onclick="canvasMode(\'paredeV\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Parede V</button>';
+    h+='<button id="btn-modo-lapis" onclick="canvasMode(\'lapis\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Lapis</button>';
+    h+='<button id="btn-modo-borracha" onclick="canvasMode(\'borracha\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Borracha</button>';
+    h+='</div><button onclick="canvasLimpar()" style="width:100%;margin-top:6px;background:#fff3f3;color:#e53e3e;border:1px solid #fecaca;border-radius:8px;padding:8px;font-size:12px;cursor:pointer;">Limpar tudo</button>';
     h+='</div></div>';
-    h+='<div id="rp-cont-int"></div>';
+    h+='<div id="rp-nav-wrap-int"></div><div id="rp-cont-int"></div>';
   } else if(sub==='ferroviario'){
-    h+='<div class="card"><div class="card-title blue">Ruído Ferroviário</div>';
-    h+='<div class="field"><label>Finalidade do monitoramento</label><select id="r-finalidade-ferro" onchange="renderFerroSub(this.value)"><option value="">Selecione...</option><option>Passagem de composição ferroviária</option><option>Operações em pátios / manobras / cruzamentos</option></select></div>';
+    h+='<div class="card"><div class="card-title blue">Ruido Ferroviario</div>';
+    h+='<div class="field"><label>Finalidade do monitoramento</label><select id="r-finalidade-ferro" onchange="renderFerroSub(this.value)"><option value="">Selecione...</option><option>Passagem de composicao ferroviaria</option><option>Operacoes em patios / manobras / cruzamentos</option></select></div>';
     h+='<div id="ferro-form-cont"></div>';
-    h+='<div class="field"><label>Quantidade de pontos</label><select id="r-npontos-ferro" onchange="atualizarPontosFerro(parseInt(this.value)||1)"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>';
-    h+='</div><div id="rp-cont-ferro"></div>';
+    h+='<div class="field"><label>Quantidade de pontos</label><select id="r-npontos-ferro" onchange="_rpSetN(parseInt(this.value)||1,\'ferro\')"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>';
+    h+='</div><div id="rp-nav-wrap-ferro"></div><div id="rp-cont-ferro"></div>';
   } else if(sub==='aeronautico'){
-    h+='<div class="card"><div class="card-title blue">Ruído Aeronáutico</div>';
-    h+='<div class="field"><label>Finalidade do monitoramento</label><select id="r-finalidade-aero" onchange="atualizarPontosAero(parseInt(v(\'r-npontos-aero\'))||0)"><option value="">Selecione...</option><option>Receptores críticos</option><option>Monitoramento operacional</option></select></div>';
-    h+='<div class="field"><label>Quantidade de pontos</label><select id="r-npontos-aero" onchange="atualizarPontosAero(parseInt(this.value)||1)"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>';
-    h+='</div><div id="rp-cont-aero"></div>';
+    h+='<div class="card"><div class="card-title blue">Ruido Aeronautico</div>';
+    h+='<div class="field"><label>Finalidade do monitoramento</label><select id="r-finalidade-aero"><option value="">Selecione...</option><option>Receptores criticos</option><option>Monitoramento operacional</option></select></div>';
+    h+='<div class="field"><label>Quantidade de pontos</label><select id="r-npontos-aero" onchange="_rpSetN(parseInt(this.value)||1,\'aero\')"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>';
+    h+='</div><div id="rp-nav-wrap-aero"></div><div id="rp-cont-aero"></div>';
   }
   return h;
 }
 
-function selEsq(val){document.getElementById('r-esquadria').value=val;var a=document.getElementById('btn-esq-aberta');var b=document.getElementById('btn-esq-fechada');if(a){a.style.background=val==='aberta'?'#2d7db3':'#f0f4f8';a.style.color=val==='aberta'?'white':'#1a202c';a.style.border='1.5px solid '+(val==='aberta'?'#2d7db3':'#e2e8f0');}if(b){b.style.background=val==='fechada'?'#2d7db3':'#f0f4f8';b.style.color=val==='fechada'?'white':'#1a202c';b.style.border='1.5px solid '+(val==='fechada'?'#2d7db3':'#e2e8f0');}}
-function selAmb(val){document.getElementById('r-ambiente-cond').value=val;var a=document.getElementById('btn-amb-vazio');var b=document.getElementById('btn-amb-pessoas');if(a){a.style.background=val==='vazio'?'#2d7db3':'#f0f4f8';a.style.color=val==='vazio'?'white':'#1a202c';a.style.border='1.5px solid '+(val==='vazio'?'#2d7db3':'#e2e8f0');}if(b){b.style.background=val==='pessoas'?'#2d7db3':'#f0f4f8';b.style.color=val==='pessoas'?'white':'#1a202c';b.style.border='1.5px solid '+(val==='pessoas'?'#2d7db3':'#e2e8f0');}}
-
-function calcPontosRuidoInt(){
-  var area=parseFloat(v('r-area-int'));if(!area||area<=0){toast('Informe a área');return;}
-  var n=area<=30?3:3+Math.ceil((area-30)/30);
-  document.getElementById('r-int-resultado').classList.remove('hidden');
-  document.getElementById('r-int-msg').textContent='Área: '+area+' m² → '+n+' ponto(s) necessário(s)';
-  var cont=document.getElementById('rp-cont-int');
-  if(cont) cont.innerHTML=renderPontosRuidoInt(n);
-  // Mostrar canvas após definir pontos
-  var wrap=document.getElementById('sala-canvas-wrap');
-  if(wrap){
-    wrap.style.display='block';
-    setTimeout(function(){iniciarCanvas();},200);
-  }
+// Paginacao generica para ruido
+function _rpSetN(n, tipo){
+  _rpN=n;_rpIdx=1;_rpDados={};
+  var navId='rp-nav-wrap'+(tipo==='externo'?'':'-'+tipo);
+  var contId='rp-cont'+(tipo==='externo'?'':'-'+tipo);
+  var navEl=document.getElementById(navId);var contEl=document.getElementById(contId);
+  if(navEl)navEl.innerHTML=_rpNavHtml(n,tipo);
+  if(contEl)contEl.innerHTML=_rpPageHtml(1,tipo);
 }
-var _rpiN=1,_rpiIdx=1,_rpiDados={};
-function renderPontosRuidoInt(n){_rpiN=n;_rpiIdx=1;_rpiDados={};return _rpiNav()+_rpiPage(1);}
-function _rpiNav(){return '<div class="qar-nav" id="rpi-nav"><button class="qar-nav-btn" id="rpi-prev" onclick="_rpiPrev()">&#8592;</button><span class="qar-nav-label" id="rpi-label">Ponto 1 de '+_rpiN+'</span><button class="qar-nav-btn" id="rpi-next" onclick="_rpiNext()">&#8594;</button></div>';}
-function _rpiPrev(){if(_rpiIdx>1){_rpiSave();_rpiIdx--;_rpiUpdate();window.scrollTo(0,0);}}
-function _rpiNext(){if(_rpiIdx<_rpiN){_rpiSave();_rpiIdx++;_rpiUpdate();window.scrollTo(0,0);}}
-function _rpiSave(){var p='rpi'+_rpiIdx;var saved={};document.querySelectorAll('[id^="'+p+'-"]').forEach(function(el){if(el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='TEXTAREA')saved[el.id]=el.value;if(el.classList&&el.classList.contains('check-item'))saved[el.id+'__chk']=el.classList.contains('checked');});_rpiDados[_rpiIdx]=saved;}
-function _rpiRestore(){var saved=_rpiDados[_rpiIdx];if(!saved)return;Object.keys(saved).forEach(function(k){if(k.endsWith('__chk')){var el=document.getElementById(k.replace('__chk',''));if(el&&saved[k])el.classList.add('checked');}else{var el=document.getElementById(k);if(el)el.value=saved[k];}});}
-function _rpiUpdate(){var cont=document.getElementById('rpi-cont');if(cont)cont.innerHTML=_rpiPage(_rpiIdx);var lbl=document.getElementById('rpi-label');if(lbl)lbl.textContent='Ponto '+_rpiIdx+' de '+_rpiN;var prev=document.getElementById('rpi-prev');var next=document.getElementById('rpi-next');if(prev)prev.disabled=_rpiIdx===1;if(next)next.disabled=_rpiIdx===_rpiN;setTimeout(function(){_rpiRestore();},0);}
-function _rpiPage(idx){var p='rpi'+idx;var h='<div id="rpi-cont"><div class="ponto-card"><div class="ponto-header">Ponto '+idx+'</div><div class="ponto-body">';h+=inp(p+'-nome','Nome / identificação do ponto','text','');h+=gpsBlock(p);h+=inp(p+'-alt','Altura do sonômetro (m)','number','');h+=chk(p+'-slow','Sonômetro configurado em Slow (S)');h+=inp(p+'-chkini','Checagem inicial (dB)','number','');h+=inp(p+'-chkfim','Checagem final (dB)','number','');h+='<div id="'+p+'-chk-alerta" class="chk-alerta hidden">⚠️ Diferença acima de 0,5 dB</div>';h+=fotoBlock(p);h+='<div class="row3">'+inp(p+'-temp','Temp. (°C)','number','')+inp(p+'-umid','Umidade (%)','number','')+inp(p+'-vento','Vento (m/s)','number','')+'</div>';h+=chk(p+'-residual','Ruído residual monitorado');h+=chk(p+'-total','Ruído total monitorado');h+=inp(p+'-obs','Observações','text','');h+='</div></div></div>';setTimeout(function(){_rpiRestore();},0);return h;}
+function _rpNavHtml(n,tipo){
+  var prevBtn='<button class="qar-nav-btn" id="rp-prev-'+tipo+'" onclick="_rpPrev(\'" + tipo + "\')" disabled>&#8592;</button>';
+  var nextBtn='<button class="qar-nav-btn" id="rp-next-'+tipo+'" onclick="_rpNext(\'" + tipo + "\')"'+(n===1?' disabled':'')+'>&#8594;</button>';
+  return '<div class="qar-nav">'+prevBtn+'<span class="qar-nav-label" id="rp-label-'+tipo+'">Ponto 1 de '+n+'</span>'+nextBtn+'</div>';
+}
+function _rpPrev(tipo){if(_rpIdx>1){_rpSave(tipo);_rpIdx--;_rpUpdate(tipo);window.scrollTo(0,0);}}
+function _rpNext(tipo){if(_rpIdx<_rpN){_rpSave(tipo);_rpIdx++;_rpUpdate(tipo);window.scrollTo(0,0);}}
+function _rpSave(tipo){
+  var p='rp'+tipo+_rpIdx;var saved={};
+  document.querySelectorAll('[id^="'+p+'-"]').forEach(function(el){
+    if(el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='TEXTAREA')saved[el.id]=el.value;
+    if(el.classList&&el.classList.contains('check-item'))saved[el.id+'__chk']=el.classList.contains('checked');
+  });
+  _rpDados[_rpIdx]=saved;
+}
+function _rpRestore(tipo){
+  var saved=_rpDados[_rpIdx];if(!saved)return;
+  Object.keys(saved).forEach(function(k){
+    if(k.endsWith('__chk')){var el=document.getElementById(k.replace('__chk',''));if(el&&saved[k])el.classList.add('checked');}
+    else{var el=document.getElementById(k);if(el)el.value=saved[k];}
+  });
+}
+function _rpUpdate(tipo){
+  var contId='rp-cont'+(tipo==='externo'?'':'-'+tipo);
+  var contEl=document.getElementById(contId);
+  if(contEl)contEl.innerHTML=_rpPageHtml(_rpIdx,tipo);
+  var lbl=document.getElementById('rp-label-'+tipo);if(lbl)lbl.textContent='Ponto '+_rpIdx+' de '+_rpN;
+  var prev=document.getElementById('rp-prev-'+tipo);if(prev)prev.disabled=_rpIdx===1;
+  var next=document.getElementById('rp-next-'+tipo);if(next)next.disabled=_rpIdx===_rpN;
+  setTimeout(function(){_rpRestore(tipo);},0);
+}
 
-var _canvasMode='ponto',_canvasItems=[],_lapisAtivo=false,_lapisPts=[];
-function iniciarCanvas(){
-  var c=document.getElementById('sala-canvas');if(!c)return;
-  c.width=c.offsetWidth||320;c.height=250;
-  // Click para pontos e paredes
-  c.addEventListener('click',function(e){
-    if(_canvasMode==='lapis')return;
-    var r=c.getBoundingClientRect();
-    var x=(e.clientX-r.left)*(c.width/r.width);
-    var y=(e.clientY-r.top)*(c.height/r.height);
-    if(_canvasMode==='borracha'){
-      // Apagar o item mais próximo do clique
-      var minDist=30,minIdx=-1;
-      _canvasItems.forEach(function(item,i){
-        var dx=item.x-x,dy=item.y-y,dist=Math.sqrt(dx*dx+dy*dy);
-        if(dist<minDist){minDist=dist;minIdx=i;}
-      });
-      if(minIdx>=0){_canvasItems.splice(minIdx,1);desenharCanvas();}
-      return;
+function _rpPageHtml(idx,tipo){
+  var p='rp'+tipo+idx;
+  var h='<div class="ponto-card"><div class="ponto-header">Ponto '+idx+'</div><div class="ponto-body">';
+  h+=inp(p+'-nome','Nome / identificacao do ponto','text','');
+  h+=gpsBlock(p);
+  if(tipo==='externo'||tipo==='interno'||tipo==='ferro'){
+    if(tipo==='interno'){
+      h+=chk(p+'-alt-ok','Altura dos pontos variando entre 1,2 e 1,5 m');
+      h+=inp(p+'-alt','Altura do sonometro (m)','number','');
     }
-    _canvasItems.push({tipo:_canvasMode,x:x,y:y});
-    desenharCanvas();
-  });
-  // Lápis: touch e mouse
-  function getLapXY(e,r){var src=e.touches?e.touches[0]:e;return{x:(src.clientX-r.left)*(c.width/r.width),y:(src.clientY-r.top)*(c.height/r.height)};}
-  function lapStart(e){if(_canvasMode!=='lapis'&&_canvasMode!=='borracha')return;e.preventDefault();if(_canvasMode==='borracha')return;_lapisAtivo=true;var r=c.getBoundingClientRect();var pt=getLapXY(e,r);_lapisPts=[[pt.x,pt.y]];}
-  function lapMove(e){if(!_lapisAtivo||_canvasMode!=='lapis')return;e.preventDefault();var r=c.getBoundingClientRect();var pt=getLapXY(e,r);_lapisPts.push([pt.x,pt.y]);desenharCanvas();}
-  function lapEnd(e){if(!_lapisAtivo)return;_lapisAtivo=false;if(_lapisPts.length>1)_canvasItems.push({tipo:'lapis',pts:_lapisPts.slice()});_lapisPts=[];desenharCanvas();}
-  c.addEventListener('mousedown',lapStart);c.addEventListener('mousemove',lapMove);c.addEventListener('mouseup',lapEnd);
-  c.addEventListener('touchstart',lapStart,{passive:false});c.addEventListener('touchmove',lapMove,{passive:false});c.addEventListener('touchend',lapEnd);
-  desenharCanvas();
-}
-function canvasMode(m){
-  _canvasMode=m;
-  var modos=['ponto','paredeH','paredeV','lapis','borracha'];
-  modos.forEach(function(mo){var b=document.getElementById('btn-modo-'+mo);if(b){b.style.background=m===mo?'#2d7db3':'#f0f4f8';b.style.color=m===mo?'white':'#1a202c';b.style.border=m===mo?'none':'1.5px solid #e2e8f0';}});
-}
-function canvasLimpar(){_canvasItems=[];_lapisPts=[];_lapisAtivo=false;desenharCanvas();}
-function desenharCanvas(){
-  var c=document.getElementById('sala-canvas');if(!c)return;
-  var ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);
-  ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,c.width,c.height);
-  ctx.strokeStyle='#cbd5e0';ctx.lineWidth=2;ctx.strokeRect(3,3,c.width-6,c.height-6);
-  var pCount=0;
-  _canvasItems.forEach(function(item){
-    if(item.tipo==='ponto'){pCount++;ctx.beginPath();ctx.arc(item.x,item.y,12,0,Math.PI*2);ctx.fillStyle='#2d7db3';ctx.fill();ctx.fillStyle='white';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('P'+pCount,item.x,item.y);}
-    else if(item.tipo==='paredeH'){ctx.fillStyle='#2d3748';ctx.fillRect(item.x-30,item.y-4,60,8);}
-    else if(item.tipo==='paredeV'){ctx.fillStyle='#2d3748';ctx.fillRect(item.x-4,item.y-30,8,60);}
-    else if(item.tipo==='lapis'&&item.pts&&item.pts.length>1){ctx.beginPath();ctx.strokeStyle='#2d3748';ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';ctx.moveTo(item.pts[0][0],item.pts[0][1]);item.pts.slice(1).forEach(function(p){ctx.lineTo(p[0],p[1]);});ctx.stroke();ctx.lineWidth=2;}
-  });
-  // Lápis ativo
-  if(_lapisAtivo&&_lapisPts.length>1){ctx.beginPath();ctx.strokeStyle='#2d3748';ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';ctx.moveTo(_lapisPts[0][0],_lapisPts[0][1]);_lapisPts.slice(1).forEach(function(p){ctx.lineTo(p[0],p[1]);});ctx.stroke();ctx.lineWidth=2;}
-}
-
-function renderFerroSub(finalidade){var cont=document.getElementById('ferro-form-cont');if(!cont)return;if(finalidade==='Passagem de composição ferroviária'){cont.innerHTML='';}else{cont.innerHTML='<div class="field"><label>Tipo de operação</label><select id="r-ferro-operacao"><option value="">Selecione...</option><option>Operações em pátios</option><option>Manobras</option><option>Cruzamentos</option></select></div><div class="field"><label>Tempo de monitoramento</label><select id="r-ferro-tempo"><option value="">Selecione...</option><option>24 horas</option><option>Pontual</option></select></div>';}}
-function atualizarPontosFerro(n){var f=v('r-finalidade-ferro');document.getElementById('rp-cont-ferro').innerHTML=renderPontosFerro(n,f);}
-function renderPontosFerro(n,finalidade){var h='';var passagem=(finalidade==='Passagem de composição ferroviária');for(var i=1;i<=n;i++){var p='rpf'+i;h+='<div class="ponto-card"><div class="ponto-header">Ponto '+i+'</div><div class="ponto-body">';h+=inp(p+'-nome','Nome / identificação','text','');h+=gpsBlock(p);if(passagem){h+=chk(p+'-mic-curta','Microfone entre 1,2 m e 1,5 m do solo (curta duração)');h+=chk(p+'-mic-longa','Microfone ≥ 4 m do solo (longa duração)');h+=chk(p+'-dist2m','Distância mínima de 2 m de superfícies refletoras');h+=chk(p+'-inicio','Monitoramento iniciado antes da passagem do trem');h+=chk(p+'-15min','Pelo menos 15 min de ruído residual monitorado');h+=chk(p+'-1sentido','Pelo menos 1 passagem em cada sentido monitorada');h+=chk(p+'-3pass','Total de pelo menos 3 passagens monitoradas');h+=inp(p+'-tipo-comp','Tipo de composição ferroviária','text','Ex: carga, passageiro, longo...');}else{h+=chk(p+'-mic4m','Microfone ≥ 4 m do solo');h+=chk(p+'-cruzamento','Monitorados dois eventos de cruzamento/ultrapassagem');h+=chk(p+'-engates','Mínimo 30 eventos de engates em período de 60–240 min');}h+=inp(p+'-chkini','Checagem inicial (dB)','number','');h+=inp(p+'-chkfim','Checagem final (dB)','number','');h+=fotoBlock(p);h+='<div class="row3">'+inp(p+'-temp','Temp. (°C)','number','')+inp(p+'-umid','Umidade (%)','number','')+inp(p+'-vento','Vento (m/s)','number','')+'</div>';h+=chk(p+'-residual','Ruído residual monitorado');h+=chk(p+'-total','Ruído total monitorado');h+=inp(p+'-obs','Observações','text','');h+='</div></div>';}return h;}
-
-function atualizarPontosAero(n){if(!n)return;var f=v('r-finalidade-aero');document.getElementById('rp-cont-aero').innerHTML=renderPontosAero(n,f);}
-function renderPontosAero(n,finalidade){var h='';var operacional=(finalidade==='Monitoramento operacional');for(var i=1;i<=n;i++){var p='rpa'+i;h+='<div class="ponto-card"><div class="ponto-header">Ponto '+i+'</div><div class="ponto-body">';h+=inp(p+'-nome','Nome / identificação','text','');h+=gpsBlock(p);if(!operacional){h+=chk(p+'-dist2m','Distância mínima de 2 m de obstáculos');h+=chk(p+'-10db','Ruído residual é 10 dB menor que o de impacto das aeronaves');h+=chk(p+'-meteo','Estação meteorológica funcionando');}else{h+=chk(p+'-mic6m','Microfone instalado ≥ 6 m do solo');h+=chk(p+'-dist10m','Distância mínima de 10 m de obstáculos');h+=chk(p+'-direcao','Microfone direcionado para a trajetória das aeronaves');h+=chk(p+'-10db','Ruído residual é 10 dB menor que o de impacto das aeronaves');h+=chk(p+'-meteo','Estação meteorológica funcionando');}h+=inp(p+'-chkini','Checagem inicial (dB)','number','');h+=inp(p+'-chkfim','Checagem final (dB)','number','');h+=fotoBlock(p);if(!operacional){h+='<div class="row3">'+inp(p+'-temp','Temp. (°C)','number','')+inp(p+'-umid','Umidade (%)','number','')+inp(p+'-vento','Vento (m/s)','number','')+'</div>';}h+=chk(p+'-residual','Ruído residual monitorado');h+=chk(p+'-total','Ruído total monitorado');h+=inp(p+'-obs','Observações','text','');h+='</div></div>';}return h;}
-function renderPontosRuido(n){
-  var h='';
-  for(var i=1;i<=n;i++){var p='rp'+i;
-    h+='<div class="ponto-card"><div class="ponto-header">Ponto '+i+'</div><div class="ponto-body">';
-    h+=inp(p+'-nome','Nome / identificação do ponto','text','');
-    h+=gpsBlock(p);
-    h+=inp(p+'-chkini','Valor da checagem inicial (dB)','number','');
-    h+=inp(p+'-chkfim','Valor da checagem final (dB)','number','');
-    h+='<div id="'+p+'-chk-alerta" class="chk-alerta hidden">\u26A0\uFE0F A Diferença entre checagens é maior que o máximo permitido (0,5 dB)</div>';
+    h+=chkIniField(p);
+    h+=fotoTela(p,'ini','Foto da tela do sonometro apos checagem inicial');
     h+=fotoBlock(p);
-    h+='<div class="row3">'+inp(p+'-temp','Temp. (°C)','number','')+inp(p+'-umid','Umidade (%)','number','')+inp(p+'-vento','Vento (m/s)','number','')+'</div>';
-    h+=chk(p+'-residual','Ruído residual monitorado');
-    h+=chk(p+'-total','Ruído total monitorado');
-    h+=inp(p+'-fontes-empresa','Fontes percebidas da EMPRESA','text','');
-    h+=inp(p+'-fontes-ambiente','Fontes percebidas do AMBIENTE','text','');
-    h+=inp(p+'-chkfim2','Valor da checagem final apos fontes (dB)','number','');
-    h+='<div class="field"><label>Foto da tela do sonometro - inicio</label><div class="foto-area" onclick="document.getElementById(\'fini-'+p+'\').click()"><input type="file" id="fini-'+p+'" accept="image/*" capture="environment" data-pid="fini-'+p+'" onchange="previewFotoCb(this)" style="display:none"/><div class="foto-icon">&#128247;</div><div class="foto-text">Foto inicio</div></div><div class="foto-preview" id="fp-fini-'+p+'"></div></div>';
-    h+='<div class="field"><label>Foto da tela do sonometro - final</label><div class="foto-area" onclick="document.getElementById(\'ffim-'+p+'\').click()"><input type="file" id="ffim-'+p+'" accept="image/*" capture="environment" data-pid="ffim-'+p+'" onchange="previewFotoCb(this)" style="display:none"/><div class="foto-icon">&#128247;</div><div class="foto-text">Foto final</div></div><div class="foto-preview" id="fp-ffim-'+p+'"></div></div>';
+    h+='<div class="row3">'+inp(p+'-temp','Temp. (C)','number','')+inp(p+'-umid','Umidade (%)','number','')+ventoField(p)+'</div>';
+    h+=chk(p+'-residual','Ruido residual monitorado');
+    h+=chk(p+'-total','Ruido total monitorado');
+    if(tipo==='externo'){
+      h+=inp(p+'-fontes-empresa','Fontes percebidas da EMPRESA','text','');
+      h+=inp(p+'-fontes-ambiente','Fontes percebidas do AMBIENTE','text','');
+    }
+    h+=chkFimField(p,p+'-chkini');
+    h+=fotoTela(p,'fim','Foto da tela do sonometro apos checagem final');
     h+=inp(p+'-obs','Observacoes do ponto','text','');
-    h+='</div></div>';
-  }return h;
+    h+=inp(p+'-hora-fim','Hora de termino do ponto','time','');
+  } else if(tipo==='aero'){
+    h+=chkIniField(p);
+    h+=fotoTela(p,'ini','Foto checagem inicial');
+    h+=fotoBlock(p);
+    h+='<div class="row3">'+inp(p+'-temp','Temp. (C)','number','')+inp(p+'-umid','Umidade (%)','number','')+ventoField(p)+'</div>';
+    h+=chk(p+'-residual','Ruido residual monitorado');
+    h+=chk(p+'-total','Ruido total monitorado');
+    h+=chkFimField(p,p+'-chkini');
+    h+=fotoTela(p,'fim','Foto checagem final');
+    h+=inp(p+'-obs','Observacoes do ponto','text','');
+    h+=inp(p+'-hora-fim','Hora de termino','time','');
+  }
+  h+='</div></div>';
+  setTimeout(function(){_rpRestore(tipo);},0);
+  return h;
 }
+
+function renderPontosRuido(n){return '';}
 function atualizarPontosRuido(n){document.getElementById('rp-cont').innerHTML=renderPontosRuido(n);}
 
 // VIBRAÇÃO
@@ -1254,6 +1226,13 @@ function buscarCidadeGPS(){
       }).catch(function(){toast('Erro ao buscar cidade',true);});
   },function(){toast('GPS negado',true);},{enableHighAccuracy:true,timeout:10000});
 }
+
+function chkIniField(pid){return '<div class="field"><label>Valor da checagem inicial (dB)</label><div style="display:flex;gap:6px;"><select id="'+pid+'-chkini-sinal" style="width:60px;flex-shrink:0;"><option value="+">+</option><option value="-">-</option></select><input type="number" id="'+pid+'-chkini" placeholder="Ex: 94.2" step="0.1" style="flex:1;"/></div></div>';}
+function chkFimField(pid){return '<div class="field"><label>Valor da checagem final (dB)</label><div style="display:flex;gap:6px;"><select id="'+pid+'-chkfim-sinal" style="width:60px;flex-shrink:0;"><option value="+">+</option><option value="-">-</option></select><input type="number" id="'+pid+'-chkfim" placeholder="Ex: 94.2" step="0.1" style="flex:1;" oninput="validarChkDiff(\''+pid+'-chkini\',\''+pid+'-chkfim\',\''+pid+'-chkfim-alerta\')"/></div><div id="'+pid+'-chkfim-alerta" style="display:none;background:#fee2e2;border:1.5px solid #e53e3e;color:#b91c1c;border-radius:8px;padding:8px 12px;font-size:13px;margin-top:6px;">&#9888;&#65039; A diferenca entre as checagens deu maior ou igual a 0,5 dB. Repetir o monitoramento.</div></div>';}
+function ventoField(pid){return '<div class="field"><label>Vento (m/s)</label><input type="number" id="'+pid+'-vento" placeholder="m/s" step="0.1" oninput="ventoAlerta(\''+pid+'-vento\')"/><div id="'+pid+'-vento-alerta" style="display:none;background:#fef3c7;border:1.5px solid #f59e0b;color:#92400e;border-radius:8px;padding:8px 12px;font-size:13px;margin-top:6px;">&#9888;&#65039; Esperar o vento abaixar. Nao e aceito vento acima de 5 m/s.</div></div>';}
+function ventoAlerta(id){var val=parseFloat(document.getElementById(id)&&document.getElementById(id).value||0);var al=document.getElementById(id+'-alerta');if(al)al.style.display=val>=5?'block':'none';}
+function validarChkDiff(iniId,fimId,alertaId){var ini=parseFloat(document.getElementById(iniId)&&document.getElementById(iniId).value||0);var fim=parseFloat(document.getElementById(fimId)&&document.getElementById(fimId).value||0);var al=document.getElementById(alertaId);if(al)al.style.display=(!isNaN(ini)&&!isNaN(fim)&&Math.abs(fim-ini)>=0.5)?'block':'none';}
+function fotoTela(pid,sufixo,lbl){return '<div class="field"><label>'+lbl+'</label><div class="foto-area" onclick="document.getElementById(\'ft'+sufixo+'-'+pid+'\').click()"><input type="file" id="ft'+sufixo+'-'+pid+'" accept="image/*" capture="environment" data-pid="ft'+sufixo+'-'+pid+'" onchange="previewFotoCb(this)" style="display:none"/><div class="foto-icon">&#128247;</div><div class="foto-text">Foto da tela</div></div><div class="foto-preview" id="fp-ft'+sufixo+'-'+pid+'"></div></div>';}
 function novoRegistro(){
   tipoSel='';fotosAnexadas={};
   document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
