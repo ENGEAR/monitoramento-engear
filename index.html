@@ -197,7 +197,7 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
     <div id="passo2" class="hidden">
       <div id="form-dinamico"></div>
-      <div style="margin-bottom:8px;margin-top:8px;">
+      <div id="rascunho-btn-wrap" style="display:none;margin-bottom:8px;margin-top:8px;">
         <button class="btn-outline" onclick="salvarRascunhoGeral()" style="width:100%;">💾 Salvar rascunho</button>
       </div>
       <div class="btn-row"><button class="btn-back" onclick="irP1()">← Voltar</button><button class="btn-next" onclick="irP3()">Proximo →</button></div>
@@ -316,12 +316,13 @@ function sair(){if(!confirm('Deseja sair?'))return;token=null;nomeLogado='';docu
 
 function atualizarSteps(p){['sd1','sd2','sd3'].forEach(function(id,i){document.getElementById(id).className='step-dot'+(i+1<p?' done':i+1===p?' active':'');});document.getElementById('step-label').textContent='Passo '+p+' de 3 — '+['Identificação','Formulário','Finalização'][p-1];}
 function mostrar(id){['passo1','passo2','passo3','sucesso','pendencias'].forEach(function(p){var el=document.getElementById(p);if(el)el.classList.add('hidden');});document.getElementById(id).classList.remove('hidden');}
-function irP1(){mostrar('passo1');atualizarSteps(1);}
+function irP1(){mostrarBtnRascunho(false);mostrar('passo1');atualizarSteps(1);}
 function irP2(){if(!tipoSel){toast('Selecione o tipo de monitoramento');return;}var fd=document.getElementById('form-dinamico');if(!fd||fd.innerHTML===''||fd.getAttribute('data-tipo')!==tipoSel){fotosAnexadas={};renderForm();fd=document.getElementById('form-dinamico');if(fd)fd.setAttribute('data-tipo',tipoSel);}mostrar('passo2');atualizarSteps(2);}
 function irP3(){mostrar('passo3');atualizarSteps(3);}
 function selecionarTipo(el,t){
   document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
   el.classList.add('selected');tipoSel=t;
+  mostrarBtnRascunho(false);
 }
 
 function chk(id,lbl){return '<div class="check-item" id="'+id+'" data-id="'+id+'" onclick="toggleCheck(this)"><div class="check-box"><svg class="check-mark" width="12" height="12" viewBox="0 0 12 12" fill="none"><polyline points="1.5 6 4.5 9 10.5 3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-text">'+lbl+'</span></div>';}
@@ -444,7 +445,7 @@ function _renderSubRuido(sub){
 }
 
 // Paginacao generica para ruido
-function _rpSetN(n, tipo){
+function _rpSetN(n, tipo){mostrarBtnRascunho(true);
   _rpN=n;_rpIdx=1;_rpDados={};
   var navId='rp-nav-wrap'+(tipo==='externo'?'':'-'+tipo);
   var contId='rp-cont'+(tipo==='externo'?'':'-'+tipo);
@@ -538,7 +539,7 @@ function renderSismo(){
     '<div class="field"><label>Quantidade de pontos</label><select id="s-npontos" onchange="_sismoSetN(parseInt(this.value)||1)"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>'+
     '</div><div id="sismo-wrap"></div>';
 }
-function _sismoSetN(n){_sismoN=n;_sismoIdx=1;_sismoDados={};_sismoRender();}
+function _sismoSetN(n){mostrarBtnRascunho(true);_sismoN=n;_sismoIdx=1;_sismoDados={};_sismoRender();}
 function _sismoRender(){var w=document.getElementById('sismo-wrap');if(w)w.innerHTML=_sismoPage(_sismoIdx);}
 function _sismoPrev(){if(_sismoIdx>1){_sismoSave();_sismoIdx--;_sismoRender();window.scrollTo(0,0);}}
 function _sismoNext(){if(_sismoIdx<_sismoN){_sismoSave();_sismoIdx++;_sismoRender();window.scrollTo(0,0);}}
@@ -583,7 +584,7 @@ function renderQAR(){
     '<div class="field"><label>Quantidade de pontos</label><select id="qar-npontos" onchange="atualizarPontosQAR(parseInt(this.value)||1)"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>'+
     '</div><div id="qar-abas-bar" class="qar-abas-bar"></div><div id="qarp-cont"></div>';
 }
-function atualizarPontosQAR(n){_qarN=n;_qarIdx=1;_qarDados={};document.getElementById('qar-abas-bar').innerHTML=gerarAbasQAR(n);document.getElementById('qarp-cont').innerHTML=renderPontosQAR(n);mostrarPontoQAR(1);}
+function atualizarPontosQAR(n){mostrarBtnRascunho(true);_qarN=n;_qarIdx=1;_qarDados={};document.getElementById('qar-abas-bar').innerHTML=gerarAbasQAR(n);document.getElementById('qarp-cont').innerHTML=renderPontosQAR(n);mostrarPontoQAR(1);}
 function gerarAbasQAR(n){var h='';for(var i=1;i<=n;i++){h+='<div class="qar-aba'+(i===1?' active':'')+'" onclick="mostrarPontoQAR('+i+')">P'+i+'</div>';}return h;}
 function mostrarPontoQAR(idx){_qarIdx=idx;document.querySelectorAll('.qar-aba').forEach(function(a,i){a.classList.toggle('active',i+1===idx);});document.querySelectorAll('.qar-ponto').forEach(function(p,i){p.style.display=(i+1===idx)?'block':'none';});}
 function renderPontosQAR(n){
@@ -661,7 +662,7 @@ function selecionarSubOpac(el, sub){
 
 // RINGELMANN - paginação por veículo
 var _ringN=1,_ringIdx=1,_ringDados={};
-function _ringSetN(n){_ringN=n;_ringIdx=1;_ringDados={};_ringRender();}
+function _ringSetN(n){mostrarBtnRascunho(true);_ringN=n;_ringIdx=1;_ringDados={};_ringRender();}
 function _ringRender(){var w=document.getElementById('ring-wrap');if(w)w.innerHTML=_ringPage(_ringIdx);}
 function _ringPrev(){if(_ringIdx>1){_ringSave();_ringIdx--;_ringRender();window.scrollTo(0,0);}}
 function _ringNext(){if(_ringIdx<_ringN){_ringSave();_ringIdx++;_ringRender();window.scrollTo(0,0);}}
@@ -720,7 +721,7 @@ function coletarRingelmann(){
   }
   return veiculos;
 }
-function _opacSetN(n){_opacN=n;_opacIdx=1;_opacDados={};_opacRender();}
+function _opacSetN(n){mostrarBtnRascunho(true);_opacN=n;_opacIdx=1;_opacDados={};_opacRender();}
 function _opacRender(){var w=document.getElementById('opac-wrap');if(w)w.innerHTML=_opacPage(_opacIdx);}
 function _opacPrev(){if(_opacIdx>1){_opacSave();_opacIdx--;_opacRender();window.scrollTo(0,0);}}
 function _opacNext(){if(_opacIdx<_opacN){_opacSave();_opacIdx++;_opacRender();window.scrollTo(0,0);}}
@@ -802,7 +803,7 @@ function _qarintAmbFormHtml(idx){
     '<div id="qarint-wrap"></div>'+
     '</div>';
 }
-function _qarintCalcFromAmb(idx){
+function _qarintCalcFromAmb(idx){mostrarBtnRascunho(true);
   var aEl=document.getElementById('qaint-area-'+idx);
   var area=parseFloat(aEl?aEl.value:0);
   if(!area||area<=0){toast('Informe a area');return;}
@@ -855,7 +856,7 @@ function renderGenerico(){
     '<div class="field"><label>Quantidade de pontos</label><select id="outro-npontos" onchange="_outroSetN(parseInt(this.value)||1)"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>'+
     '</div><div id="outro-wrap"></div>';
 }
-function _outroSetN(n){_outroN=n;_outroIdx=1;_outroDados={};_outroRender();}
+function _outroSetN(n){mostrarBtnRascunho(true);_outroN=n;_outroIdx=1;_outroDados={};_outroRender();}
 function _outroRender(){var w=document.getElementById('outro-wrap');if(w)w.innerHTML=_outroPage(_outroIdx);}
 function _outroPrev(){if(_outroIdx>1){_outroSave();_outroIdx--;_outroRender();window.scrollTo(0,0);}}
 function _outroNext(){if(_outroIdx<_outroN){_outroSave();_outroIdx++;_outroRender();window.scrollTo(0,0);}}
@@ -1383,6 +1384,11 @@ async function _salvarRascunhoExcel(dados){
 
 function toggleOutroEquipQAR(pid,val){var el=document.getElementById(pid+'-tipoequip-outro-field');if(el)el.classList.toggle('hidden',val!=='Outro');}
 function toggleOutroEquipSismo(pid,val){var el=document.getElementById(pid+'-tipoequip-sismo-outro-field');if(el)el.classList.toggle('hidden',val!=='Outro');}
+
+function mostrarBtnRascunho(show){
+  var el=document.getElementById('rascunho-btn-wrap');
+  if(el)el.style.display=show?'block':'none';
+}
 function novoRegistro(){
   tipoSel='';fotosAnexadas={};
   document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
