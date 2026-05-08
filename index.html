@@ -914,27 +914,27 @@ function montarLinhaPorTipo(dados){
     var rows=[];
     (dados.pontos||[]).forEach(function(p,i){var diff='';if(p.chkIni!==''&&p.chkFim!==''){var dv=Math.abs(parseFloat(p.chkFim)-parseFloat(p.chkIni));diff=isNaN(dv)?'':dv.toFixed(1);}
       rows.push(base.concat([dados.finalidade||'',i+1,p.nome||'',gpsStr(p.gps),p.chkIni||'',p.chkFim||'',diff,p.temp||'',p.umid||'',p.vento||'',bool(p.residual),bool(p.total),p.fontesEmpresa||'',p.fontesAmbiente||'',p.obs||'',dados.obsGeral||'','']));});
-    return {sheet:'Ruído',rows:rows};
+    rows.forEach(function(r){if(r.length&&(!r[r.length-1]||r[r.length-1]===''))r.push('Validado');});return {sheet:'Ruído',rows:rows};
   }
   if(dados.tipo==='sismo'){
     var rows=[];
     (dados.pontos||[]).forEach(function(p,i){rows.push(base.concat([dados.objetivo||'',dados.finalidade||'',i+1,p.nome||'',gpsStr(p.gps),p.fonte||'',bool(p.autov),p.temp||'',p.umid||'',bool(p.trigger),bool(p.mem),bool(p.prog),bool(p.capt),p.interc||'Nenhuma',dados.obsGeral||'','']));});
-    return {sheet:'Vibração',rows:rows};
+    rows.forEach(function(r){if(r.length&&(!r[r.length-1]||r[r.length-1]===''))r.push('Validado');});return {sheet:'Vibração',rows:rows};
   }
   if(dados.tipo==='qar'){
     var rows=[];
     (dados.pontos||[]).forEach(function(p,i){(p.coletas||[]).forEach(function(c,ci){rows.push(base.concat([dados.objetivo||'',i+1,p.nome||'',gpsStr(p.gps),bool(p.calibAprovada),ci+1,c.dini||'',c.hini||'',c.horamIni||'',c.tini||'',c.uini||'',c.pini||'',c.dfim||'',c.hfim||'',c.horamFim||'',c.tfim||'',c.ufim||'',c.pfim||'',dados.obsGeral||'']));});});
-    return {sheet:'QAR Externo',rows:rows};
+    rows.forEach(function(r){if(r.length&&(!r[r.length-1]||r[r.length-1]===''))r.push('Validado');});return {sheet:'QAR Externo',rows:rows};
   }
   if(dados.tipo==='opacidade'){
     var rows=[];
     (dados.veiculos||[]).forEach(function(ve,i){rows.push(base.concat([i+1,ve.placa||'',gpsStr(ve.gps),bool(ve.calibrado),bool(ve.acel),bool(ve.ensaio),bool(ve.leituras),bool(ve.dados),ve.obs||'','']));});
-    return {sheet:'Opacidade',rows:rows};
+    rows.forEach(function(r){if(r.length&&(!r[r.length-1]||r[r.length-1]===''))r.push('Validado');});return {sheet:'Opacidade',rows:rows};
   }
   if(dados.tipo==='qarint'){
     var rows=[];
     (dados.pontos||[]).forEach(function(p,i){rows.push(base.concat([dados.area||'',(dados.pontos||[]).length,i+1,p.nome||'',gpsStr(p.gps),bool(p.plano),bool(p.equip),bool(p.posic),bool(p.coleta),p.co2||'',p.temp||'',p.ur||'',p.vento||'',bool(p.conformidade),bool(p.amostras),p.obs||'','']));});
-    return {sheet:'QAR Interno',rows:rows};
+    rows.forEach(function(r){if(r.length&&(!r[r.length-1]||r[r.length-1]===''))r.push('Validado');});return {sheet:'QAR Interno',rows:rows};
   }
   return {sheet:'Outro',rows:[base.concat([dados.tipoEspecifico||'',dados.objetivo||'',(dados.pontos||[]).map(function(p,i){return 'P'+(i+1)+':'+p.nome;}).join('; '),dados.obsGeral||'',''])]};
 }
@@ -1199,23 +1199,23 @@ function salvarRascunhoQAR() {
 }
 
 function abrirRascunhos() {
-  document.getElementById('rascunhos').querySelector('h2').textContent='Rascunhos salvos';
   var lista = document.getElementById('rascunhos-lista');
+  if(!lista)return;
   if (_rascunhos.length === 0) {
-    lista.innerHTML = '<div class="hist-empty">📝<br><br>Nenhum rascunho salvo.<br><br><small>Use o botão "Salvar rascunho" durante o preenchimento.</small></div>';
+    lista.innerHTML = '<div class="hist-empty">&#128196;<br><br>Nenhum rascunho salvo.<br><br><small>Use o botao Salvar rascunho durante o preenchimento.</small></div>';
   } else {
     lista.innerHTML = _rascunhos.map(function(r, i) {
       return '<div class="hist-card rascunho">' +
-        '<div class="hist-tipo rascunho">📝 Rascunho — '+(r.tipoLabel||'QAR Externo')+'</div>' +
-        '<div class="hist-cliente">' + r.cliente + '</div>' +
+        '<div class="hist-tipo rascunho">&#128196; Rascunho — '+(r.tipoLabel||r.tipo||'—')+'</div>' +
+        '<div class="hist-cliente">' + (r.cliente||'—') + '</div>' +
         '<div class="hist-meta">' +
-          '<span>📅 ' + r.data + '</span>' +
-          '<span>👤 ' + r.tecnico + '</span>' +
-          '<span>🕐 ' + new Date(r.ts).toLocaleString("pt-BR") + '</span>' +
+          '<span>&#128197; ' + (r.data||'—') + '</span>' +
+          '<span>&#128100; ' + (r.tecnico||'—') + '</span>' +
+          '<span>&#128336; ' + new Date(r.ts).toLocaleString("pt-BR") + '</span>' +
         '</div>' +
         '<div class="hist-actions">' +
-          '<button class="hist-btn primary" onclick="editarRascunho(' + i + ')">✏️ Continuar preenchimento</button>' +
-          '<button class="hist-btn danger" onclick="excluirRascunho(' + i + ')">🗑️ Excluir</button>' +
+          '<button class="hist-btn primary" onclick="editarRascunho(' + i + ')">&#9998; Continuar</button>' +
+          '<button class="hist-btn danger" onclick="excluirRascunho(' + i + ')">&#128465; Excluir</button>' +
         '</div>' +
         '</div>';
     }).join('');
@@ -1326,6 +1326,52 @@ function ventoField(pid){return '<div class="field"><label>Vento (m/s)</label><i
 function ventoAlerta(id){var val=parseFloat(document.getElementById(id)&&document.getElementById(id).value||0);var al=document.getElementById(id+'-alerta');if(al)al.style.display=val>=5?'block':'none';}
 function validarChkDiff(iniId,fimId,alertaId){var ini=parseFloat(document.getElementById(iniId)&&document.getElementById(iniId).value||0);var fim=parseFloat(document.getElementById(fimId)&&document.getElementById(fimId).value||0);var al=document.getElementById(alertaId);if(al)al.style.display=(!isNaN(ini)&&!isNaN(fim)&&Math.abs(fim-ini)>=0.5)?'block':'none';}
 function fotoTela(pid,sufixo,lbl){return '<div class="field"><label>'+lbl+'</label><div class="foto-area" onclick="document.getElementById(\'ft'+sufixo+'-'+pid+'\').click()"><input type="file" id="ft'+sufixo+'-'+pid+'" accept="image/*" capture="environment" data-pid="ft'+sufixo+'-'+pid+'" onchange="previewFotoCb(this)" style="display:none"/><div class="foto-icon">&#128247;</div><div class="foto-text">Foto da tela</div></div><div class="foto-preview" id="fp-ft'+sufixo+'-'+pid+'"></div></div>';}
+
+// ── RASCUNHOS ────────────────────────────────────────────────────────────
+function salvarRascunhoGeral(){
+  var dados={data:v('data'),hora:v('hora'),tecnico:v('tecnico'),cliente:v('cliente'),cidade:v('cidade'),numOS:v('num-os'),tipo:tipoSel,timestamp:new Date().toISOString()};
+  // Tentar coletar dados completos
+  try{
+    var completos=coletarDados();
+    if(completos&&completos.tipo)dados=completos;
+  }catch(e){console.log('Dados parciais salvos:',e.message);}
+  dados.status='rascunho';
+  var tipos={ruido:'Ruido',sismo:'Vibracao',qar:'QAR Externo',opacidade:'Opacidade',qarint:'QAR Interno',outro:'Outro'};
+  var entry={
+    id:Date.now(),
+    data:dados.data||'',
+    cliente:dados.cliente||'-',
+    tecnico:dados.tecnico||'-',
+    tipo:dados.tipo||tipoSel,
+    tipoLabel:tipos[dados.tipo||tipoSel]||tipoSel,
+    ts:new Date().toISOString(),
+    dados:dados
+  };
+  // Substituir rascunho existente do mesmo tipo/data/cliente
+  var idx=_rascunhos.findIndex(function(r){
+    return r.tipo===entry.tipo&&r.data===entry.data&&r.cliente===entry.cliente;
+  });
+  if(idx>=0){_rascunhos[idx]=entry;}
+  else{_rascunhos.unshift(entry);if(_rascunhos.length>20)_rascunhos=_rascunhos.slice(0,20);}
+  localStorage.setItem('engear_rascunhos',JSON.stringify(_rascunhos));
+  // Tentar salvar no Excel como rascunho
+  if(navigator.onLine&&token){
+    _salvarRascunhoExcel(dados).catch(function(e){console.log('Nao foi possivel salvar rascunho no Excel:',e.message);});
+  }
+  toast('Rascunho salvo!',false,true);
+}
+
+async function _salvarRascunhoExcel(dados){
+  await obterToken();
+  var resultado=montarLinhaPorTipo(dados);
+  // Adicionar status rascunho
+  for(var ri=0;ri<resultado.rows.length;ri++){
+    var row=resultado.rows[ri].slice();
+    // Substituir status (ultima coluna) por Rascunho
+    row[row.length-1]='⏸️ Rascunho';
+    await appendLinha(row,resultado.sheet);
+  }
+}
 function novoRegistro(){
   tipoSel='';fotosAnexadas={};
   document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
