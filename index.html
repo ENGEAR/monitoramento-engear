@@ -808,9 +808,10 @@ function _qarintCalcFromAmb(idx){mostrarBtnRascunho(true);
   var area=parseFloat(aEl?aEl.value:0);
   if(!area||area<=0){toast('Informe a area');return;}
   var n=calcPontosQarint(area);
-  _qarintN=n;_qarintIdx=1;_qarintDados={};
+  _qarintN=n+1; // +1 ponto externo
+  _qarintIdx=1;_qarintDados={};
   var res=document.getElementById('qarint-resultado-'+idx);if(res)res.classList.remove('hidden');
-  var msg=document.getElementById('qarint-msg-'+idx);if(msg)msg.textContent='Area: '+area+' m2 -> '+n+' ponto(s)';
+  var msg=document.getElementById('qarint-msg-'+idx);if(msg)msg.textContent='Area: '+area+' m2 -> '+n+' ponto(s) interno(s) + 1 ponto externo = '+(_qarintN)+' total';
   _qarintRender();
 }
 function _qarintCalc(){var area=parseFloat(v('qarint-area'));if(!area||area<=0){alert('Informe a área da sala');return;}_qarintN=calcPontosQarint(area);_qarintIdx=1;_qarintDados={};var res=document.getElementById('qarint-resultado');var msg=document.getElementById('qarint-msg');res.classList.remove('hidden');msg.textContent='Área: '+area+' m² → '+_qarintN+' ponto(s) necessário(s)';_qarintRender();}
@@ -821,11 +822,15 @@ function _qarintSave(){var p='qarintp'+_qarintIdx;var saved={};document.querySel
 function _qarintRestore(){var saved=_qarintDados[_qarintIdx];if(!saved)return;Object.keys(saved).forEach(function(k){if(k.endsWith('__checked')){var el=document.getElementById(k.replace('__checked',''));if(el&&saved[k])el.classList.add('checked');}else{var el=document.getElementById(k);if(el)el.value=saved[k];}});}
 function _qarintPage(idx){
   var p='qarintp'+idx;
-  var h='<div class="qar-nav"><button class="qar-nav-btn" onclick="_qarintPrev()" '+(idx===1?'disabled':'')+'>&#8592;</button><span class="qar-nav-label">Ponto '+idx+' de '+_qarintN+'</span><button class="qar-nav-btn" onclick="_qarintNext()" '+(idx===_qarintN?'disabled':'')+'>&#8594;</button></div>';
-  h+='<div class="card"><div class="card-title blue">Ponto '+idx+'</div>';
+  var isExterno=(idx===_qarintN);
+  var h='<div class="qar-nav"><button class="qar-nav-btn" onclick="_qarintPrev()" '+(idx===1?'disabled':'')+'>&#8592;</button><span class="qar-nav-label">'+(isExterno?'Ponto Externo':'Ponto '+idx+' de '+(_qarintN-1))+' / '+_qarintN+' total</span><button class="qar-nav-btn" onclick="_qarintNext()" '+(idx===_qarintN?'disabled':'')+'>&#8594;</button></div>';
+  h+='<div class="card"><div class="card-title blue">'+(isExterno?'Ponto Externo':'Ponto '+idx)+'</div>';
+  if(isExterno)h+='<div style="background:#fff3cd;border:1.5px solid #fcd34d;border-radius:8px;padding:8px 12px;font-size:12px;color:#92400e;margin-bottom:10px;">&#127774; Ponto externo — para referência da qualidade do ar externo</div>';
   h+=inp(p+'-nome','Nome do ponto','text','');
   h+=gpsBlock(p);
   h+='<div class="row2">'+inp(p+'-hora-ini','Hora inicial','time','')+inp(p+'-hora-fim','Hora final','time','')+'</div>';
+  h+=inp(p+'-npessoas','Quantidade aproximada de pessoas','number','');
+  h+=chk(p+'-taxa-ocup','Análise da qualidade do ar com taxa de ocupação típica do ambiente');
   h+=chk(p+'-plano','Plano de amostragem conferido');
   h+=chk(p+'-equip','Equipamentos calibrados');
   h+=chk(p+'-posic','Pontos posicionados corretamente');
@@ -839,6 +844,7 @@ function _qarintPage(idx){
   h+=chk(p+'-amostras','Amostras armazenadas');
   h+='<div class="field"><label>Foto do ponto</label><div class="foto-area" onclick="document.getElementById(\'fi-'+p+'\').click()"><input type="file" id="fi-'+p+'" accept="image/*" capture="environment" data-pid="'+p+'" onchange="previewFotoCb(this)" style="display:none"/><div class="foto-icon">&#128247;</div><div class="foto-text">Foto do ponto</div></div><div class="foto-preview" id="fp-'+p+'"></div></div>';
   h+='<div class="field"><label>Foto da tela dos equipamentos</label><div class="foto-area" onclick="document.getElementById(\'fteq-'+p+'\').click()"><input type="file" id="fteq-'+p+'" accept="image/*" capture="environment" data-pid="fteq-'+p+'" onchange="previewFotoCb(this)" style="display:none"/><div class="foto-icon">&#128241;</div><div class="foto-text">Foto da tela</div></div><div class="foto-preview" id="fp-fteq-'+p+'"></div></div>';
+  h+='<div class="field"><label>Foto do ambiente geral</label><div class="foto-area" onclick="document.getElementById(\'famb-'+p+'\').click()"><input type="file" id="famb-'+p+'" accept="image/*" capture="environment" data-pid="famb-'+p+'" onchange="previewFotoCb(this)" style="display:none"/><div class="foto-icon">&#127968;</div><div class="foto-text">Foto do ambiente</div></div><div class="foto-preview" id="fp-famb-'+p+'"></div></div>';
   h+=inp(p+'-obs','Observacoes','text','');
   h+='</div>';
   setTimeout(function(){_qarintRestore();},0);
@@ -1123,7 +1129,7 @@ var BIBLIO_CATS={normas:{titulo:'Normas',itens:[{nome:'Ruído',icon:'🔊',pasta
 
 function abrirBiblioteca(){document.getElementById('app').style.display='none';document.getElementById('biblioteca').classList.remove('hidden');document.getElementById('biblio-home').classList.remove('hidden');document.getElementById('biblio-sub').classList.add('hidden');}
 function fecharBiblioteca(){document.getElementById('biblioteca').classList.add('hidden');document.getElementById('app').style.display='block';}
-function abrirProcedimentos(){window.open('https://engearlaboratorio.sharepoint.com/:f:/r/sites/Engear-SGQ/Documentos%20Compartilhados/SGQ/PROCEDIMENTOS%20pdf?csf=1&web=1&e=1H9GEh','_blank');}
+function abrirProcedimentos(){window.open('https://engearlaboratorio.sharepoint.com/:f:/r/sites/EngearLaboratorio/Documentos%20Partilhados/LABORAT%C3%93RIO/SERVI%C3%87OS/0%20PROCEDIMENTOS%20pdf?csf=1&web=1&e=mJPxTk','_blank');}
 function abrirCategoria(cat){_biblioCategoria=cat;var data=BIBLIO_CATS[cat];document.getElementById('biblio-home').classList.add('hidden');document.getElementById('biblio-sub').classList.remove('hidden');var lista=document.getElementById('biblio-sub-lista');lista.innerHTML='<div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">'+data.titulo+'</div>'+data.itens.map(function(item){return '<div class="biblio-sub-item" data-pasta="'+item.pasta+'" onclick="abrirPastaEl(this)"><span class="biblio-sub-icon">'+item.icon+'</span><span class="biblio-sub-name">'+item.nome+'</span><span style="margin-left:auto;color:var(--muted);">›</span></div>';}).join('');}
 function abrirPastaEl(el){abrirPasta(el.getAttribute('data-pasta'));}
 function abrirPasta(pasta){window.open(BIBLIO_BASE+'/'+pasta+'/index.html','_blank');}
