@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Etapas de Amostragem — QAR Interno</title>
+<style>
+  body{font-family:Arial,sans-serif;background:#f0f4f8;margin:0;padding:0;color:#1a202c;}
+  .header{background:linear-gradient(135deg,#1e5f8a,#2d7db3);color:white;padding:1rem 1.25rem;position:sticky;top:0;z-index:100;}
+  .header h1{font-size:15px;font-weight:600;margin:0;}
+  .back{font-size:13px;opacity:.8;cursor:pointer;margin-bottom:6px;display:block;border:none;background:none;color:white;padding:0;}
+  .content{padding:1.25rem;max-width:430px;margin:0 auto;padding-bottom:5rem;}
+  .secao{background:white;border-radius:12px;padding:1rem 1.25rem;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+  .secao-titulo{font-size:14px;font-weight:700;color:#1e5f8a;margin-bottom:10px;}
+  .sub{font-size:12px;font-weight:600;color:#2d7db3;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em;}
+  .ci{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid #f0f4f8;cursor:pointer;}
+  .ci:last-child{border-bottom:none;}
+  .cb{width:22px;height:22px;min-width:22px;border-radius:6px;border:2px solid #cbd5e0;display:flex;align-items:center;justify-content:center;transition:all .15s;margin-top:1px;flex-shrink:0;}
+  .ci.chk .cb{background:#00b894;border-color:#00b894;}
+  .cm{display:none;color:white;font-size:12px;font-weight:bold;}
+  .ci.chk .cm{display:block;}
+  .ct{font-size:13px;line-height:1.5;}
+  .prog-wrap{background:white;border-radius:12px;padding:.75rem 1rem;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+  .prog-bar{height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;margin-top:6px;}
+  .prog-fill{height:100%;background:#00b894;border-radius:4px;transition:width .3s;}
+  .prog-label{font-size:12px;color:#718096;display:flex;justify-content:space-between;}
+  .reset-btn{width:100%;background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px;font-size:13px;color:#718096;cursor:pointer;margin-top:4px;}
+  .app-btn{position:fixed;bottom:20px;right:20px;z-index:999;background:#2d7db3;color:white;border-radius:30px;padding:10px 18px;font-family:Arial,sans-serif;font-size:13px;font-weight:600;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,0.2);}
+</style>
+</head>
+<body>
+<div class="header">
+  <button class="back" onclick="history.length>1?history.back():window.close()">← Voltar</button>
+  <h1>Etapas de Amostragem — QAR Interno</h1>
+</div>
+<div class="content" id="conteudo">
+
+  <div class="prog-wrap">
+    <div class="prog-label"><span>Progresso</span><span id="pl">0 / 0</span></div>
+    <div class="prog-bar"><div class="prog-fill" id="pf"></div></div>
+  </div>
+
+  <div class="secao"><div class="secao-titulo">📋 Informações preliminares</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar quantidade de ambientes a serem monitorados</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Procurar saber área (m²) aproximada de cada ambiente monitorado</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Definir quantidade mínima de amostras conforme área</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar necessidade de amostra externa</span></div>
+  </div>
+
+  <div class="secao"><div class="secao-titulo">🧰 Verificação dos Equipamentos</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Equipamentos verificados e em boas condições</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Calibração dos equipamentos dentro do prazo</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Baterias carregadas</span></div>
+  </div>
+
+  <div class="secao"><div class="secao-titulo">🌡️ Condições do ambiente</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sistema de climatização ligado</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Sistema operando em condição normal</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar temperatura do ambiente</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar umidade relativa</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar ocupação do ambiente</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar quantidade aproximada de pessoas</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">As medições devem ser realizadas longe de fontes poluentes externas (depósito de resíduos, automóveis, jardins com terra, obras, fontes de combustão)</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar janelas abertas ou fechadas</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar condições relevantes no aplicativo</span></div>
+  </div>
+
+  <div class="secao"><div class="secao-titulo">📌 Posicionamento dos Equipamentos</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Equipamento posicionado a 1,5 m do piso</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Equipamento afastado de paredes</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Equipamento longe de insuflamento direto</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Equipamento distante do operador</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Ponto localizado em área de maior ocupação</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Pontos distribuídos uniformemente</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Equipamento estabilizado no tripé</span></div>
+  </div>
+
+  <div class="secao"><div class="secao-titulo">🌬️ Coleta de Fungos</div>
+    <div class="sub">Antes da coleta:</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar vazão da bomba</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Vazão entre 25,5 e 31,1 L/min</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar verificação da vazão</span></div>
+    <div class="sub">Durante a coleta:</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Inserir placa corretamente</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Retirar tampa da placa somente no momento da coleta</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Programar tempo de coleta</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar horário inicial</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar horário final</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar volume amostrado</span></div>
+    <div class="sub">Após a coleta:</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Tampar placa imediatamente</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Vedação com fita</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Identificar placa</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Acondicionar em caixa isotérmica</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Higienizar impactador com álcool 70%</span></div>
+  </div>
+
+  <div class="secao"><div class="secao-titulo">🌡️ Medições Diretas</div>
+    <div class="sub">CO₂:</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Medição interna realizada</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Medição externa realizada</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar valor em ppm</span></div>
+    <div class="sub">Temperatura:</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar temperatura do ar</span></div>
+    <div class="sub">Umidade relativa:</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar UR%</span></div>
+    <div class="sub">Velocidade do ar:</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Evitar medição diretamente na saída do ar</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar velocidade em m/s</span></div>
+    <div class="sub">Particulado:</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar concentrações das frações de particulados</span></div>
+  </div>
+
+  <div class="secao"><div class="secao-titulo">🔬 Método alternativo de Coleta de PM10 / PM2,5</div>
+    <div class="sub">Antes da coleta:</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar código do filtro</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar integridade do porta-filtro</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Realizar calibração inicial</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Ajustar vazão para 3 L/min</span></div>
+    <div class="sub">Durante a coleta:</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Posicionar entrada de ar corretamente</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar horário inicial</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar horário final</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Registrar volume coletado</span></div>
+    <div class="sub">Após a coleta:</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Fechar porta-filtro com plugues</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Armazenar corretamente</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Evitar movimentação brusca</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Realizar calibração final</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Verificar variação máxima de 5%</span></div>
+  </div>
+
+  <div class="secao"><div class="secao-titulo">🚚 Transporte das Amostras</div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Amostras acondicionadas corretamente</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Caixa isotérmica fechada</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Gelo reciclável presente</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Amostras identificadas com risco biológico</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Cadeia de custódia preenchida</span></div>
+    <div class="ci" onclick="chk(this)"><div class="cb"><span class="cm">✓</span></div><span class="ct">Envio ao laboratório realizado rapidamente</span></div>
+  </div>
+
+  <button class="reset-btn" onclick="resetAll()">↺ Reiniciar checklist completo</button>
+</div>
+<a class="app-btn" href="https://engear.github.io/monitoramento-engear/">🏠 Voltar ao App</a>
+<script>
+function chk(el){el.classList.toggle('chk');atualizar();}
+function atualizar(){
+  var total=document.querySelectorAll('.ci').length;
+  var done=document.querySelectorAll('.ci.chk').length;
+  var pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('pf').style.width=pct+'%';
+  document.getElementById('pl').textContent=done+' / '+total;
+}
+function resetAll(){document.querySelectorAll('.ci.chk').forEach(function(el){el.classList.remove('chk');});atualizar();}
+</script>
+</body>
+</html>
