@@ -323,6 +323,9 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 
 
+
+
+
 const CFG={clientId:'756385e2-9a87-4997-a939-60129e4c1573',tenantId:'f84b416a-a586-42bf-b3ae-46d4d8e882da',clientSecret:'YOC8Q~~1S0wTi3f~qyeMq5VIbXkg31T3gIwjgc.4',siteHost:'engearlaboratorio.sharepoint.com',sitePath:'/sites/EngearLaboratorio',filePath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/monitoramento.xlsx',fotosPath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/Fotos',sheetName:'Plan1',senha:'campo26*',workerUrl:'https://engear-auth.red-cell-b560.workers.dev'};
 var token=null,tokenExp=0,nomeLogado='',tipoSel='',fotosAnexadas={};
 var pending=JSON.parse(localStorage.getItem('engear_pending')||'[]');
@@ -1146,8 +1149,19 @@ function renderSismo(){
   _sismoIdx=1;_sismoDados={};
   return '<div class="card"><div class="card-title blue">Vibração</div>'+
     sel('s-objetivo','Objetivo do monitoramento',['Vibrações da Empresa','Vibrações do Ambiente (Background)'])+
-    inp('s-finalidade','Finalidade do ensaio','text','')+
     '<div class="field"><label>Quantidade de pontos</label><select id="s-npontos" onchange="_sismoSetN(parseInt(this.value)||1)"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>'+
+    '<span class="passo-step">Configurações específicas por tipo de evento</span>'+
+    chk('s-cfg1','ICMBio → SISMOGRAMA (TRIGGER) e HISTOGRAMA')+
+    chk('s-cfg2','Eventos curtos (< 30 min) → SISMOGRAMA (TRIGGER)')+
+    chk('s-cfg3','Eventos longos (> 30 min) → SISMOGRAMA (TRIGGER) e HISTOGRAMA')+
+    '<span class="passo-step">Informações preliminares</span>'+
+    chk('s-pre1','Identificada em campo qual a fonte de vibração será analisada')+
+    chk('s-pre2','Geofone verificado — em pleno estado de uso')+
+    chk('s-pre3','Microfone verificado — em pleno estado de uso')+
+    '<div style="background:#fff8e1;border:1.5px solid #fcd34d;border-radius:8px;padding:8px 12px;font-size:12px;color:#92400e;margin-bottom:8px;">⚠️ Se não checar: verificar cabos; se persistir: contatar ENGEAR</div>'+
+    chk('s-pre4','Tripé verificado — em pleno estado de uso')+
+    chk('s-pre5','Cabos sem avarias')+
+    chk('s-pre6','Baterias instaladas')+
     '</div><div id="sismo-wrap"></div>';
 }
 function _sismoSetN(n){mostrarBtnRascunho(true);_sismoN=n;_sismoIdx=1;_sismoDados={};_sismoRender();}
@@ -1160,6 +1174,7 @@ function _sismoPage(idx){
   var p='sp'+idx;
   var h='<div class="qar-nav"><button class="qar-nav-btn" onclick="_sismoPrev()" '+(idx===1?'disabled':'')+'>&#8592;</button><span class="qar-nav-label">Ponto '+idx+' de '+_sismoN+'</span><button class="qar-nav-btn" onclick="_sismoNext()" '+(idx===_sismoN?'disabled':'')+'>&#8594;</button></div>';
   h+='<div class="card"><div class="card-title blue">Ponto '+idx+'</div>';
+  h+=inp(p+'-hora-ini','Hora inicial','time','');
   h+=inp(p+'-nome','Nome do ponto','text','');
   h+='<div class="field"><label>Tipo de equipamento</label>'+
     '<select id="'+p+'-tipoequip-sismo" onchange="toggleOutroEquipSismo(\''+p+'\',this.value)">'+
@@ -1169,18 +1184,58 @@ function _sismoPage(idx){
     '<div class="field hidden" id="'+p+'-tipoequip-sismo-outro-field">'+
     '<label>Especifique o equipamento</label><input type="text" id="'+p+'-tipoequip-sismo-outro" placeholder="Descreva..."/>'+
     '</div>';
-  h+=inp(p+'-numequip-sismo','N\u00ba do equipamento','text','');
+  h+=inp(p+'-numequip-sismo','Nº do equipamento','text','');
   h+=gpsBlock(p);
+  // Escolha do local
+  h+='<span class="passo-step">📍 Escolha do local</span>';
+  h+=chk(p+'-loc1','Ponto representa adequadamente o cenário');
+  h+=chk(p+'-loc2','Solo preferencialmente natural ou aterro consolidado');
+  h+=chk(p+'-loc3','Evitado solo desagregado');
+  h+=chk(p+'-loc4','Evitado piso pavimentado / calçada / passarela');
+  h+=chk(p+'-loc5','Sem interferências excessivas próximas');
+  h+=chk(p+'-loc6','Sem obstáculos relevantes entre fonte e sensor');
+  h+=chk(p+'-loc7','Distante de alta tensão (> 7 m)');
+  h+=chk(p+'-loc8','Sem movimentação excessiva de pessoas');
+  h+=chk(p+'-loc9','Sem interferência de rádio transmissor');
+  // Instalação geofone solo
+  h+='<span class="passo-step">🔧 Instalação do geofone — solo</span>';
+  h+=chk(p+'-geo1','Geofone nivelado');
+  h+=chk(p+'-geo2','Cravos totalmente enterrados');
+  h+=chk(p+'-geo3','Profundidade entre 10 e 30 cm');
+  h+=chk(p+'-geo4','Fixação firme no solo');
+  // Instalação solo rígido
+  h+='<span class="passo-step">🔧 Instalação do geofone — solo rígido</span>';
+  h+=chk(p+'-geo5','Uso de gesso / grampos / parafusos');
+  h+=chk(p+'-geo6','Furos protegidos com fita adesiva');
+  h+=chk(p+'-geo7','Fixação conferida após secagem');
+  h+=chk(p+'-geo8','Equipamento sem folgas');
+  h+=chk(p+'-geo9','Trigger configurado (0,5 mm/s)');
+  h+=chk(p+'-geo10','Memória verificada');
+  // Microfone
+  h+='<span class="passo-step">🎤 Instalação do microfone</span>';
+  h+=chk(p+'-mic1','Instalado externamente à edificação');
+  h+=chk(p+'-mic2','Distância máxima de 3 m da estrutura monitorada');
+  h+=chk(p+'-mic3','Distante pelo menos 3 m de outras paredes');
+  h+=chk(p+'-mic4','Sem obstáculos entre fonte e microfone');
+  h+=chk(p+'-mic5','Protetor de vento instalado');
+  h+=chk(p+'-mic6','Altura do tripé ajustada adequadamente');
+  // Fonte e auto verificação
   h+=inp(p+'-fonte','Fonte de vibração','text','');
   h+=chk(p+'-autov','Auto verificação do equipamento realizada');
+  h+='<div style="background:#fff8e1;border:1.5px solid #fcd34d;border-radius:8px;padding:8px 12px;font-size:12px;color:#92400e;margin-bottom:8px;">⚠️ Se não checar: verificar cabos; se persistir: contatar ENGEAR</div>';
+  // Foto
   h+=fotoBlock(p);
-  
-  h+=chk(p+'-trigger','Trigger configurado (0,5 mm/s)');
-  h+=chk(p+'-mem','Memória verificada');
-  h+=chk(p+'-prog','Programação validada');
-  h+=chk(p+'-capt','Captação ativa');
+  // Durante o monitoramento (após a foto, removidos trigger/mem/prog/capt)
+  h+='<span class="passo-step">🚨 Durante o monitoramento</span>';
+  h+=chk(p+'-dur1','Conferida checagem automática do equipamento');
+  h+=chk(p+'-dur2','Equipamento orientado para a fonte');
+  h+=chk(p+'-dur3','Afastado um passo atrás do equipamento');
+  h+=chk(p+'-dur4','Evento captado');
+  h+=chk(p+'-dur5','Registro sísmico conferido após evento');
+  // Intercorrências
   h+='<div class="field"><label>Intercorrências</label><select id="'+p+'-interc-sel" data-ponto="'+p+'" onchange="toggleInterc(this)"><option value="nenhuma">Nenhuma</option><option value="sim">Sim — descrever</option></select></div>';
   h+='<div class="field hidden" id="'+p+'-interc-desc-field"><input type="text" id="'+p+'-interc" placeholder="Descreva a intercorrência..."/></div>';
+  h+=inp(p+'-hora-fim','Hora final','time','');
   h+='</div>';
   setTimeout(function(){_sismoRestore();},0);
   return h;
@@ -2068,6 +2123,9 @@ function selEventualidade(pid, sim){
   if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
   if(desc)desc.style.display=sim?'block':'none';
 }
+
+
+
 
 
 
