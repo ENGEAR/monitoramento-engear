@@ -1486,7 +1486,7 @@ function _rpiRestore(){
   });
 }
 function _rpiUpdate(){
-  var nav=document.getElementById('rpi-nav-wrap');
+  var nav=document.getElementById('rpi-nav-wrap')||document.getElementById('rp-nav-wrap-int');
   var cont=document.getElementById('rp-cont-int');
   if(nav)nav.innerHTML=_rpiNav();
   if(cont)cont.innerHTML=_rpiPageBody(_rpiIdx);
@@ -1514,6 +1514,51 @@ function _rpiPageBody(idx){
   h+='</div></div>';
   setTimeout(function(){_rpiRestore();},0);
   return h;
+}
+
+// ── RUÍDO INTERNO ─────────────────────────────────────────────────────────
+function selEsq(val){
+  document.getElementById('r-esquadria').value=val;
+  var a=document.getElementById('btn-esq-aberta');
+  var b=document.getElementById('btn-esq-fechada');
+  if(a){a.style.background=val==='aberta'?'#2d7db3':'#f0f4f8';a.style.color=val==='aberta'?'white':'#1a202c';a.style.border='1.5px solid '+(val==='aberta'?'#2d7db3':'#e2e8f0');}
+  if(b){b.style.background=val==='fechada'?'#2d7db3':'#f0f4f8';b.style.color=val==='fechada'?'white':'#1a202c';b.style.border='1.5px solid '+(val==='fechada'?'#2d7db3':'#e2e8f0');}
+}
+
+function selAmb(val){
+  document.getElementById('r-ambiente-cond').value=val;
+  var a=document.getElementById('btn-amb-vazio');
+  var b=document.getElementById('btn-amb-pessoas');
+  if(a){a.style.background=val==='vazio'?'#2d7db3':'#f0f4f8';a.style.color=val==='vazio'?'white':'#1a202c';a.style.border='1.5px solid '+(val==='vazio'?'#2d7db3':'#e2e8f0');}
+  if(b){b.style.background=val==='pessoas'?'#2d7db3':'#f0f4f8';b.style.color=val==='pessoas'?'white':'#1a202c';b.style.border='1.5px solid '+(val==='pessoas'?'#2d7db3':'#e2e8f0');}
+}
+
+function calcPontosRuidoInt(){
+  var area=parseFloat(document.getElementById('r-area-int')&&document.getElementById('r-area-int').value||0);
+  if(!area||area<=0){toast('Informe a área do ambiente');return;}
+  var n=area<=30?3:3+Math.ceil((area-30)/30);
+  var res=document.getElementById('r-int-resultado');
+  if(res)res.classList.remove('hidden');
+  var msg=document.getElementById('r-int-msg');
+  if(msg)msg.textContent='Área: '+area+' m² → '+n+' ponto(s) necessário(s)';
+  // Mostrar canvas
+  var wrap=document.getElementById('sala-canvas-wrap');
+  if(wrap){
+    wrap.style.display='block';
+    setTimeout(function(){iniciarCanvas();},300);
+  }
+  // Renderizar pontos
+  _rpiN=n;_rpiIdx=1;_rpiDados={};
+  var nav=document.getElementById('rp-nav-wrap-int');
+  var cont=document.getElementById('rp-cont-int');
+  if(nav)nav.innerHTML=_rpiNav();
+  if(cont)cont.innerHTML=_rpiPageBody(1);
+  mostrarBtnRascunho(true);
+}
+
+function renderPontosRuidoInt(n){
+  _rpiN=n;_rpiIdx=1;_rpiDados={};
+  return '<div id="rpi-nav-wrap">'+_rpiNav()+'</div><div id="rp-cont-int">'+_rpiPageBody(1)+'</div>';
 }
 function novoRegistro(){
   tipoSel='';fotosAnexadas={};
