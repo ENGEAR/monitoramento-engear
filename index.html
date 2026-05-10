@@ -596,7 +596,6 @@ function renderSismo(){
   _sismoIdx=1;_sismoDados={};
   return '<div class="card"><div class="card-title blue">Vibração</div>'+
     sel('s-objetivo','Objetivo do monitoramento',['Vibrações da Empresa','Vibrações do Ambiente (Background)'])+
-    inp('s-finalidade','Finalidade do ensaio','text','')+
     '<div class="field"><label>Quantidade de pontos</label><select id="s-npontos" onchange="_sismoSetN(parseInt(this.value)||1)"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>'+
     '</div><div id="sismo-wrap"></div>';
 }
@@ -1862,27 +1861,36 @@ function renderPontosRuidoInt(n){
 var _cronTimers = {};
 function iniciarCronometro(id, meta) {
   meta = meta || 60;
+  var btnId = 'btn-' + id;
+  var btn = document.getElementById(btnId);
   if (_cronTimers[id]) {
+    // PAUSAR
     clearInterval(_cronTimers[id]);
     delete _cronTimers[id];
     var el = document.getElementById(id);
-    if (el) { el.style.display = 'none'; el.textContent = '00:00'; el.style.color = '#2d7db3'; }
+    if (el) { el.style.color = '#f59e0b'; }
+    if (btn) btn.innerHTML = '▶️ Retomar cronômetro';
     return;
   }
   var el = document.getElementById(id);
   if (!el) return;
+  // Ver se já tinha tempo (retomar)
+  var jaPassou = 0;
+  if (el.style.display === 'block' && el.textContent && el.textContent.includes(':')) {
+    var parts = el.textContent.replace('✓ ','').split(':');
+    jaPassou = (parseInt(parts[0])||0)*60 + (parseInt(parts[1])||0);
+  }
   el.style.display = 'block';
   el.style.color = '#2d7db3';
-  var start = Date.now();
+  if (btn) btn.innerHTML = '⏸️ Pausar cronômetro';
+  var start = Date.now() - jaPassou * 1000;
   _cronTimers[id] = setInterval(function() {
     var elapsed = Math.floor((Date.now() - start) / 1000);
     var m = Math.floor(elapsed / 60);
     var s = elapsed % 60;
-    el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-    if (elapsed >= meta) {
-      el.style.color = '#00b894';
-      el.textContent = '✓ ' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-    }
+    el.style.color = elapsed >= meta ? '#00b894' : '#2d7db3';
+    el.textContent = (elapsed >= meta ? '✓ ' : '') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    if (btn && elapsed >= meta) btn.innerHTML = '✅ Concluído — Reiniciar';
   }, 500);
 }
 function novoRegistro(){
