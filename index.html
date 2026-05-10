@@ -329,6 +329,7 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 
 
+
 const CFG={clientId:'756385e2-9a87-4997-a939-60129e4c1573',tenantId:'f84b416a-a586-42bf-b3ae-46d4d8e882da',clientSecret:'YOC8Q~~1S0wTi3f~qyeMq5VIbXkg31T3gIwjgc.4',siteHost:'engearlaboratorio.sharepoint.com',sitePath:'/sites/EngearLaboratorio',filePath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/monitoramento.xlsx',fotosPath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/Fotos',sheetName:'Plan1',senha:'campo26*',workerUrl:'https://engear-auth.red-cell-b560.workers.dev'};
 var token=null,tokenExp=0,nomeLogado='',tipoSel='',fotosAnexadas={};
 var pending=JSON.parse(localStorage.getItem('engear_pending')||'[]');
@@ -1797,20 +1798,30 @@ function lerFotoBase64(file){return new Promise(function(resolve){var reader=new
 
 // FILA DE PENDÊNCIAS
 function verPendencias(){
-  var lista=document.getElementById('pendencias-lista');
-  var tipos={ruido:'Ruído',sismo:'Vibração',qar:'QAR Externo',opacidade:'Opacidade',qarint:'QAR Interno',outro:'Outro'};
-  if(pending.length===0){lista.innerHTML='<p style="color:var(--muted);font-size:14px;text-align:center;padding:1rem;">Nenhum registro pendente.</p>';}
-  else{lista.innerHTML=pending.map(function(r,i){var d=r.dados||{};var dt=new Date(r.ts||Date.now());
-    return '<div class="saved-info" style="margin-bottom:8px;">'+
-      '<div class="saved-row"><span>Data</span><span>'+(d.data||dt.toLocaleDateString('pt-BR'))+'</span></div>'+
-      '<div class="saved-row"><span>Hora</span><span>'+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'</span></div>'+
-      '<div class="saved-row"><span>Técnico</span><span>'+(d.tecnico||'—')+'</span></div>'+
-      '<div class="saved-row"><span>Tipo</span><span>'+(tipos[d.tipo]||d.tipo||'—')+'</span></div>'+
-      '<div class="saved-row"><span>Cliente</span><span>'+(d.cliente||'—')+'</span></div>'+
-      '<div style="margin-top:8px;"><button onclick="excluirPendencia('+i+')" style="width:100%;background:#fff3f3;color:#e53e3e;border:1px solid #fecaca;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;">🗑️ Excluir este registro</button></div>'+
-      '</div>';
-  }).join('');}
+  // Garantir que #app está visível
+  var appEl=document.getElementById('app');
+  if(appEl)appEl.style.display='block';
+  // Mostrar a seção de pendências
   mostrar('pendencias');
+  // Preencher a lista
+  var lista=document.getElementById('pendencias-lista');
+  if(!lista)return;
+  var tipos={ruido:'Ruído',sismo:'Vibração',qar:'QAR Externo',opacidade:'Opacidade',qarint:'QAR Interno',outro:'Outro'};
+  if(pending.length===0){
+    lista.innerHTML='<p style="color:var(--muted);font-size:14px;text-align:center;padding:1rem;">Nenhum registro pendente.</p>';
+  } else {
+    lista.innerHTML=pending.map(function(r,i){
+      var d=r.dados||{};var dt=new Date(r.ts||Date.now());
+      return '<div class="saved-info" style="margin-bottom:8px;">'+
+        '<div class="saved-row"><span>Data</span><span>'+(d.data||dt.toLocaleDateString('pt-BR'))+'</span></div>'+
+        '<div class="saved-row"><span>Tipo</span><span>'+(tipos[d.tipo]||d.tipo||'—')+'</span></div>'+
+        '<div class="saved-row"><span>Cliente</span><span>'+(d.cliente||'—')+'</span></div>'+
+        '<div class="saved-row"><span>Técnico</span><span>'+(d.tecnico||'—')+'</span></div>'+
+        '<div class="saved-row"><span>Salvo em</span><span>'+dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'</span></div>'+
+        '<div style="margin-top:8px;"><button onclick="excluirPendencia('+i+')" style="width:100%;background:#fff3f3;color:#e53e3e;border:1px solid #fecaca;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;">🗑️ Excluir este registro</button></div>'+
+        '</div>';
+    }).join('');
+  }
 }
 
 function excluirPendencia(idx){
@@ -2284,6 +2295,7 @@ function selEventualidade(pid, sim){
   if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
   if(desc)desc.style.display=sim?'block':'none';
 }
+
 
 
 
