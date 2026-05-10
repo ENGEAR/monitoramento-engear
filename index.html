@@ -609,6 +609,7 @@ function _sismoPage(idx){
   var p='sp'+idx;
   var h='<div class="qar-nav"><button class="qar-nav-btn" onclick="_sismoPrev()" '+(idx===1?'disabled':'')+'>&#8592;</button><span class="qar-nav-label">Ponto '+idx+' de '+_sismoN+'</span><button class="qar-nav-btn" onclick="_sismoNext()" '+(idx===_sismoN?'disabled':'')+'>&#8594;</button></div>';
   h+='<div class="card"><div class="card-title blue">Ponto '+idx+'</div>';
+  h+=inp(p+'-hora-ini','Hora inicial do ponto','time','');
   h+=inp(p+'-nome','Nome do ponto','text','');
   h+='<div class="field"><label>Tipo de equipamento</label>'+
     '<select id="'+p+'-tipoequip-sismo" onchange="toggleOutroEquipSismo(\''+p+'\',this.value)">'+
@@ -622,14 +623,14 @@ function _sismoPage(idx){
   h+=gpsBlock(p);
   h+=inp(p+'-fonte','Fonte de vibração','text','');
   h+=chk(p+'-autov','Auto verificação do equipamento realizada');
-  h+=fotoBlock(p);
-  h+='<div class="row2">'+inp(p+'-temp','Temp. (°C)','number','')+inp(p+'-umid','Umidade (%)','number','')+'</div>';
-  h+=chk(p+'-trigger','Trigger configurado (0,05 mm/s)');
+  h+=chk(p+'-trigger','Trigger configurado (0,5 mm/s)');
   h+=chk(p+'-mem','Memória verificada');
+  h+=fotoBlock(p);
   h+=chk(p+'-prog','Programação validada');
   h+=chk(p+'-capt','Captação ativa');
   h+='<div class="field"><label>Intercorrências</label><select id="'+p+'-interc-sel" data-ponto="'+p+'" onchange="toggleInterc(this)"><option value="nenhuma">Nenhuma</option><option value="sim">Sim — descrever</option></select></div>';
   h+='<div class="field hidden" id="'+p+'-interc-desc-field"><input type="text" id="'+p+'-interc" placeholder="Descreva a intercorrência..."/></div>';
+  h+=inp(p+'-hora-fim','Hora de término do ponto','time','');
   h+='</div>';
   setTimeout(function(){_sismoRestore();},0);
   return h;
@@ -852,20 +853,35 @@ function _updateQarintAmbNav(){
 function _qarintAmbPrev(){if(_qarintAmbIdx>1){_saveQarintAmb();_qarintAmbIdx--;_loadQarintAmb();_updateQarintAmbNav();window.scrollTo(0,0);}}
 function _qarintAmbNext(){if(_qarintAmbIdx<_qarintNAmb){_saveQarintAmb();_qarintAmbIdx++;_loadQarintAmb();_updateQarintAmbNav();window.scrollTo(0,0);}}
 function _saveQarintAmb(){
-  var saved={npontos:_qarintN,pontos:JSON.parse(JSON.stringify(_qarintDados))};
+  if(_qarintN>1)_qarintSave(); // Salvar ponto atual antes de trocar
+  var saved=_qarintAmbData[_qarintAmbIdx]||{};
+  saved.npontos=_qarintN;
+  saved.pontos=JSON.parse(JSON.stringify(_qarintDados));
   var nome=document.getElementById('qaint-nome-'+_qarintAmbIdx);if(nome)saved.nome=nome.value;
   var area=document.getElementById('qaint-area-'+_qarintAmbIdx);if(area)saved.area=area.value;
   _qarintAmbData[_qarintAmbIdx]=saved;
 }
 function _loadQarintAmb(){
+  // Limpar pontos do ambiente anterior
+  var qw=document.getElementById('qarint-wrap');
+  if(qw)qw.innerHTML='';
+  _qarintN=1;_qarintIdx=1;_qarintDados={};
+  // Carregar form do novo ambiente
   var inner=document.getElementById('qarint-amb-inner');
   if(inner)inner.innerHTML=_qarintAmbFormHtml(_qarintAmbIdx);
-  var cont=document.getElementById('qarint-amb-cont');
+  // Restaurar dados salvos
   var saved=_qarintAmbData[_qarintAmbIdx];
   if(saved){
-    var nome=document.getElementById('qaint-nome-'+_qarintAmbIdx);if(nome&&saved.nome)nome.value=saved.nome;
-    var area=document.getElementById('qaint-area-'+_qarintAmbIdx);if(area&&saved.area)area.value=saved.area;
-    if(saved.npontos){_qarintN=saved.npontos;_qarintDados=saved.pontos||{};_qarintIdx=1;_qarintRender();}
+    setTimeout(function(){
+      var nome=document.getElementById('qaint-nome-'+_qarintAmbIdx);if(nome&&saved.nome)nome.value=saved.nome;
+      var area=document.getElementById('qaint-area-'+_qarintAmbIdx);if(area&&saved.area)area.value=saved.area;
+      if(saved.npontos){
+        _qarintN=saved.npontos;_qarintDados=saved.pontos||{};_qarintIdx=1;
+        var res=document.getElementById('qarint-resultado-'+_qarintAmbIdx);
+        if(res){res.classList.remove('hidden');var msg=document.getElementById('qarint-msg-'+_qarintAmbIdx);if(msg)msg.textContent=saved.resultMsg||'';}
+        _qarintRender();
+      }
+    },50);
   }
 }
 function _qarintAmbFormHtml(idx){
@@ -884,7 +900,11 @@ function _qarintCalcFromAmb(idx){mostrarBtnRascunho(true);
   _qarintN=n+1; // +1 ponto externo
   _qarintIdx=1;_qarintDados={};
   var res=document.getElementById('qarint-resultado-'+idx);if(res)res.classList.remove('hidden');
-  var msg=document.getElementById('qarint-msg-'+idx);if(msg)msg.textContent='Area: '+area+' m2 -> '+n+' ponto(s) interno(s) + 1 externo = '+(_qarintN)+' total';
+  var msgTxt='Area: '+area+' m2 -> '+n+' ponto(s) interno(s) + 1 externo = '+(_qarintN)+' total';
+  var msg=document.getElementById('qarint-msg-'+idx);if(msg)msg.textContent=msgTxt;
+  // Salvar resultMsg para restauração
+  if(!_qarintAmbData[idx])_qarintAmbData[idx]={};
+  _qarintAmbData[idx].resultMsg=msgTxt;
   _qarintRender();
   // Mostrar canvas do layout
   setTimeout(function(){
