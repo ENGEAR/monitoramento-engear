@@ -1100,7 +1100,7 @@ if(d.tipo==='ruido'&&d.pontos){d.pontos.forEach(function(p,i){linhas.push(ponto(
       '<div class="no-print" style="text-align:center;margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">'+
       '<button onclick="window.print()" style="background:#2d7db3;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">🖨️ Imprimir / Compartilhar PDF</button>'+
       '<button onclick="baixarHTML()" style="background:#00b894;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">💾 Salvar no celular</button>'+
-      '</div><script>function baixarHTML(){var blob=new Blob([document.documentElement.outerHTML],{type:"text/html"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="'+nomeArq+'";a.click();}<\/script></body></html>';
+      '</div><scr'+'ipt>function baixarHTML(){var blob=new Blob([document.documentElement.outerHTML],{type:"text/html"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="'+nomeArq+'";a.click();}<\/scr'+'ipt></body></html>';
     var blob=new Blob([html_pdf],{type:'text/html'});var file=new File([blob],nomeArq,{type:'text/html'});
     if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({title:'Registro Engear — '+tipoLabel,files:[file]}).catch(function(e){if(e.name!=='AbortError')_abrirPdfJanela(html_pdf);});}
     else if(navigator.share){var url=URL.createObjectURL(blob);navigator.share({title:'Registro Engear — '+tipoLabel,url:url}).catch(function(e){if(e.name!=='AbortError')_abrirPdfJanela(html_pdf);});}
@@ -1918,9 +1918,8 @@ function novoRegistro(){
 
 var toastT;
 function toast(msg,err,suc){var el=document.getElementById('toast');el.textContent=msg;el.className=(err?'error':suc?'success':'')+' show';clearTimeout(toastT);toastT=setTimeout(function(){el.className='';},3500);}
-</script>
-</body>
-</htmlfunction mostrarTela(id){['passo1','passo2','passo3','passo4','passo5','sucesso','pendencias','historico','rascunhos'].forEach(function(s){var e=document.getElementById(s);if(e)e.classList.add('hidden');});var t=document.getElementById(id);if(t)t.classList.remove('hidden');}
+
+function mostrarTela(id){['passo1','passo2','passo3','passo4','passo5','sucesso','pendencias','historico','rascunhos'].forEach(function(s){var e=document.getElementById(s);if(e)e.classList.add('hidden');});var t=document.getElementById(id);if(t)t.classList.remove('hidden');}
 function atualizarOfflineBar(){var bar=document.getElementById('offline-bar');if(!navigator.onLine||pending.length>0){bar.classList.add('show');document.getElementById('pending-count').textContent=pending.length;}else{bar.classList.remove('show');}}
 
 function toggleLembrar(cb){if(!cb.checked){localStorage.removeItem('engear_saved_senha');localStorage.removeItem('engear_saved_nome');}}
@@ -2734,7 +2733,7 @@ if(d.tipo==='ruido'&&d.pontos){d.pontos.forEach(function(p,i){linhas.push(ponto(
       '<div class="no-print" style="text-align:center;margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">'+
       '<button onclick="window.print()" style="background:#2d7db3;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">🖨️ Imprimir / Compartilhar PDF</button>'+
       '<button onclick="baixarHTML()" style="background:#00b894;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">💾 Salvar no celular</button>'+
-      '</div><script>function baixarHTML(){var blob=new Blob([document.documentElement.outerHTML],{type:"text/html"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="'+nomeArq+'";a.click();}<\/script></body></html>';
+      '</div><scr'+'ipt>function baixarHTML(){var blob=new Blob([document.documentElement.outerHTML],{type:"text/html"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="'+nomeArq+'";a.click();}<\/scr'+'ipt></body></html>';
     var blob=new Blob([html_pdf],{type:'text/html'});var file=new File([blob],nomeArq,{type:'text/html'});
     if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({title:'Registro Engear — '+tipoLabel,files:[file]}).catch(function(e){if(e.name!=='AbortError')_abrirPdfJanela(html_pdf);});}
     else if(navigator.share){var url=URL.createObjectURL(blob);navigator.share({title:'Registro Engear — '+tipoLabel,url:url}).catch(function(e){if(e.name!=='AbortError')_abrirPdfJanela(html_pdf);});}
@@ -3290,6 +3289,7 @@ function novoRegistro(){
 
 var toastT;
 function toast(msg,err,suc){var el=document.getElementById('toast');el.textContent=msg;el.className=(err?'error':suc?'success':'')+' show';clearTimeout(toastT);toastT=setTimeout(function(){el.className='';},3500);}
+
 </script>
 </body>
 </html>
