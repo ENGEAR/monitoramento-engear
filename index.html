@@ -838,7 +838,7 @@ function _qarintSetupAmbientes(n){
   _qarintNAmb=n;_qarintAmbIdx=1;_qarintAmbData={};
   var wrap=document.getElementById('qarint-ambientes-wrap');
   if(!wrap)return;
-  wrap.innerHTML=_qarintAmbNavHtml()+_qarintAmbFormHtml(1);
+  wrap.innerHTML=_qarintAmbNavHtml()+'<div id="qarint-amb-wrap"><div id="qarint-amb-inner">'+_qarintAmbFormHtml(1)+'</div></div><div id="qarint-wrap"></div>';
   _updateQarintAmbNav();
 }
 function _qarintAmbNavHtml(){
@@ -858,8 +858,9 @@ function _saveQarintAmb(){
   _qarintAmbData[_qarintAmbIdx]=saved;
 }
 function _loadQarintAmb(){
+  var inner=document.getElementById('qarint-amb-inner');
+  if(inner)inner.innerHTML=_qarintAmbFormHtml(_qarintAmbIdx);
   var cont=document.getElementById('qarint-amb-cont');
-  if(cont)cont.innerHTML=_qarintAmbFormHtml(_qarintAmbIdx);
   var saved=_qarintAmbData[_qarintAmbIdx];
   if(saved){
     var nome=document.getElementById('qaint-nome-'+_qarintAmbIdx);if(nome&&saved.nome)nome.value=saved.nome;
@@ -873,8 +874,6 @@ function _qarintAmbFormHtml(idx){
     '<div class="field"><label>Area climatizada (m2)</label><input type="number" id="qaint-area-'+idx+'" placeholder="Ex: 45"/></div>'+
     '<div class="field"><button class="btn-next" style="width:100%" onclick="_qarintCalcFromAmb('+idx+')">Calcular pontos necessarios</button></div>'+
     '<div id="qarint-resultado-'+idx+'" class="hidden"><div class="chk-alerta" style="background:#e8f4fd;border-color:#2d7db3;color:#1e5f8a;" id="qarint-msg-'+idx+'"></div></div>'+
-    '</div>'+
-    '<div id="qarint-wrap"></div>'+
     '</div>';
 }
 function _qarintCalcFromAmb(idx){mostrarBtnRascunho(true);
@@ -885,8 +884,28 @@ function _qarintCalcFromAmb(idx){mostrarBtnRascunho(true);
   _qarintN=n+1; // +1 ponto externo
   _qarintIdx=1;_qarintDados={};
   var res=document.getElementById('qarint-resultado-'+idx);if(res)res.classList.remove('hidden');
-  var msg=document.getElementById('qarint-msg-'+idx);if(msg)msg.textContent='Area: '+area+' m2 -> '+n+' ponto(s) interno(s) + 1 ponto externo = '+(_qarintN)+' total';
+  var msg=document.getElementById('qarint-msg-'+idx);if(msg)msg.textContent='Area: '+area+' m2 -> '+n+' ponto(s) interno(s) + 1 externo = '+(_qarintN)+' total';
   _qarintRender();
+  // Mostrar canvas do layout
+  setTimeout(function(){
+    var qwrap=document.getElementById('qarint-wrap');
+    if(qwrap&&!document.getElementById('qarint-canvas-section')){
+      var canvasHtml='<div id="qarint-canvas-section" class="card" style="margin-top:10px;"><div class="card-title blue">Layout da sala</div>'+
+        '<p style="font-size:12px;color:#718096;margin-bottom:8px;">Desenhe o layout e posicione os pontos de monitoramento</p>'+
+        '<canvas id="qarint-canvas" style="width:100%;height:220px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;display:block;touch-action:none;"></canvas>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:5px;margin-top:8px;">'+
+        '<button id="qcbtn-ponto" onclick="qCanvasMode(\'ponto\')" style="background:#2d7db3;color:white;border:none;border-radius:8px;padding:7px 4px;font-size:10px;font-weight:600;cursor:pointer;">Ponto</button>'+
+        '<button id="qcbtn-paredeH" onclick="qCanvasMode(\'paredeH\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Parede H</button>'+
+        '<button id="qcbtn-paredeV" onclick="qCanvasMode(\'paredeV\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Parede V</button>'+
+        '<button id="qcbtn-lapis" onclick="qCanvasMode(\'lapis\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Lápis</button>'+
+        '<button id="qcbtn-borracha" onclick="qCanvasMode(\'borracha\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Borracha</button>'+
+        '</div>'+
+        '<button onclick="qCanvasLimpar()" style="width:100%;margin-top:6px;background:#fff3f3;color:#e53e3e;border:1px solid #fecaca;border-radius:8px;padding:8px;font-size:12px;cursor:pointer;">Limpar tudo</button>'+
+        '</div>';
+      qwrap.insertAdjacentHTML('beforeend', canvasHtml);
+      iniciarQCanvas();
+    }
+  }, 200);
 }
 function _qarintCalc(){var area=parseFloat(v('qarint-area'));if(!area||area<=0){alert('Informe a área da sala');return;}_qarintN=calcPontosQarint(area);_qarintIdx=1;_qarintDados={};var res=document.getElementById('qarint-resultado');var msg=document.getElementById('qarint-msg');res.classList.remove('hidden');msg.textContent='Área: '+area+' m² → '+_qarintN+' ponto(s) necessário(s)';_qarintRender();}
 function _qarintRender(){var w=document.getElementById('qarint-wrap');if(w)w.innerHTML=_qarintPage(_qarintIdx);}
@@ -1892,6 +1911,52 @@ function iniciarCronometro(id, meta) {
     el.textContent = (elapsed >= meta ? '✓ ' : '') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
     if (btn && elapsed >= meta) btn.innerHTML = '✅ Concluído — Reiniciar';
   }, 500);
+}
+
+var _qCanvasMode='ponto',_qCanvasItems=[],_qLapisAtivo=false,_qLapisPts=[];
+function iniciarQCanvas(){
+  var c=document.getElementById('qarint-canvas');if(!c)return;
+  c.width=c.offsetWidth||320;c.height=220;
+  c.addEventListener('click',function(e){
+    if(_qCanvasMode==='lapis'||_qCanvasMode==='borracha')return;
+    var r=c.getBoundingClientRect();
+    var x=(e.clientX-r.left)*(c.width/r.width),y=(e.clientY-r.top)*(c.height/r.height);
+    if(_qCanvasMode==='borracha'){
+      var minD=30,minI=-1;
+      _qCanvasItems.forEach(function(it,i){var dx=it.x-x,dy=it.y-y,d=Math.sqrt(dx*dx+dy*dy);if(d<minD){minD=d;minI=i;}});
+      if(minI>=0){_qCanvasItems.splice(minI,1);_qDraw();}
+      return;
+    }
+    _qCanvasItems.push({tipo:_qCanvasMode,x:x,y:y});_qDraw();
+  });
+  function getXY(e,r){var s=e.touches?e.touches[0]:e;return{x:(s.clientX-r.left)*(c.width/r.width),y:(s.clientY-r.top)*(c.height/r.height)};}
+  c.addEventListener('mousedown',function(e){if(_qCanvasMode!=='lapis')return;_qLapisAtivo=true;var r=c.getBoundingClientRect();var pt=getXY(e,r);_qLapisPts=[[pt.x,pt.y]];});
+  c.addEventListener('mousemove',function(e){if(!_qLapisAtivo)return;var r=c.getBoundingClientRect();var pt=getXY(e,r);_qLapisPts.push([pt.x,pt.y]);_qDraw();});
+  c.addEventListener('mouseup',function(){if(!_qLapisAtivo)return;_qLapisAtivo=false;if(_qLapisPts.length>1)_qCanvasItems.push({tipo:'lapis',pts:_qLapisPts.slice()});_qLapisPts=[];_qDraw();});
+  c.addEventListener('touchstart',function(e){if(_qCanvasMode!=='lapis')return;e.preventDefault();_qLapisAtivo=true;var r=c.getBoundingClientRect();var pt=getXY(e,r);_qLapisPts=[[pt.x,pt.y]];},{passive:false});
+  c.addEventListener('touchmove',function(e){if(!_qLapisAtivo)return;e.preventDefault();var r=c.getBoundingClientRect();var pt=getXY(e,r);_qLapisPts.push([pt.x,pt.y]);_qDraw();},{passive:false});
+  c.addEventListener('touchend',function(){if(!_qLapisAtivo)return;_qLapisAtivo=false;if(_qLapisPts.length>1)_qCanvasItems.push({tipo:'lapis',pts:_qLapisPts.slice()});_qLapisPts=[];_qDraw();});
+  _qDraw();
+}
+function qCanvasMode(m){
+  _qCanvasMode=m;
+  var modos=['ponto','paredeH','paredeV','lapis','borracha'];
+  modos.forEach(function(mo){var b=document.getElementById('qcbtn-'+mo);if(b){b.style.background=m===mo?'#2d7db3':'#f0f4f8';b.style.color=m===mo?'white':'#1a202c';b.style.border=m===mo?'none':'1.5px solid #e2e8f0';}});
+}
+function qCanvasLimpar(){_qCanvasItems=[];_qLapisPts=[];_qLapisAtivo=false;_qDraw();}
+function _qDraw(){
+  var c=document.getElementById('qarint-canvas');if(!c)return;
+  var ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);
+  ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,c.width,c.height);
+  ctx.strokeStyle='#cbd5e0';ctx.lineWidth=2;ctx.strokeRect(3,3,c.width-6,c.height-6);
+  var pc=0;
+  _qCanvasItems.forEach(function(it){
+    if(it.tipo==='ponto'){pc++;ctx.beginPath();ctx.arc(it.x,it.y,12,0,Math.PI*2);ctx.fillStyle='#2d7db3';ctx.fill();ctx.fillStyle='white';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('P'+pc,it.x,it.y);}
+    else if(it.tipo==='paredeH'){ctx.fillStyle='#2d3748';ctx.fillRect(it.x-30,it.y-4,60,8);}
+    else if(it.tipo==='paredeV'){ctx.fillStyle='#2d3748';ctx.fillRect(it.x-4,it.y-30,8,60);}
+    else if(it.tipo==='lapis'&&it.pts&&it.pts.length>1){ctx.beginPath();ctx.strokeStyle='#2d3748';ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';ctx.moveTo(it.pts[0][0],it.pts[0][1]);it.pts.slice(1).forEach(function(p){ctx.lineTo(p[0],p[1]);});ctx.stroke();ctx.lineWidth=2;}
+  });
+  if(_qLapisAtivo&&_qLapisPts.length>1){ctx.beginPath();ctx.strokeStyle='#2d3748';ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';ctx.moveTo(_qLapisPts[0][0],_qLapisPts[0][1]);_qLapisPts.slice(1).forEach(function(p){ctx.lineTo(p[0],p[1]);});ctx.stroke();}
 }
 function novoRegistro(){
   tipoSel='';fotosAnexadas={};
