@@ -166,7 +166,7 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
         </div>
       </div>
     </div>
-    <div class="step-bar"><div class="step-dot" id="sd1"></div><div class="step-dot" id="sd2"></div><div class="step-dot" id="sd3"></div></div>
+    <div class="step-bar"><div class="step-dot" id="sd1"></div><div class="step-dot" id="sd2"></div><div class="step-dot" id="sd3"></div><div class="step-dot" id="sd4"></div><div class="step-dot" id="sd5"></div></div>
     <div class="step-label" id="step-label">Passo 1 de 3</div>
   </div>
   <div class="offline-bar" id="offline-bar">
@@ -175,40 +175,68 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
   </div>
   <div class="content">
 
+    <!-- PASSO 1: Identificacao -->
     <div id="passo1">
       <div class="card">
-        <div class="card-title">Identificacao</div>
-        <div class="row2"><div class="field"><label>Data</label><input type="date" id="data"/></div><div class="field"><label>Hora inicio</label><input type="time" id="hora"/></div></div>
-        <div class="field"><label>Nome do tecnico</label><input type="text" id="tecnico" placeholder="Nome completo"/></div>
+        <div class="card-title blue">Passo 1 — Identificação</div>
+        <div class="row2"><div class="field"><label>Data</label><input type="date" id="data"/></div><div class="field"><label>Hora início</label><input type="time" id="hora"/></div></div>
+        <div class="field"><label>Nome do técnico</label><input type="text" id="tecnico" placeholder="Nome completo" oninput="_showRasc1()"/></div>
         <div class="field"><label>Nome do cliente</label><input type="text" id="cliente" placeholder="Nome do cliente"/></div>
         <div class="field"><label>Cidade / Estado <button onclick="buscarCidadeGPS()" style="background:none;border:none;color:#2d7db3;font-size:12px;cursor:pointer;margin-left:4px;">📍 GPS</button></label><input type="text" id="cidade" placeholder="Ex: Belo Horizonte / MG"/></div>
         <div class="field"><label>Nº da OS</label><input type="text" id="num-os" placeholder="Ex: OS-2024-001" maxlength="30"/></div>
       </div>
+      <div id="rascunho-btn-p1" style="display:none;margin-bottom:8px;">
+        <button class="btn-outline" onclick="salvarRascunhoGeral()" style="width:100%;">💾 Salvar rascunho</button>
+      </div>
+      <button class="btn-full" onclick="irP2()">Próximo →</button>
+    </div>
+
+    <div id="passo2" class="hidden">
       <div class="card">
-        <div class="card-title">Tipo de monitoramento</div>
+        <div class="card-title blue">Passo 2 — Tipo de monitoramento</div>
         <div class="tipo-grid">
-          <div class="tipo-btn" onclick="selecionarTipo(this,'ruido')"><svg width="52" height="52" viewBox="0 0 56 56" fill="none"><rect x="18" y="22" width="16" height="22" rx="4" fill="#e8f0fe" stroke="#1e3a6e" stroke-width="1.8"/><rect x="20" y="24" width="12" height="8" rx="2" fill="#1e3a6e"/><text x="26" y="30.5" font-family="Arial" font-size="4" fill="#7cfc00" text-anchor="middle" font-weight="bold">dB</text><rect x="21" y="31" width="2" height="3" rx="0.5" fill="#00b894"/><rect x="24" y="30" width="2" height="4" rx="0.5" fill="#00b894"/><rect x="27" y="29" width="2" height="5" rx="0.5" fill="#00cc66"/><circle cx="26" cy="19" r="5" fill="#e8f0fe" stroke="#1e3a6e" stroke-width="1.8"/><circle cx="26" cy="19" r="2.5" fill="#1e3a6e"/><circle cx="26" cy="44" r="3" fill="#e8f0fe" stroke="#1e3a6e" stroke-width="1.5"/><path d="M13 23 Q10 26 10 30 Q10 34 13 37" stroke="#4a90b8" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M9 20 Q5 25 5 30 Q5 35 9 40" stroke="#4a90b8" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/><path d="M39 23 Q42 26 42 30 Q42 34 39 37" stroke="#4a90b8" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M43 20 Q47 25 47 30 Q47 35 43 40" stroke="#4a90b8" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/></svg><span class="tn">Ruido</span></div>
-          <div class="tipo-btn" onclick="selecionarTipo(this,'sismo')"><svg width="52" height="52" viewBox="0 0 56 56" fill="none"><line x1="4" y1="28" x2="14" y2="28" stroke="#1e3a6e" stroke-width="2" stroke-linecap="round"/><line x1="42" y1="28" x2="52" y2="28" stroke="#1e3a6e" stroke-width="2" stroke-linecap="round"/><polyline points="14,28 18,28 20,18 22,38 25,12 28,44 31,18 33,28 36,28 38,28 42,28" stroke="#1e3a6e" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="28" cy="48" rx="10" ry="3" stroke="#4a90b8" stroke-width="1.5" fill="none" opacity="0.5"/><ellipse cx="28" cy="48" rx="16" ry="5" stroke="#4a90b8" stroke-width="1.2" fill="none" opacity="0.3"/></svg><span class="tn">Vibracao</span></div>
+          <div class="tipo-btn" onclick="selecionarTipo(this,'ruido')"><svg width="52" height="52" viewBox="0 0 56 56" fill="none"><rect x="18" y="22" width="16" height="22" rx="4" fill="#e8f0fe" stroke="#1e3a6e" stroke-width="1.8"/><rect x="20" y="24" width="12" height="8" rx="2" fill="#1e3a6e"/><text x="26" y="30.5" font-family="Arial" font-size="4" fill="#7cfc00" text-anchor="middle" font-weight="bold">dB</text><rect x="21" y="31" width="2" height="3" rx="0.5" fill="#00b894"/><rect x="24" y="30" width="2" height="4" rx="0.5" fill="#00b894"/><rect x="27" y="29" width="2" height="5" rx="0.5" fill="#00cc66"/><circle cx="26" cy="19" r="5" fill="#e8f0fe" stroke="#1e3a6e" stroke-width="1.8"/><circle cx="26" cy="19" r="2.5" fill="#1e3a6e"/><circle cx="26" cy="44" r="3" fill="#e8f0fe" stroke="#1e3a6e" stroke-width="1.5"/><path d="M13 23 Q10 26 10 30 Q10 34 13 37" stroke="#4a90b8" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M9 20 Q5 25 5 30 Q5 35 9 40" stroke="#4a90b8" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/><path d="M39 23 Q42 26 42 30 Q42 34 39 37" stroke="#4a90b8" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M43 20 Q47 25 47 30 Q47 35 43 40" stroke="#4a90b8" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/></svg><span class="tn">Ruído</span></div>
+          <div class="tipo-btn" onclick="selecionarTipo(this,'sismo')"><svg width="52" height="52" viewBox="0 0 56 56" fill="none"><line x1="4" y1="28" x2="14" y2="28" stroke="#1e3a6e" stroke-width="2" stroke-linecap="round"/><line x1="42" y1="28" x2="52" y2="28" stroke="#1e3a6e" stroke-width="2" stroke-linecap="round"/><polyline points="14,28 18,28 20,18 22,38 25,12 28,44 31,18 33,28 36,28 38,28 42,28" stroke="#1e3a6e" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="28" cy="48" rx="10" ry="3" stroke="#4a90b8" stroke-width="1.5" fill="none" opacity="0.5"/><ellipse cx="28" cy="48" rx="16" ry="5" stroke="#4a90b8" stroke-width="1.2" fill="none" opacity="0.3"/></svg><span class="tn">Vibração</span></div>
           <div class="tipo-btn" onclick="selecionarTipo(this,'qar')"><svg width="52" height="52" viewBox="0 0 56 56" fill="none"><path d="M6 20 Q14 17 22 20 Q30 23 38 20" stroke="#4a90b8" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M4 28 Q12 25 20 28 Q28 31 36 28 Q44 25 50 28" stroke="#4a90b8" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/><path d="M8 36 Q16 33 24 36 Q32 39 40 36" stroke="#4a90b8" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/><circle cx="42" cy="20" r="2" fill="#4a90b8" opacity="0.6"/><circle cx="44" cy="33" r="2.5" fill="#718096" opacity="0.5"/><path d="M38 38 Q44 30 50 32 Q46 42 38 38 Z" fill="#00b894" opacity="0.85"/></svg><span class="tn">QAR Externo</span></div>
           <div class="tipo-btn" onclick="selecionarTipo(this,'opacidade')"><svg width="52" height="52" viewBox="0 0 56 56" fill="none"><path d="M14 38 C8 38 4 34 4 29 C4 24 8 20 14 20 C15 20 16 20 17 21 C19 16 24 13 30 13 C38 13 44 19 44 27 C44 28 44 29 43 30 C47 31 50 34 50 38 C50 42 47 44 43 44 L14 44 Z" fill="#c8d6e5" stroke="#8fa3b8" stroke-width="1.5"/><circle cx="8" cy="46" r="2" fill="#8fa3b8" opacity="0.5"/><circle cx="20" cy="47" r="2.5" fill="#718096" opacity="0.4"/></svg><span class="tn">Opacidade</span></div>
           <div class="tipo-btn" onclick="selecionarTipo(this,'qarint')"><svg width="52" height="52" viewBox="0 0 56 56" fill="none"><rect x="8" y="14" width="40" height="18" rx="4" fill="#e8f0fe" stroke="#1e3a6e" stroke-width="1.8"/><circle cx="40" cy="19" r="2.5" fill="#00b894"/><path d="M18 34 Q16 40 18 46" stroke="#4a90b8" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.7"/><path d="M26 34 Q24 41 26 48" stroke="#4a90b8" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.6"/><path d="M34 34 Q32 40 34 46" stroke="#4a90b8" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.5"/></svg><span class="tn">QAR Interno</span></div>
           <div class="tipo-btn" onclick="selecionarTipo(this,'outro')"><svg width="52" height="52" viewBox="0 0 56 56" fill="none"><rect x="12" y="10" width="28" height="36" rx="3" fill="#e8f0fe" stroke="#1e3a6e" stroke-width="1.8"/><rect x="22" y="7" width="8" height="7" rx="2" fill="#4a90b8" stroke="#1e3a6e" stroke-width="1.5"/><polyline points="18,22 20,24 24,19" stroke="#00b894" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><polyline points="18,28 20,30 24,25" stroke="#00b894" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><polyline points="18,34 20,36 24,31" stroke="#00b894" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="40" cy="42" r="8" fill="#e8f0fe" stroke="#1e3a6e" stroke-width="1.5"/><circle cx="40" cy="42" r="3.5" fill="#4a90b8"/></svg><span class="tn">Outro</span></div>
         </div>
       </div>
-      <button class="btn-full" onclick="irP2()">Proximo →</button>
-    </div>
-
-    <div id="passo2" class="hidden">
-      <div id="form-dinamico"></div>
-      <div id="rascunho-btn-wrap" style="display:none;margin-bottom:8px;margin-top:8px;">
+      <div style="margin-bottom:8px;">
         <button class="btn-outline" onclick="salvarRascunhoGeral()" style="width:100%;">💾 Salvar rascunho</button>
       </div>
-      <div class="btn-row"><button class="btn-back" onclick="irP1()">← Voltar</button><button class="btn-next" onclick="irP3()">Proximo →</button></div>
+      <div class="btn-row"><button class="btn-back" onclick="irP1()">← Voltar</button><button class="btn-next" onclick="irP3()">Próximo →</button></div>
     </div>
 
     <div id="passo3" class="hidden">
-      <div class="card"><div class="card-title">Finalizar e salvar</div><p style="font-size:13px;color:var(--muted);">Revise e confirme.</p></div>
-      <div class="btn-row"><button class="btn-back" onclick="irP2()">← Voltar</button><button class="btn-next" id="btn-salvar" onclick="salvar()">Salvar registro</button></div>
+      <div class="card">
+        <div class="card-title blue">Passo 3 — Pré-campo</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:1rem;">Checklist de ações antes de sair do laboratório.</p>
+        <div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:10px;padding:12px;font-size:13px;color:#92400e;">
+          ⏳ Conteúdo do pré-campo será adicionado em breve.
+        </div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <button class="btn-outline" onclick="salvarRascunhoGeral()" style="width:100%;">💾 Salvar rascunho</button>
+      </div>
+      <div class="btn-row"><button class="btn-back" onclick="irP2()">← Voltar</button><button class="btn-next" onclick="irP4()">Próximo →</button></div>
+    </div>
+
+    <div id="passo4" class="hidden">
+      <div id="form-dinamico"></div>
+      <div id="rascunho-btn-wrap" style="display:none;margin-bottom:8px;">
+        <button class="btn-outline" onclick="salvarRascunhoGeral()" style="width:100%;">💾 Salvar rascunho</button>
+      </div>
+      <div class="btn-row"><button class="btn-back" onclick="irP3()">← Voltar</button><button class="btn-next" onclick="irP5()">Próximo →</button></div>
+    </div>
+
+    <div id="passo5" class="hidden">
+      <div class="card">
+        <div class="card-title blue">Passo 5 — Finalizar e salvar</div>
+        <p style="font-size:13px;color:var(--muted);">Revise as informações e confirme o envio.</p>
+      </div>
+      <div class="btn-row"><button class="btn-back" onclick="irP4()">← Voltar</button><button class="btn-next" id="btn-salvar" onclick="salvar()">Salvar registro</button></div>
     </div>
 
     <div id="sucesso" class="hidden">
@@ -317,14 +345,49 @@ async function obterToken(){
 
 function sair(){if(!confirm('Deseja sair?'))return;token=null;nomeLogado='';document.getElementById('login-nome').value='';document.getElementById('login-senha').value='';document.getElementById('app').style.display='none';document.getElementById('login-screen').style.display='flex';novoRegistro();}
 
-function atualizarSteps(p){['sd1','sd2','sd3'].forEach(function(id,i){document.getElementById(id).className='step-dot'+(i+1<p?' done':i+1===p?' active':'');});document.getElementById('step-label').textContent='Passo '+p+' de 3 — '+['Identificação','Formulário','Finalização'][p-1];}
-function mostrar(id){['passo1','passo2','passo3','sucesso','pendencias'].forEach(function(p){var el=document.getElementById(p);if(el)el.classList.add('hidden');});document.getElementById(id).classList.remove('hidden');}
-function irP1(){mostrarBtnRascunho(false);mostrar('passo1');atualizarSteps(1);}
-function irP2(){if(!tipoSel){toast('Selecione o tipo de monitoramento');return;}var fd=document.getElementById('form-dinamico');if(!fd||fd.innerHTML===''||fd.getAttribute('data-tipo')!==tipoSel){fotosAnexadas={};renderForm();fd=document.getElementById('form-dinamico');if(fd)fd.setAttribute('data-tipo',tipoSel);}mostrar('passo2');atualizarSteps(2);}
-function irP3(){mostrar('passo3');atualizarSteps(3);}
+function atualizarSteps(p){
+  ['sd1','sd2','sd3','sd4','sd5'].forEach(function(id,i){
+    var el=document.getElementById(id);
+    if(el)el.className='step-dot'+(i+1<p?' done':i+1===p?' active':'');
+  });
+  var labels=['Identificacao','Tipo de Monitoramento','Pre-campo','Em campo','Finalizar'];
+  var el=document.getElementById('step-label');
+  if(el)el.textContent='Passo '+p+' de 5 — '+(labels[p-1]||'');
+}
+function mostrar(id){['passo1','passo2','passo3','passo4','passo5','sucesso','pendencias'].forEach(function(p){var el=document.getElementById(p);if(el)el.classList.add('hidden');});var el=document.getElementById(id);if(el)el.classList.remove('hidden');}
+function irP1(){_setPasso(1);atualizarSteps(1);}
+function irP2(){_setPasso(2);atualizarSteps(2);}
+
+function irP3(){_setPasso(5);atualizarSteps(3);}
+function irP4(){
+  if(!tipoSel){toast('Selecione o tipo de monitoramento');return;}
+  var fd=document.getElementById('form-dinamico');
+  if(!fd||fd.innerHTML===''||fd.getAttribute('data-tipo')!==tipoSel){
+    fotosAnexadas={};renderForm();fd=document.getElementById('form-dinamico');
+    if(fd)fd.setAttribute('data-tipo',tipoSel);
+  }
+  mostrarBtnRascunho(false);
+  mostrar('passo4');atualizarSteps(4);
+}
+function irP5(){mostrar('passo5');atualizarSteps(5);}
+
 function selecionarTipo(el,t){
   document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
   el.classList.add('selected');tipoSel=t;
+  mostrarBtnRascunho(false);
+}
+function _renderTipo(t){
+  if(t==='ruido')return renderRuido();
+  if(t==='sismo')return renderSismo();
+  if(t==='qar')return renderQAR();
+  if(t==='opacidade')return renderOpacidade();
+  if(t==='qarint')return renderQarint();
+  if(t==='outro')return renderOutro();
+  return '';
+}
+function renderFormulario(){
+  var fd=document.getElementById('form-dinamico');
+  if(fd&&tipoSel)fd.innerHTML=_renderTipo(tipoSel);
   mostrarBtnRascunho(false);
 }
 
@@ -989,7 +1052,7 @@ function mostrarSucesso(d,offline){
   document.getElementById('sucesso-titulo').textContent=offline?'Salvo offline!':'Registro salvo!';
   document.getElementById('sucesso-msg').textContent=offline?'Dados salvos no dispositivo. Serão enviados quando conectar.':'Dados gravados com sucesso na planilha do SharePoint.';
   document.getElementById('saved-info').innerHTML='<div class="saved-row"><span>Data</span><span>'+d.data+'</span></div><div class="saved-row"><span>Técnico</span><span>'+d.tecnico+'</span></div><div class="saved-row"><span>Tipo</span><span>'+(tipos[d.tipo]||d.tipo)+'</span></div><div class="saved-row"><span>Status</span><span>'+(offline?'⏳ Pendente':'✅ Enviado')+'</span></div>';
-  mostrar('sucesso');
+  mostrarTela('sucesso');
 }
 
 // UPLOAD FOTOS
@@ -1132,7 +1195,7 @@ function excluirPendencia(idx){
   atualizarOfflineBar();
   verPendencias();
 }
-function fecharPendencias(){mostrar('passo1');atualizarSteps(1);}
+function fecharPendencias(){_setPasso(1);atualizarSteps(1);}
 
 // BIBLIOTECA
 var _biblioCategoria='';
@@ -1403,11 +1466,49 @@ async function _salvarRascunhoExcel(dados){
 function toggleOutroEquipQAR(pid,val){var el=document.getElementById(pid+'-tipoequip-outro-field');if(el)el.classList.toggle('hidden',val!=='Outro');}
 function toggleOutroEquipSismo(pid,val){var el=document.getElementById(pid+'-tipoequip-sismo-outro-field');if(el)el.classList.toggle('hidden',val!=='Outro');}
 
+function _showRasc1(){var el=document.getElementById('rascunho-btn-p1');if(el)el.style.display='block';}
 function mostrarBtnRascunho(show){
   var el=document.getElementById('rascunho-btn-wrap');
   if(el)el.style.display=show?'block':'none';
 }
+
+var _passoAtual = 1;
+function _setPasso(n) {
+  for(var i=1;i<=5;i++){
+    var el=document.getElementById('passo'+i);
+    if(el)el.classList.toggle('hidden', i!==n);
+    var sd=document.getElementById('sd'+i);
+    if(sd)sd.classList.toggle('active', i===n);
+  }
+  _passoAtual=n;
+  var labels={1:'Passo 1 de 5 — Identificação',2:'Passo 2 de 5 — Tipo',3:'Passo 3 de 5 — Pré-campo',4:'Passo 4 de 5 — Em campo',5:'Passo 5 de 5 — Finalizar'};
+  var lbl=document.getElementById('step-label');if(lbl)lbl.textContent=labels[n]||'';
+  // Mostrar botão rascunho p1 ao preencher algo
+  var rp1=document.getElementById('rascunho-btn-p1');
+  if(rp1)rp1.style.display=n===1&&(v('tecnico')||v('cliente'))?'block':'none';
+  window.scrollTo(0,0);
+}
+function irP1(){_setPasso(1);mostrarBtnRascunho(false);}
+function irP2(){_setPasso(2);mostrarBtnRascunho(false);}
+function irP3(){if(!tipoSel){toast('Selecione o tipo de monitoramento');return;}_setPasso(3);}
+function irP4(){
+  if(!tipoSel){toast('Selecione o tipo de monitoramento no passo 2');_setPasso(2);return;}
+  _setPasso(4);
+  renderFormulario();
+}
+function irP5(){_setPasso(5);}
+function renderFormulario(){var fd=document.getElementById("form-dinamico");if(fd&&tipoSel)fd.innerHTML=_renderTipo(tipoSel);}
 function novoRegistro(){
+  tipoSel='';fotosAnexadas={};
+  document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
+  var a=new Date();
+  var ano=a.getFullYear(),mes=String(a.getMonth()+1).padStart(2,'0'),dia=String(a.getDate()).padStart(2,'0');
+  var dtEl=document.getElementById('data');if(dtEl)dtEl.value=ano+'-'+mes+'-'+dia;
+  var hrEl=document.getElementById('hora');if(hrEl)hrEl.value=String(a.getHours()).padStart(2,'0')+':'+String(a.getMinutes()).padStart(2,'0');
+  var fd=document.getElementById('form-dinamico');if(fd)fd.innerHTML='';
+  mostrarBtnRascunho(false);
+  irP1();
+}
   tipoSel='';fotosAnexadas={};
   document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
   document.querySelectorAll('input[type=text],input[type=number],textarea').forEach(function(el){if(el.id!=='tecnico')el.value='';});
@@ -1416,9 +1517,6 @@ function novoRegistro(){
   var ano=a.getFullYear(),mes=String(a.getMonth()+1).padStart(2,'0'),dia=String(a.getDate()).padStart(2,'0');
   document.getElementById('data').value=ano+'-'+mes+'-'+dia;
   document.getElementById('hora').value=String(a.getHours()).padStart(2,'0')+':'+String(a.getMinutes()).padStart(2,'0');
-  document.getElementById('form-dinamico').innerHTML='';irP1();
-}
-
 var toastT;
 function toast(msg,err,suc){var el=document.getElementById('toast');el.textContent=msg;el.className=(err?'error':suc?'success':'')+' show';clearTimeout(toastT);toastT=setTimeout(function(){el.className='';},3500);}
 </script>
