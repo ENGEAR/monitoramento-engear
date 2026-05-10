@@ -315,7 +315,7 @@ async function obterToken(){
 function sair(){if(!confirm('Deseja sair?'))return;token=null;nomeLogado='';document.getElementById('login-nome').value='';document.getElementById('login-senha').value='';document.getElementById('app').style.display='none';document.getElementById('login-screen').style.display='flex';novoRegistro();}
 
 function atualizarSteps(p){['sd1','sd2','sd3'].forEach(function(id,i){document.getElementById(id).className='step-dot'+(i+1<p?' done':i+1===p?' active':'');});document.getElementById('step-label').textContent='Passo '+p+' de 3 — '+['Identificação','Formulário','Finalização'][p-1];}
-function mostrar(id){['passo1','passo2','passo3','sucesso','pendencias'].forEach(function(p){var el=document.getElementById(p);if(el)el.classList.add('hidden');});document.getElementById(id).classList.remove('hidden');}
+function mostrar(id){['passo1','passo2','passo3','passo4','passo5','sucesso','pendencias','historico','rascunhos'].forEach(function(p){var el=document.getElementById(p);if(el)el.classList.add('hidden');});var bib=document.getElementById('biblioteca');if(bib)bib.classList.add('hidden');var t=document.getElementById(id);if(t)t.classList.remove('hidden');}
 function irP1(){mostrarBtnRascunho(false);mostrar('passo1');atualizarSteps(1);}
 function irP2(){if(!tipoSel){toast('Selecione o tipo de monitoramento');return;}var fd=document.getElementById('form-dinamico');if(!fd||fd.innerHTML===''||fd.getAttribute('data-tipo')!==tipoSel){fotosAnexadas={};renderForm();fd=document.getElementById('form-dinamico');if(fd)fd.setAttribute('data-tipo',tipoSel);}mostrar('passo2');atualizarSteps(2);}
 function irP3(){mostrar('passo3');atualizarSteps(3);}
@@ -1302,10 +1302,11 @@ function excluirRascunho(idx) {
 }
 
 function mostrarTela(id) {
-  ['passo1','passo2','passo3','sucesso','pendencias','historico','rascunhos'].forEach(function(p) {
+  ['passo1','passo2','passo3','passo4','passo5','sucesso','pendencias','historico','rascunhos'].forEach(function(p) {
     var el = document.getElementById(p);
     if (el) el.classList.add('hidden');
   });
+  var bib=document.getElementById('biblioteca');if(bib)bib.classList.add('hidden');
   var target = document.getElementById(id);
   if (target) target.classList.remove('hidden');
 }
@@ -1406,16 +1407,9 @@ function mostrarBtnRascunho(show){
 }
 
 function fecharTudo(){
-  ['historico','rascunhos','pendencias'].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el)el.classList.add('hidden');
-  });
-  for(var i=1;i<=5;i++){
-    var el=document.getElementById('passo'+i);
-    if(el)el.classList.toggle('hidden',i!==1);
-  }
-  var app=document.getElementById('app');if(app)app.style.display='';
-  var bib=document.getElementById('biblioteca');if(bib)bib.classList.add('hidden');
+  mostrar('passo1');
+  atualizarSteps(1);
+  mostrarBtnRascunho(false);
 }
 
 var _canvasMode='ponto',_canvasItems=[],_lapisAtivo=false,_lapisPts=[];
