@@ -318,15 +318,10 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 <div id="toast"></div>
 <script>
 
-function atualizarSteps(p){
-  ['sd1','sd2','sd3','sd4','sd5'].forEach(function(id,i){
-    var el=document.getElementById(id);
-    if(el)el.className='step-dot'+(i+1<p?' done':i+1===p?' active':'');
-  });
-  var lbl=['Identificação','Tipo','Pré-campo','Em campo','Finalizar'];
-  var sl=document.getElementById('step-label');
-  if(sl)sl.textContent='Passo '+p+' de 5 — '+(lbl[p-1]||'');
-}
+
+
+
+
 
 const CFG={clientId:'756385e2-9a87-4997-a939-60129e4c1573',tenantId:'f84b416a-a586-42bf-b3ae-46d4d8e882da',clientSecret:'YOC8Q~~1S0wTi3f~qyeMq5VIbXkg31T3gIwjgc.4',siteHost:'engearlaboratorio.sharepoint.com',sitePath:'/sites/EngearLaboratorio',filePath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/monitoramento.xlsx',fotosPath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/Fotos',sheetName:'Plan1',senha:'campo26*',workerUrl:'https://engear-auth.red-cell-b560.workers.dev'};
 var token=null,tokenExp=0,nomeLogado='',tipoSel='',fotosAnexadas={};
@@ -339,626 +334,161 @@ window.addEventListener('offline',function(){atualizarOfflineBar();});
 
 
 
-function toggleLembrar(cb){if(!cb.checked){localStorage.removeItem('engear_saved_senha');localStorage.removeItem('engear_saved_nome');}}
-function carregarSenhasSalvas(){var nome=localStorage.getItem('engear_saved_nome');var senha=localStorage.getItem('engear_saved_senha');if(nome)document.getElementById('login-nome').value=nome;if(senha){document.getElementById('login-senha').value=senha;document.getElementById('lembrar-senha').checked=true;}}
-
-async
-
-async
 
 
+var _canvasMode='ponto',_canvasItems=[],_lapisAtivo=false,_lapisPts=[];
+var _rpiN=1,_rpiIdx=1,_rpiDados={};
 
-
-
-function selecionarTipo(el,t){
-  document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
-  el.classList.add('selected');tipoSel=t;
-  mostrarBtnRascunho(false);
+function _desenharCanvas(){
+  var c=document.getElementById('sala-canvas');if(!c)return;
+  var ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,c.width,c.height);
+  ctx.strokeStyle='#cbd5e0';ctx.lineWidth=2;ctx.strokeRect(3,3,c.width-6,c.height-6);
+  var pc=0;
+  _canvasItems.forEach(function(it){
+    if(it.tipo==='ponto'){pc++;ctx.beginPath();ctx.arc(it.x,it.y,12,0,Math.PI*2);ctx.fillStyle='#2d7db3';ctx.fill();ctx.fillStyle='white';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('P'+pc,it.x,it.y);}
+    else if(it.tipo==='paredeH'){ctx.fillStyle='#2d3748';ctx.fillRect(it.x-30,it.y-4,60,8);}
+    else if(it.tipo==='paredeV'){ctx.fillStyle='#2d3748';ctx.fillRect(it.x-4,it.y-30,8,60);}
+    else if(it.tipo==='lapis'&&it.pts&&it.pts.length>1){ctx.beginPath();ctx.strokeStyle='#2d3748';ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';ctx.moveTo(it.pts[0][0],it.pts[0][1]);it.pts.slice(1).forEach(function(p){ctx.lineTo(p[0],p[1]);});ctx.stroke();ctx.lineWidth=2;}
+  });
+  if(_lapisAtivo&&_lapisPts.length>1){ctx.beginPath();ctx.strokeStyle='#2d3748';ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';ctx.moveTo(_lapisPts[0][0],_lapisPts[0][1]);_lapisPts.slice(1).forEach(function(p){ctx.lineTo(p[0],p[1]);});ctx.stroke();}
 }
 
-function chk(id,lbl){return '<div class="check-item" id="'+id+'" data-id="'+id+'" onclick="toggleCheck(this)"><div class="check-box"><svg class="check-mark" width="12" height="12" viewBox="0 0 12 12" fill="none"><polyline points="1.5 6 4.5 9 10.5 3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-text">'+lbl+'</span></div>';}
-function inp(id,lbl,type,ph){return '<div class="field"><label>'+lbl+'</label><input type="'+(type||'text')+'" id="'+id+'" placeholder="'+(ph||'')+'"/></div>';}
-function sel(id,lbl,opts){return '<div class="field"><label>'+lbl+'</label><select id="'+id+'"><option value="">Selecione...</option>'+opts.map(function(o){return '<option>'+o+'</option>';}).join('')+'</select></div>';}
-function fotoBlock(pid){return '<div class="field"><label>Foto do ponto</label><div class="foto-area" onclick="document.getElementById(\'fi-'+pid+'\').click()"><input type="file" id="fi-'+pid+'" accept="image/*" capture="environment" data-pid="'+pid+'" onchange="previewFotoCb(this)" style="display:none"/><div class="foto-icon">\uD83D\uDCF7</div><div class="foto-text">Toque para tirar ou selecionar foto</div></div><div class="foto-preview" id="fp-'+pid+'"></div></div>';}
-function gpsBlock(pid){return '<div class="gps-field"><div class="gps-label">\uD83D\uDCCD Coordenadas UTM</div><div class="gps-coords"><div><div class="gps-sub">Leste (E)</div><input class="gps-input" type="number" id="gps-e-'+pid+'" placeholder="Ex: 612500"/></div><div><div class="gps-sub">Norte (N)</div><input class="gps-input" type="number" id="gps-n-'+pid+'" placeholder="Ex: 7820000"/></div></div><div style="margin-bottom:6px"><div class="gps-sub">Zona UTM</div><input class="gps-input" type="text" id="gps-zona-'+pid+'" placeholder="Ex: 23K" style="width:100px"/></div><button class="gps-btn" id="gps-btn-'+pid+'" data-pid="'+pid+'" onclick="capturarGPS(this)">\uD83D\uDCCD Capturar GPS automaticamente</button><div class="gps-status" id="gps-status-'+pid+'"></div></div>';}
-
-function toggleCheck(el){el.classList.toggle('checked');}
-function isChk(id){var el=document.getElementById(id);return el?el.classList.contains('checked'):false;}
-function v(id){var el=document.getElementById(id);return el?el.value:'';}
-
-function previewFotoCb(input){
-  var pid=input.getAttribute('data-pid');
-  if(!fotosAnexadas[pid])fotosAnexadas[pid]=[];
-  var prev=document.getElementById('fp-'+pid);
-  Array.from(input.files).forEach(function(f){
-    var idx=fotosAnexadas[pid].length;
-    fotosAnexadas[pid].push(f);
-    var wrap=document.createElement('div');wrap.className='foto-thumb-wrap';
-    var img=document.createElement('img');img.src=URL.createObjectURL(f);img.className='foto-thumb';
-    var btn=document.createElement('button');btn.className='foto-del';btn.innerHTML='&times;';
-    btn.setAttribute('data-pid',pid);btn.setAttribute('data-idx',idx);
-    btn.onclick=function(e){e.stopPropagation();var p=this.getAttribute('data-pid');var i=parseInt(this.getAttribute('data-idx'));fotosAnexadas[p].splice(i,1);this.parentElement.remove();document.getElementById('fp-'+p).querySelectorAll('button').forEach(function(b,ni){b.setAttribute('data-idx',ni);});};
-    wrap.appendChild(img);wrap.appendChild(btn);prev.appendChild(wrap);
-  });input.value='';
+function _rpiNav(){
+  return '<div class="qar-nav">'+
+    '<button class="qar-nav-btn" id="rpi-prev" onclick="_rpiPrev()" '+(_rpiIdx===1?'disabled':'')+'>&#8592;</button>'+
+    '<span class="qar-nav-label" id="rpi-label">Ponto '+_rpiIdx+' de '+_rpiN+'</span>'+
+    '<button class="qar-nav-btn" id="rpi-next" onclick="_rpiNext()" '+(_rpiIdx===_rpiN?'disabled':'')+'>&#8594;</button>'+
+    '</div>';
 }
 
-function toggleInterc(sel){var p=sel.getAttribute('data-ponto');var el=document.getElementById(p+'-interc-desc-field');if(el)el.classList.toggle('hidden',sel.value!=='sim');}
-function toggleOutroRuido(v){var el=document.getElementById('r-finalidade-outro-field');if(el)el.classList.toggle('hidden',v!=='Outros');}
+function _rpiNext(){if(_rpiIdx<_rpiN){_rpiSave();_rpiIdx++;_rpiUpdate();window.scrollTo(0,0);}}
 
-// GPS
-function latLonToUTM(lat,lon){var a=6378137,f=1/298.257223563,b=a*(1-f),e2=1-(b*b)/(a*a),k0=0.9996;var zone=Math.floor((lon+180)/6)+1,lon0=(zone-1)*6-180+3,lon0r=lon0*Math.PI/180,latr=lat*Math.PI/180,lonr=lon*Math.PI/180;var N=a/Math.sqrt(1-e2*Math.sin(latr)*Math.sin(latr)),T=Math.tan(latr)*Math.tan(latr),C=(e2/(1-e2))*Math.cos(latr)*Math.cos(latr),A=Math.cos(latr)*(lonr-lon0r);var e4=e2*e2,e6=e4*e2,M=a*((1-e2/4-3*e4/64-5*e6/256)*latr-(3*e2/8+3*e4/32+45*e6/1024)*Math.sin(2*latr)+(15*e4/256+45*e6/1024)*Math.sin(4*latr)-(35*e6/3072)*Math.sin(6*latr));var E=k0*N*(A+(1-T+C)*A*A*A/6+(5-18*T+T*T+72*C-58*(e2/(1-e2)))*A*A*A*A*A/120)+500000;var Nr=k0*(M+N*Math.tan(latr)*(A*A/2+(5-T+9*C+4*C*C)*A*A*A*A/24+(61-58*T+T*T+600*C-330*(e2/(1-e2)))*A*A*A*A*A*A/720));if(lat<0)Nr+=10000000;return{zona:zone+(lat>=0?'N':'S'),e:Math.round(E),n:Math.round(Nr)};}
-
-function capturarGPS(btn){
-  var pid=btn.getAttribute('data-pid');
-  var status=document.getElementById('gps-status-'+pid);
-  if(!navigator.geolocation){if(status)status.textContent='GPS não disponível';return;}
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Buscando...';
-  if(status)status.textContent='Aguardando sinal GPS...';
-  navigator.geolocation.getCurrentPosition(function(pos){
-    var utm=latLonToUTM(pos.coords.latitude,pos.coords.longitude);
-    var eEl=document.getElementById('gps-e-'+pid);var nEl=document.getElementById('gps-n-'+pid);var zEl=document.getElementById('gps-zona-'+pid);
-    if(eEl)eEl.value=utm.e;if(nEl)nEl.value=utm.n;if(zEl)zEl.value=utm.zona;
-    if(status)status.textContent='\u2705 GPS capturado (precisão: '+Math.round(pos.coords.accuracy)+' m)';
-    btn.disabled=false;btn.innerHTML='\uD83D\uDCCD Atualizar GPS';
-  },function(err){if(status)status.textContent='\u274C Erro: '+err.message;btn.disabled=false;btn.innerHTML='\uD83D\uDCCD Capturar GPS automaticamente';},{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+function _rpiPage(idx){
+  return '<div id="rpi-nav-wrap">'+_rpiNav()+'</div><div id="rp-cont-int">'+_rpiPageBody(idx)+'</div>';
 }
 
-function getGPS(pid){return{e:v('gps-e-'+pid),n:v('gps-n-'+pid),zona:v('gps-zona-'+pid)};}
-
-// VALIDAÇÃO CHECAGEM RUÍDO
-document.addEventListener('input',function(e){if(e.target&&e.target.type==='number'){var id=e.target.id;if(id&&id.endsWith('-chkfim')){validarChecagem(id.replace('-chkfim',''));}}});
-function validarChecagem(p){var elIni=document.getElementById(p+'-chkini');var elFim=document.getElementById(p+'-chkfim');var alerta=document.getElementById(p+'-chk-alerta');if(!alerta)return;var vFim=elFim?elFim.value:'';var temDecimal=vFim.indexOf('.')!==-1&&vFim.split('.')[1]&&vFim.split('.')[1].length>=1;if(!temDecimal){alerta.classList.add('hidden');return;}var ini=parseFloat(elIni?elIni.value:'');var fim=parseFloat(vFim);if(!isNaN(ini)&&!isNaN(fim)){alerta.classList.toggle('hidden',Math.abs(fim-ini)<=0.5);}else{alerta.classList.add('hidden');}}
-
-
-
-// RUÍDO
-
-
-var _subRuido='';
-var _rpN=1,_rpIdx=1,_rpDados={};
-
-
-
-function _renderSubRuido(sub){
-  var h='';
-  if(sub==='externo'){
-    h+='<div class="card"><div class="card-title blue">Ruido Externo</div>';
-    h+='<div class="field"><label>Finalidade do monitoramento</label><select id="r-finalidade" onchange="toggleOutroRuido(this.value)"><option value="">Selecione...</option><option>Laudo PBH</option><option>Obra</option><option>Background</option><option>Operacoes do empreendimento</option><option>Outros</option></select></div>';
-    h+='<div class="field hidden" id="r-finalidade-outro-field"><label>Especifique</label><input type="text" id="r-finalidade-outro" placeholder="Descreva..."/></div>';
-    h+='<div class="field"><label>Quantidade de pontos</label><select id="r-npontos" onchange="_rpSetN(parseInt(this.value)||1,\'externo\')"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>';
-    h+='</div><div id="rp-nav-wrap"></div><div id="rp-cont"></div>';
-  } else if(sub==='interno'){
-    h+='<div class="card"><div class="card-title blue">Ruido Interno</div>';
-    h+='<div class="field"><label>Condicao das esquadrias</label><div style="display:flex;gap:8px;margin-top:6px;"><button id="btn-esq-aberta" onclick="selEsq(\'aberta\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Aberta</button><button id="btn-esq-fechada" onclick="selEsq(\'fechada\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Fechada</button></div><input type="hidden" id="r-esquadria"/></div>';
-    h+='<div class="field"><label>Condicao do ambiente</label><div style="display:flex;gap:8px;margin-top:6px;"><button id="btn-amb-vazio" onclick="selAmb(\'vazio\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Sala vazia</button><button id="btn-amb-pessoas" onclick="selAmb(\'pessoas\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Com pessoas</button></div><input type="hidden" id="r-ambiente-cond"/></div>';
-    h+='<div class="field"><label>Area do ambiente monitorado (m2)</label><input type="number" id="r-area-int" placeholder="Ex: 45"/></div>';
-    h+='<div class="field"><button class="btn-next" style="width:100%" onclick="calcPontosRuidoInt()">Calcular pontos necessarios</button></div>';
-    h+='<div id="r-int-resultado" class="hidden"><div class="chk-alerta" style="background:#e8f4fd;border-color:#2d7db3;color:#1e5f8a;margin-bottom:10px;" id="r-int-msg"></div></div>';
-    h+='</div>';
-    h+='<div id="sala-canvas-wrap" style="display:none"><div class="card"><div class="card-title blue">Layout da sala</div>';
-    h+='<p style="font-size:12px;color:#718096;margin-bottom:8px;">Desenhe o layout e posicione os pontos</p>';
-    h+='<canvas id="sala-canvas" style="width:100%;height:250px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;display:block;touch-action:none;"></canvas>';
-    h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:5px;margin-top:8px;">';
-    h+='<button id="btn-modo-ponto" onclick="canvasMode(\'ponto\')" style="background:#2d7db3;color:white;border:none;border-radius:8px;padding:7px 4px;font-size:10px;font-weight:600;cursor:pointer;">Ponto</button>';
-    h+='<button id="btn-modo-paredeH" onclick="canvasMode(\'paredeH\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Parede H</button>';
-    h+='<button id="btn-modo-paredeV" onclick="canvasMode(\'paredeV\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Parede V</button>';
-    h+='<button id="btn-modo-lapis" onclick="canvasMode(\'lapis\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Lapis</button>';
-    h+='<button id="btn-modo-borracha" onclick="canvasMode(\'borracha\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Borracha</button>';
-    h+='</div><button onclick="canvasLimpar()" style="width:100%;margin-top:6px;background:#fff3f3;color:#e53e3e;border:1px solid #fecaca;border-radius:8px;padding:8px;font-size:12px;cursor:pointer;">Limpar tudo</button>';
-    h+='</div></div>';
-    h+='<div id="rp-nav-wrap-int"></div><div id="rp-cont-int"></div>';
-  } else if(sub==='ferroviario'){
-    h+='<div class="card"><div class="card-title blue">Ruido Ferroviario</div>';
-    h+='<div class="field"><label>Finalidade do monitoramento</label><select id="r-finalidade-ferro" onchange="renderFerroSub(this.value)"><option value="">Selecione...</option><option>Passagem de composicao ferroviaria</option><option>Operacoes em patios / manobras / cruzamentos</option></select></div>';
-    h+='<div id="ferro-form-cont"></div>';
-    h+='<div class="field"><label>Quantidade de pontos</label><select id="r-npontos-ferro" onchange="_rpSetN(parseInt(this.value)||1,\'ferro\')"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>';
-    h+='</div><div id="rp-nav-wrap-ferro"></div><div id="rp-cont-ferro"></div>';
-  } else if(sub==='aeronautico'){
-    h+='<div class="card"><div class="card-title blue">Ruido Aeronautico</div>';
-    h+='<div class="field"><label>Finalidade do monitoramento</label><select id="r-finalidade-aero"><option value="">Selecione...</option><option>Receptores criticos</option><option>Monitoramento operacional</option></select></div>';
-    h+='<div class="field"><label>Quantidade de pontos</label><select id="r-npontos-aero" onchange="_rpSetN(parseInt(this.value)||1,\'aero\')"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>';
-    h+='</div><div id="rp-nav-wrap-aero"></div><div id="rp-cont-aero"></div>';
-  }
+function _rpiPageBody(idx){
+  var p='rpi'+idx;
+  var h='<div class="ponto-card"><div class="ponto-header">Ponto '+idx+'</div><div class="ponto-body">';
+  h+=inp(p+'-hora-ini','Hora inicial do ponto','time','');
+  h+=inp(p+'-nome','Nome / identificação do ponto','text','');
+  h+=gpsBlock(p);
+  h+=inp(p+'-alt','Altura do sonômetro (m)','number','');
+  h+=chk(p+'-slow','Sonômetro em Slow (S)');
+  // Ruído total e residual
+  h+='<span class="passo-step">Ruído total (Ltot)</span>';
+  h+=chk(p+'-ltot1','Medir com todas as fontes em operação');
+  h+=chk(p+'-ltot2','Garantir que representa a condição real do ambiente');
+  h+='<span class="passo-step">Ruído residual (Lres)</span>';
+  h+=chk(p+'-lres1','Medir com a fonte objeto desligada (quando possível)');
+  h+=chk(p+'-lres2','Garantir ausência da contribuição da fonte avaliada');
+  h+=chk(p+'-lres3','Caso não seja possível desligar: medir em local equivalente e registrar justificativa');
+  h+=chkIniField(p);
+  h+=fotoBlock(p);
+  h+='<div class="row3">'+inp(p+'-temp','Temp. (°C)','number','')+inp(p+'-umid','Umidade (%)','number','')+ventoField(p)+'</div>';
+  h+=chk(p+'-nochuva','Não monitorar com chuva (exceto se aprovação prévia)');
+  h+=chkFimField(p,p+'-chkini');
+  // Eventualidade
+  h+='<div class="field"><label>Houve alguma eventualidade?</label>'+
+    '<div style="display:flex;gap:8px;margin-top:6px;">'+
+    '<button id="'+p+'-ev-nao" onclick="selEventualidade(\''+p+'\',false)" style="flex:1;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f0fdf4;color:#166534;font-size:13px;cursor:pointer;">Não</button>'+
+    '<button id="'+p+'-ev-sim" onclick="selEventualidade(\''+p+'\',true)" style="flex:1;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer;">Sim</button>'+
+    '</div></div>'+
+    '<div id="'+p+'-ev-desc" style="display:none;">'+inp(p+'-obs','Descreva a eventualidade','text','')+'</div>';
+  h+=inp(p+'-hora-fim','Hora de término','time','');
+  h+='</div></div>';
+  setTimeout(function(){_rpiRestore();},0);
   return h;
 }
 
-// Paginacao generica para ruido
-function _rpSetN(n, tipo){mostrarBtnRascunho(true);
-  _rpN=n;_rpIdx=1;_rpDados={};
-  var navId='rp-nav-wrap'+(tipo==='externo'?'':'-'+tipo);
-  var contId='rp-cont'+(tipo==='externo'?'':'-'+tipo);
-  var navEl=document.getElementById(navId);var contEl=document.getElementById(contId);
-  if(navEl)navEl.innerHTML=_rpNavHtml(n,tipo);
-  if(contEl)contEl.innerHTML=_rpPageHtml(1,tipo);
-}
-function _rpNavHtml(n,tipo){
-  var prevBtn='<button class="qar-nav-btn" id="rp-prev-'+tipo+'" onclick="_rpPrev(\'" + tipo + "\')" disabled>&#8592;</button>';
-  var nextBtn='<button class="qar-nav-btn" id="rp-next-'+tipo+'" onclick="_rpNext(\'" + tipo + "\')"'+(n===1?' disabled':'')+'>&#8594;</button>';
-  return '<div class="qar-nav">'+prevBtn+'<span class="qar-nav-label" id="rp-label-'+tipo+'">Ponto 1 de '+n+'</span>'+nextBtn+'</div>';
-}
-function _rpPrev(tipo){if(_rpIdx>1){_rpSave(tipo);_rpIdx--;_rpUpdate(tipo);window.scrollTo(0,0);}}
-function _rpNext(tipo){if(_rpIdx<_rpN){_rpSave(tipo);_rpIdx++;_rpUpdate(tipo);window.scrollTo(0,0);}}
-function _rpSave(tipo){
-  var p='rp'+tipo+_rpIdx;var saved={};
-  document.querySelectorAll('[id^="'+p+'-"]').forEach(function(el){
-    if(el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='TEXTAREA')saved[el.id]=el.value;
-    if(el.classList&&el.classList.contains('check-item'))saved[el.id+'__chk']=el.classList.contains('checked');
-  });
-  _rpDados[_rpIdx]=saved;
-}
-function _rpRestore(tipo){
-  var saved=_rpDados[_rpIdx];if(!saved)return;
+function _rpiPrev(){if(_rpiIdx>1){_rpiSave();_rpiIdx--;_rpiUpdate();window.scrollTo(0,0);}}
+
+function _rpiRestore(){
+  var saved=_rpiDados[_rpiIdx];if(!saved)return;
   Object.keys(saved).forEach(function(k){
     if(k.endsWith('__chk')){var el=document.getElementById(k.replace('__chk',''));if(el&&saved[k])el.classList.add('checked');}
     else{var el=document.getElementById(k);if(el)el.value=saved[k];}
   });
 }
-function _rpUpdate(tipo){
-  var contId='rp-cont'+(tipo==='externo'?'':'-'+tipo);
-  var contEl=document.getElementById(contId);
-  if(contEl)contEl.innerHTML=_rpPageHtml(_rpIdx,tipo);
-  var lbl=document.getElementById('rp-label-'+tipo);if(lbl)lbl.textContent='Ponto '+_rpIdx+' de '+_rpN;
-  var prev=document.getElementById('rp-prev-'+tipo);if(prev)prev.disabled=_rpIdx===1;
-  var next=document.getElementById('rp-next-'+tipo);if(next)next.disabled=_rpIdx===_rpN;
-  setTimeout(function(){_rpRestore(tipo);},0);
-}
 
-
-
-function renderPontosRuido(n){return '';}
-function atualizarPontosRuido(n){document.getElementById('rp-cont').innerHTML=renderPontosRuido(n);}
-
-// VIBRAÇÃO
-var _sismoN=1,_sismoIdx=1,_sismoDados={};
-
-function _sismoSetN(n){mostrarBtnRascunho(true);_sismoN=n;_sismoIdx=1;_sismoDados={};_sismoRender();}
-function _sismoRender(){var w=document.getElementById('sismo-wrap');if(w)w.innerHTML=_sismoPage(_sismoIdx);}
-function _sismoPrev(){if(_sismoIdx>1){_sismoSave();_sismoIdx--;_sismoRender();window.scrollTo(0,0);}}
-function _sismoNext(){if(_sismoIdx<_sismoN){_sismoSave();_sismoIdx++;_sismoRender();window.scrollTo(0,0);}}
-function _sismoSave(){var p='sp'+_sismoIdx;var saved={};document.querySelectorAll('[id^="'+p+'-"]').forEach(function(el){if(el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='TEXTAREA')saved[el.id]=el.value;if(el.classList&&el.classList.contains('check-item'))saved[el.id+'__checked']=el.classList.contains('checked');});_sismoDados[_sismoIdx]=saved;}
-function _sismoRestore(){var saved=_sismoDados[_sismoIdx];if(!saved)return;Object.keys(saved).forEach(function(k){if(k.endsWith('__checked')){var el=document.getElementById(k.replace('__checked',''));if(el&&saved[k])el.classList.add('checked');}else{var el=document.getElementById(k);if(el)el.value=saved[k];}});}
-
-
-// QAR EXTERNO
-var _qarN=1,_qarIdx=1,_qarDados={};
-
-function atualizarPontosQAR(n){mostrarBtnRascunho(true);_qarN=n;_qarIdx=1;_qarDados={};document.getElementById('qar-abas-bar').innerHTML=gerarAbasQAR(n);document.getElementById('qarp-cont').innerHTML=renderPontosQAR(n);mostrarPontoQAR(1);}
-function gerarAbasQAR(n){var h='';for(var i=1;i<=n;i++){h+='<div class="qar-aba'+(i===1?' active':'')+'" onclick="mostrarPontoQAR('+i+')">P'+i+'</div>';}return h;}
-function mostrarPontoQAR(idx){_qarIdx=idx;document.querySelectorAll('.qar-aba').forEach(function(a,i){a.classList.toggle('active',i+1===idx);});document.querySelectorAll('.qar-ponto').forEach(function(p,i){p.style.display=(i+1===idx)?'block':'none';});}
-function renderPontosQAR(n){
-  var cartas=['18','13','10','9','8'];
-  function leit(id,col){return '<div class="leitura-label">Coluna '+col+'mm CmH\u2082O</div><div class="row2">'+inp(id+'-'+col+'-up','\u2191 Para cima','number','')+inp(id+'-'+col+'-dn','\u2193 Para baixo','number','')+'</div>';}
-  var h='';
-  for(var i=1;i<=n;i++){var p='qarp'+i;
-    h+='<div id="qar-ponto-'+i+'" class="qar-ponto" style="display:'+(i===1?'block':'none')+'">';
-    h+='<div class="card"><div class="card-title blue">Ponto '+i+'</div>';
-    h+=inp(p+'-nome','Nome / identificação do ponto','text','');
-    h+='<div class="field"><label>Tipo de equipamento</label>'+
-      '<select id="'+p+'-tipoequip" onchange="toggleOutroEquipQAR(\''+p+'\',this.value)">'+
-      '<option value="">Selecione...</option>'+
-      '<option>PTS</option><option>PM10</option><option>PM2,5</option><option>TRIGAS</option><option>Outro</option>'+
-      '</select></div>'+
-      '<div class="field hidden" id="'+p+'-tipoequip-outro-field">'+
-      '<label>Especifique o equipamento</label><input type="text" id="'+p+'-tipoequip-outro" placeholder="Descreva..."/>'+
-      '</div>';
-    h+=inp(p+'-numequip','N\u00ba do equipamento','text','');
-    h+=gpsBlock(p);
-    h+='<span class="passo-step">1\u00ba Passo \u2014 Aquecimento do motor</span>'+chk(p+'-motor','Motor aquecido');
-    h+='<div class="divider"></div><span class="passo-step">2\u00ba Passo \u2014 Zerar Man\u00f4metro</span>'+chk(p+'-manz','Man\u00f4metro zerado')+chk(p+'-valv','V\u00e1lvulas fechadas');
-    h+='<div class="divider"></div><span class="passo-step">3\u00ba Passo \u2014 Teste de Vazamento</span>'+chk(p+'-v800','Man\u00f4metro 800mm \u2014 vazamento OK')+chk(p+'-v400','Man\u00f4metro 400mm \u2014 vazamento OK');
-    h+='<div class="divider"></div><span class="passo-step">4\u00ba Passo \u2014 Porta filtro e porta motor</span>'+chk(p+'-fuga','Nenhuma fuga de ar detectada');
-    h+='<div class="divider"></div><span class="passo-step">5\u00ba Passo \u2014 Condi\u00e7\u00f5es ambientais</span>';
-    h+='<div class="row3">'+inp(p+'-temp','Temperatura (\u00b0C)','number','')+inp(p+'-press','Press\u00e3o','number','')+inp(p+'-umid','Umidade (%)','number','')+'</div>';
-    h+='<div class="divider"></div><span class="passo-step">6\u00ba Passo \u2014 Calibra\u00e7\u00e3o</span>';
-    cartas.forEach(function(c){h+='<div class="coleta-header"><h3>Carta '+c+'</h3></div>'+leit(p+'-cal-c'+c,'800')+'<div style="margin-top:6px">'+leit(p+'-cal-c'+c,'400')+'</div><div class="divider"></div>';});
-    h+=inp(p+'-nfiltro','N\u00famero do filtro','text','');
-    h+='<div class="coleta-header"><h3>Leitura com filtro no lugar</h3></div>'+leit(p+'-filtro','800');
-    h+=chk(p+'-calib','Calibra\u00e7\u00e3o aprovada')+inp(p+'-validade','Validade da calibra\u00e7\u00e3o','text','')+'</div>';
-    for(var c=1;c<=7;c++){
-      h+='<div class="card"><div class="coleta-header"><h3>'+c+'\u00aa Coleta</h3></div>';
-      h+='<span class="section-label">Dados Iniciais</span>';
-      h+='<div class="row2">'+inp(p+'-c'+c+'-dini','Data inicial','date','')+inp(p+'-c'+c+'-hini','Hora inicial','time','')+'</div>';
-      h+=inp(p+'-c'+c+'-horamini','Hor\u00edmetro inicial','text','');
-      h+='<div class="row3">'+inp(p+'-c'+c+'-tini','Temperatura','number','')+inp(p+'-c'+c+'-uini','Umidade','number','')+inp(p+'-c'+c+'-pini','Press\u00e3o','number','')+'</div>';
-      h+=leit(p+'-c'+c+'-ini','800');
-      h+='<div class="divider"></div><span class="section-label">Dados Finais</span>';
-      h+='<div class="row2">'+inp(p+'-c'+c+'-dfim','Data final','date','')+inp(p+'-c'+c+'-hfim','Hora final','time','')+'</div>';
-      h+=inp(p+'-c'+c+'-horamfim','Hor\u00edmetro final','text','');
-      h+='<div class="row3">'+inp(p+'-c'+c+'-tfim','Temperatura','number','')+inp(p+'-c'+c+'-ufim','Umidade','number','')+inp(p+'-c'+c+'-pfim','Press\u00e3o','number','')+'</div>';
-      h+=leit(p+'-c'+c+'-fim','800')+'</div>';
-    }
-    h+='</div>';
-  }return h;
-}
-
-// OPACIDADE
-var _opacN=1,_opacIdx=1,_opacDados={};
-
-
-var _opacSubTipo='';
-
-
-// RINGELMANN - paginação por veículo
-var _ringN=1,_ringIdx=1,_ringDados={};
-function _ringSetN(n){mostrarBtnRascunho(true);_ringN=n;_ringIdx=1;_ringDados={};_ringRender();}
-function _ringRender(){var w=document.getElementById('ring-wrap');if(w)w.innerHTML=_ringPage(_ringIdx);}
-function _ringPrev(){if(_ringIdx>1){_ringSave();_ringIdx--;_ringRender();window.scrollTo(0,0);}}
-function _ringNext(){if(_ringIdx<_ringN){_ringSave();_ringIdx++;_ringRender();window.scrollTo(0,0);}}
-function _ringSave(){
-  var p='ringv'+_ringIdx;var saved={};
+function _rpiSave(){
+  var p='rpi'+_rpiIdx;var saved={};
   document.querySelectorAll('[id^="'+p+'-"]').forEach(function(el){
     if(el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='TEXTAREA')saved[el.id]=el.value;
+    if(el.classList&&el.classList.contains('check-item'))saved[el.id+'__chk']=el.classList.contains('checked');
   });
-  _ringDados[_ringIdx]=saved;
-}
-function _ringRestore(){
-  var saved=_ringDados[_ringIdx];if(!saved)return;
-  Object.keys(saved).forEach(function(k){var el=document.getElementById(k);if(el)el.value=saved[k];});
-}
-function _ringPage(idx){
-  var p='ringv'+idx;
-  var h='<div class="qar-nav">'+
-    '<button class="qar-nav-btn" onclick="_ringPrev()" '+(idx===1?'disabled':'')+'>&#8592;</button>'+
-    '<span class="qar-nav-label">Veículo '+idx+' de '+_ringN+'</span>'+
-    '<button class="qar-nav-btn" onclick="_ringNext()" '+(idx===_ringN?'disabled':'')+'>&#8594;</button>'+
-    '</div>';
-  h+='<div class="ponto-card"><div class="ponto-header">Veículo '+idx+'</div><div class="ponto-body">';
-  h+=inp(p+'-hora-ini','Horário inicial','time','');
-  h+=inp(p+'-placa','Placa / identificação do veículo','text','');
-  h+=inp(p+'-ano','Ano de fabricação','number','');
-  h+=gpsBlock(p);
-  h+='<div class="card-title blue" style="margin-bottom:10px;margin-top:4px;">Leituras (1 a 5)</div>';
-  h+='<p style="font-size:12px;color:#718096;margin-bottom:10px;">Escreva o número correspondente à densidade observada (1 a 5) para cada leitura</p>';
-  for(var i=1;i<=10;i++){
-    h+='<div class="field"><label>'+i+'ª leitura</label>'+
-      '<select id="'+p+'-L'+i+'">'+
-      '<option value="">—</option>'+
-      '<option value="0">0</option><option value="1">1</option><option value="2">2</option>'+
-      '<option value="3">3</option><option value="4">4</option><option value="5">5</option>'+
-      '</select></div>';
-  }
-  h+=inp(p+'-hora-fim','Horário final','time','');
-  h+=fotoBlock(p);
-  h+=inp(p+'-obs','Observações','text','');
-  h+='</div></div>';
-  setTimeout(function(){_ringRestore();},0);
-  return h;
-}
-function coletarRingelmann(){
-  _ringSave();
-  var veiculos=[];
-  for(var i=1;i<=_ringN;i++){
-    var saved=_ringDados[i]||{};var p='ringv'+i;
-    var leituras=[];
-    for(var l=1;l<=10;l++){leituras.push(saved[p+'-L'+l]||'');}
-    veiculos.push({
-      placa:saved[p+'-placa']||'',ano:saved[p+'-ano']||'',
-      horaIni:saved[p+'-hora-ini']||'',horaFim:saved[p+'-hora-fim']||'',
-      gps:getGPSFromSaved(saved,p),leituras:leituras,obs:saved[p+'-obs']||''
-    });
-  }
-  return veiculos;
-}
-function _opacSetN(n){mostrarBtnRascunho(true);_opacN=n;_opacIdx=1;_opacDados={};_opacRender();}
-function _opacRender(){var w=document.getElementById('opac-wrap');if(w)w.innerHTML=_opacPage(_opacIdx);}
-function _opacPrev(){if(_opacIdx>1){_opacSave();_opacIdx--;_opacRender();window.scrollTo(0,0);}}
-function _opacNext(){if(_opacIdx<_opacN){_opacSave();_opacIdx++;_opacRender();window.scrollTo(0,0);}}
-function _opacSave(){var p='opacv'+_opacIdx;var saved={};document.querySelectorAll('[id^="'+p+'-"]').forEach(function(el){if(el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='TEXTAREA')saved[el.id]=el.value;if(el.classList&&el.classList.contains('check-item'))saved[el.id+'__checked']=el.classList.contains('checked');});_opacDados[_opacIdx]=saved;}
-function _opacRestore(){var saved=_opacDados[_opacIdx];if(!saved)return;Object.keys(saved).forEach(function(k){if(k.endsWith('__checked')){var el=document.getElementById(k.replace('__checked',''));if(el&&saved[k])el.classList.add('checked');}else{var el=document.getElementById(k);if(el)el.value=saved[k];}});}
-function _opacPage(idx){
-  var p='opacv'+idx;
-  var h='<div class="qar-nav"><button class="qar-nav-btn" onclick="_opacPrev()" '+(idx===1?'disabled':'')+'>&#8592;</button><span class="qar-nav-label">Ve\u00edculo '+idx+' de '+_opacN+'</span><button class="qar-nav-btn" onclick="_opacNext()" '+(idx===_opacN?'disabled':'')+'>&#8594;</button></div>';
-  h+='<div class="card"><div class="card-title blue">Ve\u00edculo '+idx+'</div>';
-  h+=inp(p+'-placa','Placa / identificação do veículo','text','');
-  h+=gpsBlock(p);
-  h+=chk(p+'-calibrado','Equipamento conectado e calibrado');
-  h+=chk(p+'-acel','Acelerações preliminares realizadas');
-  h+=chk(p+'-ensaio','Ensaio executado conforme método');
-  h+=chk(p+'-leituras','3 leituras válidas obtidas');
-  h+=chk(p+'-dados','Dados registrados e conferidos');
-  h+='<div class="field"><label>Evidência fotográfica</label><div class="foto-area" onclick="document.getElementById(\'fi-'+p+'\').click()"><input type="file" id="fi-'+p+'" accept="image/*" capture="environment" data-pid="'+p+'" onchange="previewFotoCb(this)" style="display:none"/><div class="foto-icon">\uD83D\uDCF7</div><div class="foto-text">Toque para tirar ou selecionar foto</div></div><div class="foto-preview" id="fp-'+p+'"></div></div>';
-  h+=inp(p+'-obs','Observações','text','');
-  h+='</div>';
-  setTimeout(function(){_opacRestore();},0);
-  return h;
-}
-function coletarOpacidade(){_opacSave();var veiculos=[];for(var i=1;i<=_opacN;i++){var saved=_opacDados[i]||{};var p='opacv'+i;veiculos.push({placa:saved[p+'-placa']||'',gps:getGPSFromSaved(saved,p),calibrado:saved[p+'-calibrado__checked']||false,acel:saved[p+'-acel__checked']||false,ensaio:saved[p+'-ensaio__checked']||false,leituras:saved[p+'-leituras__checked']||false,dados:saved[p+'-dados__checked']||false,obs:saved[p+'-obs']||''});}return veiculos;}
-function getGPSFromSaved(saved,p){return{e:saved['gps-e-'+p]||'',n:saved['gps-n-'+p]||'',zona:saved['gps-zona-'+p]||''};}
-
-// QAR INTERNO
-var _qarintN=1,_qarintIdx=1,_qarintDados={};
-function calcPontosQarint(area){if(area<=1000)return 1;if(area<=2000)return 3;if(area<=3000)return 5;if(area<=5000)return 8;if(area<=10000)return 12;if(area<=15000)return 15;if(area<=20000)return 18;if(area<=30000)return 21;return 25;}
-
-
-var _qarintNAmb=1,_qarintAmbIdx=1,_qarintAmbData={};
-function _qarintSetupAmbientes(n){
-  _qarintNAmb=n;_qarintAmbIdx=1;_qarintAmbData={};
-  var wrap=document.getElementById('qarint-ambientes-wrap');
-  if(!wrap)return;
-  wrap.innerHTML=_qarintAmbNavHtml()+_qarintAmbFormHtml(1);
-  _updateQarintAmbNav();
-}
-function _qarintAmbNavHtml(){
-  return '<div class="qar-nav" id="qaint-anav"><button class="qar-nav-btn" id="qaint-aprev" onclick="_qarintAmbPrev()">&#8592;</button><span class="qar-nav-label" id="qaint-albl">Ambiente 1</span><button class="qar-nav-btn" id="qaint-anext" onclick="_qarintAmbNext()">&#8594;</button></div>';
-}
-function _updateQarintAmbNav(){
-  var l=document.getElementById('qaint-albl');if(l)l.textContent='Ambiente '+_qarintAmbIdx+' de '+_qarintNAmb;
-  var p=document.getElementById('qaint-aprev');if(p)p.disabled=_qarintAmbIdx===1;
-  var n=document.getElementById('qaint-anext');if(n)n.disabled=_qarintAmbIdx===_qarintNAmb;
-}
-function _qarintAmbPrev(){if(_qarintAmbIdx>1){_saveQarintAmb();_qarintAmbIdx--;_loadQarintAmb();_updateQarintAmbNav();window.scrollTo(0,0);}}
-function _qarintAmbNext(){if(_qarintAmbIdx<_qarintNAmb){_saveQarintAmb();_qarintAmbIdx++;_loadQarintAmb();_updateQarintAmbNav();window.scrollTo(0,0);}}
-function _saveQarintAmb(){
-  var saved={npontos:_qarintN,pontos:JSON.parse(JSON.stringify(_qarintDados))};
-  var nome=document.getElementById('qaint-nome-'+_qarintAmbIdx);if(nome)saved.nome=nome.value;
-  var area=document.getElementById('qaint-area-'+_qarintAmbIdx);if(area)saved.area=area.value;
-  _qarintAmbData[_qarintAmbIdx]=saved;
-}
-function _loadQarintAmb(){
-  var cont=document.getElementById('qarint-amb-cont');
-  if(cont)cont.innerHTML=_qarintAmbFormHtml(_qarintAmbIdx);
-  var saved=_qarintAmbData[_qarintAmbIdx];
-  if(saved){
-    var nome=document.getElementById('qaint-nome-'+_qarintAmbIdx);if(nome&&saved.nome)nome.value=saved.nome;
-    var area=document.getElementById('qaint-area-'+_qarintAmbIdx);if(area&&saved.area)area.value=saved.area;
-    if(saved.npontos){_qarintN=saved.npontos;_qarintDados=saved.pontos||{};_qarintIdx=1;_qarintRender();}
-  }
-}
-function _qarintAmbFormHtml(idx){
-  return '<div id="qarint-amb-cont"><div class="card"><div class="card-title blue">Ambiente '+idx+'</div>'+
-    '<div class="field"><label>Nome do ambiente</label><input type="text" id="qaint-nome-'+idx+'" placeholder="Ex: Sala de reunioes, Recepcao..."/></div>'+
-    '<div class="field"><label>Area climatizada (m2)</label><input type="number" id="qaint-area-'+idx+'" placeholder="Ex: 45"/></div>'+
-    '<div class="field"><button class="btn-next" style="width:100%" onclick="_qarintCalcFromAmb('+idx+')">Calcular pontos necessarios</button></div>'+
-    '<div id="qarint-resultado-'+idx+'" class="hidden"><div class="chk-alerta" style="background:#e8f4fd;border-color:#2d7db3;color:#1e5f8a;" id="qarint-msg-'+idx+'"></div></div>'+
-    '</div>'+
-    '<div id="qarint-wrap"></div>'+
-    '</div>';
-}
-function _qarintCalcFromAmb(idx){mostrarBtnRascunho(true);
-  var aEl=document.getElementById('qaint-area-'+idx);
-  var area=parseFloat(aEl?aEl.value:0);
-  if(!area||area<=0){toast('Informe a area');return;}
-  var n=calcPontosQarint(area);
-  _qarintN=n+1; // +1 ponto externo
-  _qarintIdx=1;_qarintDados={};
-  var res=document.getElementById('qarint-resultado-'+idx);if(res)res.classList.remove('hidden');
-  var msg=document.getElementById('qarint-msg-'+idx);if(msg)msg.textContent='Area: '+area+' m2 -> '+n+' ponto(s) interno(s) + 1 ponto externo = '+(_qarintN)+' total';
-  _qarintRender();
-}
-function _qarintCalc(){var area=parseFloat(v('qarint-area'));if(!area||area<=0){alert('Informe a área da sala');return;}_qarintN=calcPontosQarint(area);_qarintIdx=1;_qarintDados={};var res=document.getElementById('qarint-resultado');var msg=document.getElementById('qarint-msg');res.classList.remove('hidden');msg.textContent='Área: '+area+' m² → '+_qarintN+' ponto(s) necessário(s)';_qarintRender();}
-function _qarintRender(){var w=document.getElementById('qarint-wrap');if(w)w.innerHTML=_qarintPage(_qarintIdx);}
-function _qarintPrev(){if(_qarintIdx>1){_qarintSave();_qarintIdx--;_qarintRender();window.scrollTo(0,0);}}
-function _qarintNext(){if(_qarintIdx<_qarintN){_qarintSave();_qarintIdx++;_qarintRender();window.scrollTo(0,0);}}
-function _qarintSave(){var p='qarintp'+_qarintIdx;var saved={};document.querySelectorAll('[id^="'+p+'-"]').forEach(function(el){if(el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='TEXTAREA')saved[el.id]=el.value;if(el.classList&&el.classList.contains('check-item'))saved[el.id+'__checked']=el.classList.contains('checked');});_qarintDados[_qarintIdx]=saved;}
-function _qarintRestore(){var saved=_qarintDados[_qarintIdx];if(!saved)return;Object.keys(saved).forEach(function(k){if(k.endsWith('__checked')){var el=document.getElementById(k.replace('__checked',''));if(el&&saved[k])el.classList.add('checked');}else{var el=document.getElementById(k);if(el)el.value=saved[k];}});}
-
-function coletarQarint(){_qarintSave();var pontos=[];for(var i=1;i<=_qarintN;i++){var saved=_qarintDados[i]||{};var p='qarintp'+i;pontos.push({nome:saved[p+'-nome']||'',gps:getGPSFromSaved(saved,p),plano:saved[p+'-plano__checked']||false,equip:saved[p+'-equip__checked']||false,posic:saved[p+'-posic__checked']||false,coleta:saved[p+'-coleta__checked']||false,co2:saved[p+'-co2']||'',temp:saved[p+'-temp']||'',ur:saved[p+'-ur']||'',vento:saved[p+'-vento']||'',conformidade:saved[p+'-conformidade__checked']||false,amostras:saved[p+'-amostras__checked']||false,obs:saved[p+'-obs']||''});}return pontos;}
-
-// OUTRO
-var _outroN=1,_outroIdx=1,_outroDados={};
-function renderGenerico(){
-  _outroIdx=1;_outroDados={};
-  return '<div class="card"><div class="card-title blue">Outro monitoramento</div>'+
-    inp('outro-tipo','Tipo de monitoramento','text','Descreva o tipo de monitoramento')+
-    inp('outro-objetivo','Objetivo do monitoramento','text','Descreva o objetivo')+
-    '<div class="field"><label>Quantidade de pontos</label><select id="outro-npontos" onchange="_outroSetN(parseInt(this.value)||1)"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>'+
-    '</div><div id="outro-wrap"></div>';
-}
-function _outroSetN(n){mostrarBtnRascunho(true);_outroN=n;_outroIdx=1;_outroDados={};_outroRender();}
-function _outroRender(){var w=document.getElementById('outro-wrap');if(w)w.innerHTML=_outroPage(_outroIdx);}
-function _outroPrev(){if(_outroIdx>1){_outroSave();_outroIdx--;_outroRender();window.scrollTo(0,0);}}
-function _outroNext(){if(_outroIdx<_outroN){_outroSave();_outroIdx++;_outroRender();window.scrollTo(0,0);}}
-function _outroSave(){var p='outrp'+_outroIdx;var saved={};document.querySelectorAll('[id^="'+p+'-"]').forEach(function(el){if(el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='TEXTAREA')saved[el.id]=el.value;});_outroDados[_outroIdx]=saved;}
-function _outroRestore(){var saved=_outroDados[_outroIdx];if(!saved)return;Object.keys(saved).forEach(function(k){var el=document.getElementById(k);if(el)el.value=saved[k];});}
-function _outroPage(idx){
-  var p='outrp'+idx;
-  var h='<div class="qar-nav"><button class="qar-nav-btn" onclick="_outroPrev()" '+(idx===1?'disabled':'')+'>&#8592;</button><span class="qar-nav-label">Ponto '+idx+' de '+_outroN+'</span><button class="qar-nav-btn" onclick="_outroNext()" '+(idx===_outroN?'disabled':'')+'>&#8594;</button></div>';
-  h+='<div class="card"><div class="card-title blue">Ponto '+idx+'</div>';
-  h+=inp(p+'-nome','Nome / identificação do ponto','text','');
-  h+=gpsBlock(p);
-  h+=inp(p+'-medicao','Medição principal','number','');
-  h+=inp(p+'-equip','Equipamento utilizado','text','');
-  h+=fotoBlock(p);
-  h+=inp(p+'-obs','Observações','text','');
-  h+='</div>';
-  setTimeout(function(){_outroRestore();},0);
-  return h;
-}
-function coletarOutro(){_outroSave();var pontos=[];for(var i=1;i<=_outroN;i++){var saved=_outroDados[i]||{};var p='outrp'+i;pontos.push({nome:saved[p+'-nome']||'',gps:getGPSFromSaved(saved,p),temp:saved[p+'-temp']||'',umid:saved[p+'-umid']||'',vento:saved[p+'-vento']||'',medicao:saved[p+'-medicao']||'',equip:saved[p+'-equip']||'',obs:saved[p+'-obs']||''});}return pontos;}
-
-// COLETAR DADOS
-function coletarDados(){
-  var os=v('num-os');var base={id:os?os+'_'+tipoSel+'_'+(v('data')||''):tipoSel+'_'+(v('data')||''),numOS:os,data:v('data'),hora:v('hora'),tecnico:v('tecnico'),cliente:v('cliente'),cidade:v('cidade'),tipo:tipoSel,horaFim:v('hora-fim'),obsGeral:v('obs-geral'),timestamp:new Date().toISOString()};
-  var esp={};
-  if(tipoSel==='ruido'){esp.subTipo=_subRuido||'externo';
-    esp.finalidade=v('r-finalidade')==='Outros'?v('r-finalidade-outro'):v('r-finalidade');
-    var nP=parseInt(v('r-npontos'))||0;esp.pontos=[];
-    for(var i=1;i<=nP;i++){var p='rp'+i;esp.pontos.push({nome:v(p+'-nome'),gps:getGPS(p),chkIni:v(p+'-chkini'),chkFim:v(p+'-chkfim'),temp:v(p+'-temp'),umid:v(p+'-umid'),vento:v(p+'-vento'),residual:isChk(p+'-residual'),total:isChk(p+'-total'),fontesEmpresa:v(p+'-fontes-empresa'),fontesAmbiente:v(p+'-fontes-ambiente'),obs:v(p+'-obs')});}
-  } else if(tipoSel==='sismo'){
-    esp.objetivo=v('s-objetivo');esp.finalidade=v('s-finalidade');
-    _sismoSave();esp.pontos=[];
-    for(var i=1;i<=_sismoN;i++){var saved=_sismoDados[i]||{};var p='sp'+i;esp.pontos.push({nome:saved[p+'-nome']||'',gps:getGPSFromSaved(saved,p),fonte:saved[p+'-fonte']||'',autov:saved[p+'-autov__checked']||false,temp:saved[p+'-temp']||'',umid:saved[p+'-umid']||'',trigger:saved[p+'-trigger__checked']||false,mem:saved[p+'-mem__checked']||false,prog:saved[p+'-prog__checked']||false,capt:saved[p+'-capt__checked']||false,interc:saved[p+'-interc-sel']==='sim'?(saved[p+'-interc']||''):'Nenhuma'});}
-  } else if(tipoSel==='qar'){
-    esp.objetivo=v('qar-objetivo');esp.qar=true;
-    var nP=parseInt(v('qar-npontos'))||0;esp.pontos=[];
-    for(var i=1;i<=nP;i++){var p='qarp'+i;var coletas=[];for(var c=1;c<=7;c++){coletas.push({dini:v(p+'-c'+c+'-dini'),hini:v(p+'-c'+c+'-hini'),horamIni:v(p+'-c'+c+'-horamini'),tini:v(p+'-c'+c+'-tini'),uini:v(p+'-c'+c+'-uini'),pini:v(p+'-c'+c+'-pini'),dfim:v(p+'-c'+c+'-dfim'),hfim:v(p+'-c'+c+'-hfim'),horamFim:v(p+'-c'+c+'-horamfim'),tfim:v(p+'-c'+c+'-tfim'),ufim:v(p+'-c'+c+'-ufim'),pfim:v(p+'-c'+c+'-pfim')});}esp.pontos.push({nome:v(p+'-nome'),gps:getGPS(p),calibAprovada:isChk(p+'-calib'),coletas:coletas});}
-  } else if(tipoSel==='opacidade'){
-    esp.subTipo=_opacSubTipo;
-    if(_opacSubTipo==='ringelmann'){esp.veiculos=coletarRingelmann();}
-    else{esp.veiculos=coletarOpacidade();}
-  } else if(tipoSel==='qarint'){
-    esp.area=v('qarint-area');esp.pontos=coletarQarint();
-  } else {
-    esp={tipoEspecifico:v('outro-tipo'),objetivo:v('outro-objetivo'),pontos:coletarOutro()};
-  }
-  return Object.assign({},base,esp);
+  _rpiDados[_rpiIdx]=saved;
 }
 
-function getGPS(pid){return{e:v('gps-e-'+pid),n:v('gps-n-'+pid),zona:v('gps-zona-'+pid)};}
-
-// LINHA EXCEL
-function montarLinhaPorTipo(dados){
-  var base=[dados.data,dados.hora,dados.horaFim,dados.tecnico,dados.cliente||'',dados.cidade||''];
-  function bool(v){return v?'Sim':'Não';}
-  function gpsStr(g){return g&&g.e?(g.zona+' E:'+g.e+' N:'+g.n):'';}
-  if(dados.tipo==='ruido'){
-    var rows=[];
-    (dados.pontos||[]).forEach(function(p,i){var diff='';if(p.chkIni!==''&&p.chkFim!==''){var dv=Math.abs(parseFloat(p.chkFim)-parseFloat(p.chkIni));diff=isNaN(dv)?'':dv.toFixed(1);}
-      rows.push(base.concat([dados.finalidade||'',i+1,p.nome||'',gpsStr(p.gps),p.chkIni||'',p.chkFim||'',diff,p.temp||'',p.umid||'',p.vento||'',bool(p.residual),bool(p.total),p.fontesEmpresa||'',p.fontesAmbiente||'',p.obs||'',dados.obsGeral||'','']));});
-    rows.forEach(function(r){if(r.length&&(!r[r.length-1]||r[r.length-1]===''))r.push('Validado');});return {sheet:'Ruído',rows:rows};
-  }
-  if(dados.tipo==='sismo'){
-    var rows=[];
-    (dados.pontos||[]).forEach(function(p,i){rows.push(base.concat([dados.objetivo||'',dados.finalidade||'',i+1,p.nome||'',gpsStr(p.gps),p.fonte||'',bool(p.autov),p.temp||'',p.umid||'',bool(p.trigger),bool(p.mem),bool(p.prog),bool(p.capt),p.interc||'Nenhuma',dados.obsGeral||'','']));});
-    rows.forEach(function(r){if(r.length&&(!r[r.length-1]||r[r.length-1]===''))r.push('Validado');});return {sheet:'Vibração',rows:rows};
-  }
-  if(dados.tipo==='qar'){
-    var rows=[];
-    (dados.pontos||[]).forEach(function(p,i){(p.coletas||[]).forEach(function(c,ci){rows.push(base.concat([dados.objetivo||'',i+1,p.nome||'',gpsStr(p.gps),bool(p.calibAprovada),ci+1,c.dini||'',c.hini||'',c.horamIni||'',c.tini||'',c.uini||'',c.pini||'',c.dfim||'',c.hfim||'',c.horamFim||'',c.tfim||'',c.ufim||'',c.pfim||'',dados.obsGeral||'']));});});
-    rows.forEach(function(r){if(r.length&&(!r[r.length-1]||r[r.length-1]===''))r.push('Validado');});return {sheet:'QAR Externo',rows:rows};
-  }
-  if(dados.tipo==='opacidade'){
-    var rows=[];
-    (dados.veiculos||[]).forEach(function(ve,i){rows.push(base.concat([i+1,ve.placa||'',gpsStr(ve.gps),bool(ve.calibrado),bool(ve.acel),bool(ve.ensaio),bool(ve.leituras),bool(ve.dados),ve.obs||'','']));});
-    rows.forEach(function(r){if(r.length&&(!r[r.length-1]||r[r.length-1]===''))r.push('Validado');});return {sheet:'Opacidade',rows:rows};
-  }
-  if(dados.tipo==='qarint'){
-    var rows=[];
-    (dados.pontos||[]).forEach(function(p,i){rows.push(base.concat([dados.area||'',(dados.pontos||[]).length,i+1,p.nome||'',gpsStr(p.gps),bool(p.plano),bool(p.equip),bool(p.posic),bool(p.coleta),p.co2||'',p.temp||'',p.ur||'',p.vento||'',bool(p.conformidade),bool(p.amostras),p.obs||'','']));});
-    rows.forEach(function(r){if(r.length&&(!r[r.length-1]||r[r.length-1]===''))r.push('Validado');});return {sheet:'QAR Interno',rows:rows};
-  }
-  return {sheet:'Outro',rows:[base.concat([dados.tipoEspecifico||'',dados.objetivo||'',(dados.pontos||[]).map(function(p,i){return 'P'+(i+1)+':'+p.nome;}).join('; '),dados.obsGeral||'',''])]};
+function _rpiUpdate(){
+  var nav=document.getElementById('rp-nav-wrap-int');
+  var cont=document.getElementById('rp-cont-int');
+  if(nav)nav.innerHTML=_rpiNav();
+  if(cont)cont.innerHTML=_rpiPageBody(_rpiIdx);
+  setTimeout(function(){_rpiRestore();},0);
+  window.scrollTo(0,0);
 }
 
-// SALVAR
-async
-function salvarOffline(dados,resultado){pending.push({dados:dados,resultado:resultado,ts:Date.now()});localStorage.setItem('engear_pending',JSON.stringify(pending));atualizarOfflineBar();}
+function atualizarOfflineBar(){var bar=document.getElementById('offline-bar');if(!navigator.onLine||pending.length>0){bar.classList.add('show');document.getElementById('pending-count').textContent=pending.length;}else{bar.classList.remove('show');}}
 
-async
-
-function mostrarSucesso(d,offline){
-  salvarHistorico(d);
-  var tipos={ruido:'Ruído',sismo:'Vibração',qar:'Qualidade do Ar Externo',opacidade:'Opacidade',qarint:'Qualidade do Ar Interno',outro:'Outro'};
-  document.getElementById('sucesso-titulo').textContent=offline?'Salvo offline!':'Registro salvo!';
-  document.getElementById('sucesso-msg').textContent=offline?'Dados salvos no dispositivo. Serão enviados quando conectar.':'Dados gravados com sucesso na planilha do SharePoint.';
-  document.getElementById('saved-info').innerHTML='<div class="saved-row"><span>Data</span><span>'+d.data+'</span></div><div class="saved-row"><span>Técnico</span><span>'+d.tecnico+'</span></div><div class="saved-row"><span>Tipo</span><span>'+(tipos[d.tipo]||d.tipo)+'</span></div><div class="saved-row"><span>Status</span><span>'+(offline?'⏳ Pendente':'✅ Enviado')+'</span></div>';
-  mostrar('sucesso');
-}
-
-// UPLOAD FOTOS
-async
-
-// GRAPH API
-async
-async function gGet(path){var r=await fetch(CFG.workerUrl+'/graph'+path,{headers:{Authorization:'Bearer '+token}});if(!r.ok)throw new Error(r.status+'');return r.json();}
-async function gPatch(path,body){var r=await fetch(CFG.workerUrl+'/graph'+path,{method:'PATCH',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error(r.status+'');return r.json();}
-
-// PDF
-
-function _abrirPdfJanela(html_pdf){var win=window.open('','_blank');if(win){win.document.write(html_pdf);win.document.close();}else{var blob=new Blob([html_pdf],{type:'text/html'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='registro_engear.html';a.click();toast('Arquivo salvo nos downloads!');}}
-function lerFotoBase64(file){return new Promise(function(resolve){var reader=new FileReader();reader.onload=function(e){resolve(e.target.result);};reader.onerror=function(){resolve('');};reader.readAsDataURL(file);});}
-
-// FILA DE PENDÊNCIAS
-
-
-
-
-
-// BIBLIOTECA
-var _biblioCategoria='';
-var BIBLIO_BASE='https://engear.github.io/monitoramento-engear';
-var BIBLIO_CATS={normas:{titulo:'Normas',itens:[{nome:'Ruído',icon:'🔊',pasta:'normas/ruido'},{nome:'Vibração',icon:'🌍',pasta:'normas/vibracao'},{nome:'Qualidade do Ar Externo',icon:'💨',pasta:'normas/qualidade-ar-externo'},{nome:'Qualidade do Ar Interno',icon:'🏭',pasta:'normas/qualidade-ar-interno'},{nome:'Opacidade',icon:'👁',pasta:'normas/opacidade'},{nome:'ABNT 17025',icon:'📜',pasta:'normas/abnt-17025'}]},etapas:{titulo:'Etapas de Amostragem',itens:[{nome:'Ruído',icon:'🔊',pasta:'etapas-amostragem/ruido'},{nome:'Vibração',icon:'🌍',pasta:'etapas-amostragem/vibracao'},{nome:'Qualidade do Ar Externo',icon:'💨',pasta:'etapas-amostragem/qualidade-ar-externo'},{nome:'Qualidade do Ar Interno',icon:'🏭',pasta:'etapas-amostragem/qualidade-ar-interno'},{nome:'Opacidade',icon:'👁',pasta:'etapas-amostragem/opacidade'}]}};
-
-
-
-
-
-function abrirPastaEl(el){abrirPasta(el.getAttribute('data-pasta'));}
-function abrirPasta(pasta){window.open(BIBLIO_BASE+'/'+pasta+'/index.html','_blank');}
-
-
-// UTILS
-
-// ── HISTÓRICO ─────────────────────────────────────────────
-var _historico = JSON.parse(localStorage.getItem('engear_historico') || '[]');
-
-function salvarHistorico(dados) {
-  var tipos = {ruido:'Ruído',sismo:'Vibração',qar:'QAR Externo',opacidade:'Opacidade',qarint:'QAR Interno',outro:'Outro'};
-  var entry = {
-    id: Date.now(),
-    data: dados.data,
-    hora: dados.hora,
-    tecnico: dados.tecnico,
-    cliente: dados.cliente || '—',
-    cidade: dados.cidade || '',
-    tipo: dados.tipo,
-    tipoLabel: tipos[dados.tipo] || dados.tipo,
-    ts: new Date().toISOString(),
-    dados: dados
-  };
-  _historico.unshift(entry);
-  if (_historico.length > 20) _historico = _historico.slice(0, 20);
-  localStorage.setItem('engear_historico', JSON.stringify(_historico));
-}
-
-
-
-
-
-function verDetalheHistorico(idx) {
-  var h = _historico[idx];
-  if (!h) return;
-  _ultimoDados = h.dados;
-  gerarPDF();
-}
-
-// ── RASCUNHOS QAR ─────────────────────────────────────────
-var _rascunhos = JSON.parse(localStorage.getItem('engear_rascunhos') || '[]');
-
-function salvarRascunhoQAR() {
-  var dados = coletarDados();
-  if (dados.tipo !== 'qar') { toast('Rascunho disponível apenas para QAR Externo'); return; }
-  var existeIdx = _rascunhos.findIndex(function(r) {
-    return r.dados.data === dados.data && r.dados.cliente === dados.cliente;
+function atualizarSteps(p){
+  ['sd1','sd2','sd3','sd4','sd5'].forEach(function(id,i){
+    var el=document.getElementById(id);
+    if(el)el.className='step-dot'+(i+1<p?' done':i+1===p?' active':'');
   });
-  var entry = { id: Date.now(), data: dados.data, cliente: dados.cliente || '—', tecnico: dados.tecnico, ts: new Date().toISOString(), dados: dados };
-  if (existeIdx >= 0) { _rascunhos[existeIdx] = entry; }
-  else { _rascunhos.unshift(entry); if (_rascunhos.length > 10) _rascunhos = _rascunhos.slice(0, 10); }
-  localStorage.setItem('engear_rascunhos', JSON.stringify(_rascunhos));
-  toast('Rascunho salvo!', false, true);
+  var lbl=['Identificação','Tipo','Pré-campo','Em campo','Finalizar'];
+  var sl=document.getElementById('step-label');
+  if(sl)sl.textContent='Passo '+p+' de 5 — '+(lbl[p-1]||'');
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ── RASCUNHOS ────────────────────────────────────────────────────────────
-
-
-async
-
-function toggleOutroEquipQAR(pid,val){var el=document.getElementById(pid+'-tipoequip-outro-field');if(el)el.classList.toggle('hidden',val!=='Outro');}
-function toggleOutroEquipSismo(pid,val){var el=document.getElementById(pid+'-tipoequip-sismo-outro-field');if(el)el.classList.toggle('hidden',val!=='Outro');}
-
-function mostrarBtnRascunho(show){
-  var el=document.getElementById('rascunho-btn-wrap');
-  if(el)el.style.display=show?'block':'none';
+function calcPontosRuidoInt(){
+  var area=parseFloat(document.getElementById('r-area-int')&&document.getElementById('r-area-int').value||0);
+  if(!area||area<=0){toast('Informe a área do ambiente');return;}
+  var n=area<=30?3:3+Math.ceil((area-30)/30);
+  // Mostrar resultado
+  var res=document.getElementById('r-int-resultado');
+  if(res)res.style.display='block';
+  var msg=document.getElementById('r-int-msg');
+  if(msg)msg.textContent='Área: '+area+' m² → '+n+' ponto(s) necessário(s)';
+  // Mostrar checks de posicionamento + canvas + botão pontos
+  var posWrap=document.getElementById('rpi-pos-checks');
+  if(posWrap)posWrap.style.display='block';
+  var canvasWrap=document.getElementById('sala-canvas-wrap');
+  if(canvasWrap)canvasWrap.style.display='block';
+  var btnPontos=document.getElementById('btn-ir-pontos');
+  if(btnPontos)btnPontos.style.display='block';
+  setTimeout(function(){iniciarCanvas();},300);
+  mostrarBtnRascunho(true);
+  // Inicializar paginação (mas não mostrar ainda)
+  _rpiN=n;_rpiIdx=1;_rpiDados={};
+  // Inicializar canvas
+  setTimeout(function(){iniciarCanvas();},200);
 }
+
+function mostrarPontosInt(){
+  var wrap=document.getElementById('rpi-pontos-wrap');
+  if(wrap){
+    wrap.style.display='block';
+    var navWrap=document.getElementById('rp-nav-wrap-int');
+    var cont=document.getElementById('rp-cont-int');
+    if(navWrap)navWrap.innerHTML=_rpiNav();
+    if(cont)cont.innerHTML=_rpiPageBody(1);
+    setTimeout(function(){window.scrollTo(0,0);},50);
+  }
+}
+
+function canvasLimpar(){_canvasItems=[];_lapisPts=[];_lapisAtivo=false;_desenharCanvas();}
+
+function canvasMode(m){
+  _canvasMode=m;
+  ['ponto','paredeH','paredeV','lapis','borracha'].forEach(function(mo){
+    var b=document.getElementById('btn-modo-'+mo);
+    if(b){b.style.background=m===mo?'#2d7db3':'#f0f4f8';b.style.color=m===mo?'white':'#1a202c';b.style.border=m===mo?'none':'1.5px solid #e2e8f0';}
+  });
+}
+
+function carregarSenhasSalvas(){var nome=localStorage.getItem('engear_saved_nome');var senha=localStorage.getItem('engear_saved_senha');if(nome)document.getElementById('login-nome').value=nome;if(senha){document.getElementById('login-senha').value=senha;document.getElementById('lembrar-senha').checked=true;}}
 
 function fecharTudo(){fecharHistorico();fecharRascunhos();
   mostrar('passo1');
@@ -966,7 +496,8 @@ function fecharTudo(){fecharHistorico();fecharRascunhos();
   mostrarBtnRascunho(false);
 }
 
-var _canvasMode='ponto',_canvasItems=[],_lapisAtivo=false,_lapisPts=[];
+function getXY(e){var r=c.getBoundingClientRect();var s=e.touches?e.touches[0]:e;return{x:(s.clientX-r.left)*(c.width/r.width),y:(s.clientY-r.top)*(c.height/r.height)};}
+
 function iniciarCanvas(){
   var c=document.getElementById('sala-canvas');if(!c)return;
   c.width=c.offsetWidth||320;c.height=250;
@@ -991,137 +522,33 @@ function iniciarCanvas(){
   c.addEventListener('touchend',function(){if(!_lapisAtivo)return;_lapisAtivo=false;if(_lapisPts.length>1)_canvasItems.push({tipo:'lapis',pts:_lapisPts.slice()});_lapisPts=[];_desenharCanvas();});
   _desenharCanvas();
 }
-function canvasMode(m){
-  _canvasMode=m;
-  ['ponto','paredeH','paredeV','lapis','borracha'].forEach(function(mo){
-    var b=document.getElementById('btn-modo-'+mo);
-    if(b){b.style.background=m===mo?'#2d7db3':'#f0f4f8';b.style.color=m===mo?'white':'#1a202c';b.style.border=m===mo?'none':'1.5px solid #e2e8f0';}
-  });
-}
-function canvasLimpar(){_canvasItems=[];_lapisPts=[];_lapisAtivo=false;_desenharCanvas();}
-function _desenharCanvas(){
-  var c=document.getElementById('sala-canvas');if(!c)return;
-  var ctx=c.getContext('2d');
-  ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,c.width,c.height);
-  ctx.strokeStyle='#cbd5e0';ctx.lineWidth=2;ctx.strokeRect(3,3,c.width-6,c.height-6);
-  var pc=0;
-  _canvasItems.forEach(function(it){
-    if(it.tipo==='ponto'){pc++;ctx.beginPath();ctx.arc(it.x,it.y,12,0,Math.PI*2);ctx.fillStyle='#2d7db3';ctx.fill();ctx.fillStyle='white';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('P'+pc,it.x,it.y);}
-    else if(it.tipo==='paredeH'){ctx.fillStyle='#2d3748';ctx.fillRect(it.x-30,it.y-4,60,8);}
-    else if(it.tipo==='paredeV'){ctx.fillStyle='#2d3748';ctx.fillRect(it.x-4,it.y-30,8,60);}
-    else if(it.tipo==='lapis'&&it.pts&&it.pts.length>1){ctx.beginPath();ctx.strokeStyle='#2d3748';ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';ctx.moveTo(it.pts[0][0],it.pts[0][1]);it.pts.slice(1).forEach(function(p){ctx.lineTo(p[0],p[1]);});ctx.stroke();ctx.lineWidth=2;}
-  });
-  if(_lapisAtivo&&_lapisPts.length>1){ctx.beginPath();ctx.strokeStyle='#2d3748';ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';ctx.moveTo(_lapisPts[0][0],_lapisPts[0][1]);_lapisPts.slice(1).forEach(function(p){ctx.lineTo(p[0],p[1]);});ctx.stroke();}
-}
 
-var _rpiN=1,_rpiIdx=1,_rpiDados={};
-function _rpiNav(){
-  return '<div class="qar-nav">'+
-    '<button class="qar-nav-btn" id="rpi-prev" onclick="_rpiPrev()" '+(_rpiIdx===1?'disabled':'')+'>&#8592;</button>'+
-    '<span class="qar-nav-label" id="rpi-label">Ponto '+_rpiIdx+' de '+_rpiN+'</span>'+
-    '<button class="qar-nav-btn" id="rpi-next" onclick="_rpiNext()" '+(_rpiIdx===_rpiN?'disabled':'')+'>&#8594;</button>'+
-    '</div>';
-}
-function _rpiPrev(){if(_rpiIdx>1){_rpiSave();_rpiIdx--;_rpiUpdate();window.scrollTo(0,0);}}
-function _rpiNext(){if(_rpiIdx<_rpiN){_rpiSave();_rpiIdx++;_rpiUpdate();window.scrollTo(0,0);}}
-function _rpiSave(){
-  var p='rpi'+_rpiIdx;var saved={};
-  document.querySelectorAll('[id^="'+p+'-"]').forEach(function(el){
-    if(el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='TEXTAREA')saved[el.id]=el.value;
-    if(el.classList&&el.classList.contains('check-item'))saved[el.id+'__chk']=el.classList.contains('checked');
-  });
-  _rpiDados[_rpiIdx]=saved;
-}
-function _rpiRestore(){
-  var saved=_rpiDados[_rpiIdx];if(!saved)return;
-  Object.keys(saved).forEach(function(k){
-    if(k.endsWith('__chk')){var el=document.getElementById(k.replace('__chk',''));if(el&&saved[k])el.classList.add('checked');}
-    else{var el=document.getElementById(k);if(el)el.value=saved[k];}
-  });
-}
-function _rpiUpdate(){
-  var nav=document.getElementById('rpi-nav-wrap')||document.getElementById('rp-nav-wrap-int');
-  var cont=document.getElementById('rp-cont-int');
-  if(nav)nav.innerHTML=_rpiNav();
-  if(cont)cont.innerHTML=_rpiPageBody(_rpiIdx);
-  setTimeout(function(){_rpiRestore();},0);
-}
-function _rpiPage(idx){
-  return '<div id="rpi-nav-wrap">'+_rpiNav()+'</div><div id="rp-cont-int">'+_rpiPageBody(idx)+'</div>';
-}
-function _rpiPageBody(idx){
-  var p='rpi'+idx;
-  var h='<div class="ponto-card"><div class="ponto-header">Ponto '+idx+'</div><div class="ponto-body">';
-  h+=inp(p+'-hora-ini','Hora inicial do ponto','time','');
-  h+=inp(p+'-nome','Nome / identificação do ponto','text','');
-  h+=gpsBlock(p);
-  h+=inp(p+'-alt','Altura do sonômetro (m)','number','');
-  h+=chk(p+'-slow','Sonômetro em Slow (S)');
-  h+=chkIniField(p);
-  h+=fotoBlock(p);
-  h+='<div class="row3">'+inp(p+'-temp','Temp. (°C)','number','')+inp(p+'-umid','Umidade (%)','number','')+ventoField(p)+'</div>';
-  h+=chk(p+'-residual','Ruído residual monitorado');
-  h+=chk(p+'-total','Ruído total monitorado');
-  h+=chkFimField(p,p+'-chkini');
-  h+=inp(p+'-obs','Observações','text','');
-  h+=inp(p+'-hora-fim','Hora de término','time','');
-  h+='</div></div>';
-  setTimeout(function(){_rpiRestore();},0);
-  return h;
-}
-
-// ── RUÍDO INTERNO ─────────────────────────────────────────────────────────
-function selEsq(val){
-  document.getElementById('r-esquadria').value=val;
-  var a=document.getElementById('btn-esq-aberta');
-  var b=document.getElementById('btn-esq-fechada');
-  if(a){a.style.background=val==='aberta'?'#2d7db3':'#f0f4f8';a.style.color=val==='aberta'?'white':'#1a202c';a.style.border='1.5px solid '+(val==='aberta'?'#2d7db3':'#e2e8f0');}
-  if(b){b.style.background=val==='fechada'?'#2d7db3':'#f0f4f8';b.style.color=val==='fechada'?'white':'#1a202c';b.style.border='1.5px solid '+(val==='fechada'?'#2d7db3':'#e2e8f0');}
-}
-
-function selAmb(val){
-  document.getElementById('r-ambiente-cond').value=val;
-  var a=document.getElementById('btn-amb-vazio');
-  var b=document.getElementById('btn-amb-pessoas');
-  if(a){a.style.background=val==='vazio'?'#2d7db3':'#f0f4f8';a.style.color=val==='vazio'?'white':'#1a202c';a.style.border='1.5px solid '+(val==='vazio'?'#2d7db3':'#e2e8f0');}
-  if(b){b.style.background=val==='pessoas'?'#2d7db3':'#f0f4f8';b.style.color=val==='pessoas'?'white':'#1a202c';b.style.border='1.5px solid '+(val==='pessoas'?'#2d7db3':'#e2e8f0');}
-}
-
-function calcPontosRuidoInt(){
-  var area=parseFloat(document.getElementById('r-area-int')&&document.getElementById('r-area-int').value||0);
-  if(!area||area<=0){toast('Informe a área do ambiente');return;}
-  var n=area<=30?3:3+Math.ceil((area-30)/30);
-  var res=document.getElementById('r-int-resultado');
-  if(res)res.classList.remove('hidden');
-  var msg=document.getElementById('r-int-msg');
-  if(msg)msg.textContent='Área: '+area+' m² → '+n+' ponto(s) necessário(s)';
-  // Mostrar canvas
-  var wrap=document.getElementById('sala-canvas-wrap');
-  if(wrap){
-    wrap.style.display='block';
-    setTimeout(function(){iniciarCanvas();},300);
+function iniciarCrono(id, btn) {
+  if(_cronoTimers[id]) {
+    clearInterval(_cronoTimers[id]);
+    delete _cronoTimers[id];
+    btn.innerHTML='&#9654; Iniciar';
+    btn.style.background='#2d7db3';
+    return;
   }
-  // Renderizar pontos
-  _rpiN=n;_rpiIdx=1;_rpiDados={};
-  var nav=document.getElementById('rp-nav-wrap-int');
-  var cont=document.getElementById('rp-cont-int');
-  if(nav)nav.innerHTML=_rpiNav();
-  if(cont)cont.innerHTML=_rpiPageBody(1);
-  mostrarBtnRascunho(true);
+  var start = Date.now() - (_cronoTimers[id+'_elapsed']||0);
+  btn.innerHTML='&#9646;&#9646; Pausar';
+  btn.style.background='#e53e3e';
+  _cronoTimers[id] = setInterval(function(){
+    var el = document.getElementById(id);
+    if(!el){clearInterval(_cronoTimers[id]);delete _cronoTimers[id];return;}
+    var elapsed = Date.now()-start;
+    _cronoTimers[id+'_elapsed'] = elapsed;
+    var s=Math.floor(elapsed/1000)%60;
+    var m=Math.floor(elapsed/60000);
+    el.textContent=(m<10?'0'+m:m)+':'+(s<10?'0'+s:s);
+  }, 500);
 }
-
-function renderPontosRuidoInt(n){
-  _rpiN=n;_rpiIdx=1;_rpiDados={};
-  return '<div id="rpi-nav-wrap">'+_rpiNav()+'</div><div id="rp-cont-int">'+_rpiPageBody(1)+'</div>';
-}
-
-
-
-
-
 
 function irP1(){mostrar('passo1');atualizarSteps(1);}
+
 function irP2(){mostrar('passo2');atualizarSteps(2);}
+
 function irP3(){
   mostrar('passo3');atualizarSteps(3);
   var wrap=document.getElementById('precampo-outro-wrap');
@@ -1263,6 +690,26 @@ chk('rom-729448','Celular carregado e carregador')+
   } else {
     if(ph)ph.style.display='block';
   }
+}
+
+function irP4(){
+  if(!tipoSel){toast('Selecione o tipo de monitoramento');irP2();return;}
+  var fd=document.getElementById('form-dinamico');
+  if(!fd||fd.innerHTML.trim()===''||fd.getAttribute('data-tipo')!==tipoSel){
+    fotosAnexadas={};renderForm();
+    if(fd)fd.setAttribute('data-tipo',tipoSel);
+  }
+  mostrarBtnRascunho(false);
+  mostrar('passo4');atualizarSteps(4);
+}
+
+function irP5(){mostrar('passo5');atualizarSteps(5);}
+
+function mostrar(id){['passo1','passo2','passo3','passo4','passo5','sucesso','pendencias'].forEach(function(s){var e=document.getElementById(s);if(e)e.classList.add('hidden');});var t=document.getElementById(id);if(t)t.classList.remove('hidden');}
+
+function mostrarBtnRascunho(show){
+  var el=document.getElementById('rascunho-btn-wrap');
+  if(el)el.style.display=show?'block':'none';
 }
 
 function mostrarRomaneioOpac(el,sub){
@@ -1410,41 +857,6 @@ chk('rom-880474','Celular carregado e carregador')+
 '</div>';}
 }
 
-
-function irP4(){
-  if(!tipoSel){toast('Selecione o tipo de monitoramento');irP2();return;}
-  var fd=document.getElementById('form-dinamico');
-  if(!fd||fd.innerHTML.trim()===''||fd.getAttribute('data-tipo')!==tipoSel){
-    fotosAnexadas={};renderForm();
-    if(fd)fd.setAttribute('data-tipo',tipoSel);
-  }
-  mostrarBtnRascunho(false);
-  mostrar('passo4');atualizarSteps(4);
-}
-function irP5(){mostrar('passo5');atualizarSteps(5);}
-
-var _cronoTimers = {};
-function iniciarCrono(id, btn) {
-  if(_cronoTimers[id]) {
-    clearInterval(_cronoTimers[id]);
-    delete _cronoTimers[id];
-    btn.innerHTML='&#9654; Iniciar';
-    btn.style.background='#2d7db3';
-    return;
-  }
-  var start = Date.now() - (_cronoTimers[id+'_elapsed']||0);
-  btn.innerHTML='&#9646;&#9646; Pausar';
-  btn.style.background='#e53e3e';
-  _cronoTimers[id] = setInterval(function(){
-    var el = document.getElementById(id);
-    if(!el){clearInterval(_cronoTimers[id]);delete _cronoTimers[id];return;}
-    var elapsed = Date.now()-start;
-    _cronoTimers[id+'_elapsed'] = elapsed;
-    var s=Math.floor(elapsed/1000)%60;
-    var m=Math.floor(elapsed/60000);
-    el.textContent=(m<10?'0'+m:m)+':'+(s<10?'0'+s:s);
-  }, 500);
-}
 function novoRegistro(){
   tipoSel='';fotosAnexadas={};
   document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
@@ -1457,36 +869,6 @@ function novoRegistro(){
   document.getElementById('form-dinamico').innerHTML='';irP1();
 }
 
-var toastT;
-function toast(msg,err,suc){var el=document.getElementById('toast');el.textContent=msg;el.className=(err?'error':suc?'success':'')+' show';clearTimeout(toastT);toastT=setTimeout(function(){el.className='';},3500);}
-
-
-function atualizarOfflineBar(){var bar=document.getElementById('offline-bar');if(!navigator.onLine||pending.length>0){bar.classList.add('show');document.getElementById('pending-count').textContent=pending.length;}else{bar.classList.remove('show');}}
-
-function toggleLembrar(cb){if(!cb.checked){localStorage.removeItem('engear_saved_senha');localStorage.removeItem('engear_saved_nome');}}
-function carregarSenhasSalvas(){var nome=localStorage.getItem('engear_saved_nome');var senha=localStorage.getItem('engear_saved_senha');if(nome)document.getElementById('login-nome').value=nome;if(senha){document.getElementById('login-senha').value=senha;document.getElementById('lembrar-senha').checked=true;}}
-
-async function entrar(){
-  var nome=document.getElementById('login-nome').value.trim();
-  var senha=document.getElementById('login-senha').value;
-  if(!nome){toast('Informe seu nome');return;}
-  if(senha!==CFG.senha){document.getElementById('login-error').style.display='block';return;}
-  document.getElementById('login-error').style.display='none';
-  if(document.getElementById('lembrar-senha').checked){localStorage.setItem('engear_saved_nome',nome);localStorage.setItem('engear_saved_senha',senha);}else{localStorage.removeItem('engear_saved_nome');localStorage.removeItem('engear_saved_senha');}
-  nomeLogado=nome;
-  document.getElementById('user-name').textContent=nome.split(' ')[0];
-  document.getElementById('avatar').textContent=nome.split(' ').map(function(n){return n[0];}).slice(0,2).join('').toUpperCase();
-  if(navigator.onLine){try{await obterToken();}catch(e){}}
-  var a=new Date();
-  var ano=a.getFullYear(),mes=String(a.getMonth()+1).padStart(2,'0'),dia=String(a.getDate()).padStart(2,'0');
-  document.getElementById('data').value=ano+'-'+mes+'-'+dia;
-  document.getElementById('hora').value=String(a.getHours()).padStart(2,'0')+':'+String(a.getMinutes()).padStart(2,'0');
-  document.getElementById('tecnico').value=nome;
-  document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='block';
-  atualizarSteps(1);atualizarOfflineBar();
-  if(navigator.onLine&&pending.length>0)sincronizar();
-}
-
 async function obterToken(){
   if(token&&Date.now()<tokenExp)return;
   var r=await fetch(CFG.workerUrl+'/token');
@@ -1494,15 +876,43 @@ async function obterToken(){
   token=data.access_token;tokenExp=Date.now()+(data.expires_in-60)*1000;
 }
 
+function renderPontosRuidoInt(n){
+  _rpiN=n;_rpiIdx=1;_rpiDados={};
+  return '<div id="rp-nav-wrap-int">'+_rpiNav()+'</div><div id="rp-cont-int">'+_rpiPageBody(1)+'</div>';
+}
+
 function sair(){if(!confirm('Deseja sair?'))return;token=null;nomeLogado='';document.getElementById('login-nome').value='';document.getElementById('login-senha').value='';document.getElementById('app').style.display='none';document.getElementById('login-screen').style.display='flex';novoRegistro();}
 
+function selAmb(val){
+  document.getElementById('r-ambiente-cond').value=val;
+  var a=document.getElementById('btn-amb-vazio');
+  var b=document.getElementById('btn-amb-pessoas');
+  if(a){a.style.background=val==='vazio'?'#2d7db3':'#f0f4f8';a.style.color=val==='vazio'?'white':'#1a202c';a.style.border='1.5px solid '+(val==='vazio'?'#2d7db3':'#e2e8f0');}
+  if(b){b.style.background=val==='pessoas'?'#2d7db3':'#f0f4f8';b.style.color=val==='pessoas'?'white':'#1a202c';b.style.border='1.5px solid '+(val==='pessoas'?'#2d7db3':'#e2e8f0');}
+}
 
-function mostrar(id){['passo1','passo2','passo3','passo4','passo5','sucesso','pendencias'].forEach(function(s){var e=document.getElementById(s);if(e)e.classList.add('hidden');});var t=document.getElementById(id);if(t)t.classList.remove('hidden');}
+function selEsq(val){
+  document.getElementById('r-esquadria').value=val;
+  var a=document.getElementById('btn-esq-aberta');
+  var b=document.getElementById('btn-esq-fechada');
+  if(a){a.style.background=val==='aberta'?'#2d7db3':'#f0f4f8';a.style.color=val==='aberta'?'white':'#1a202c';a.style.border='1.5px solid '+(val==='aberta'?'#2d7db3':'#e2e8f0');}
+  if(b){b.style.background=val==='fechada'?'#2d7db3':'#f0f4f8';b.style.color=val==='fechada'?'white':'#1a202c';b.style.border='1.5px solid '+(val==='fechada'?'#2d7db3':'#e2e8f0');}
+}
+
 function selecionarTipo(el,t){
   document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
   el.classList.add('selected');tipoSel=t;
   mostrarBtnRascunho(false);
 }
+
+function toast(msg,err,suc){var el=document.getElementById('toast');el.textContent=msg;el.className=(err?'error':suc?'success':'')+' show';clearTimeout(toastT);toastT=setTimeout(function(){el.className='';},3500);}
+
+function toggleLembrar(cb){if(!cb.checked){localStorage.removeItem('engear_saved_senha');localStorage.removeItem('engear_saved_nome');}}
+
+function toggleOutroEquipQAR(pid,val){var el=document.getElementById(pid+'-tipoequip-outro-field');if(el)el.classList.toggle('hidden',val!=='Outro');}
+
+function toggleOutroEquipSismo(pid,val){var el=document.getElementById(pid+'-tipoequip-sismo-outro-field');if(el)el.classList.toggle('hidden',val!=='Outro');}
+
 
 function chk(id,lbl){return '<div class="check-item" id="'+id+'" data-id="'+id+'" onclick="toggleCheck(this)"><div class="check-box"><svg class="check-mark" width="12" height="12" viewBox="0 0 12 12" fill="none"><polyline points="1.5 6 4.5 9 10.5 3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-text">'+lbl+'</span></div>';}
 function inp(id,lbl,type,ph){return '<div class="field"><label>'+lbl+'</label><input type="'+(type||'text')+'" id="'+id+'" placeholder="'+(ph||'')+'"/></div>';}
@@ -1594,20 +1004,41 @@ function _renderSubRuido(sub){
     h+='<div class="field"><label>Condicao do ambiente</label><div style="display:flex;gap:8px;margin-top:6px;"><button id="btn-amb-vazio" onclick="selAmb(\'vazio\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Sala vazia</button><button id="btn-amb-pessoas" onclick="selAmb(\'pessoas\')" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">Com pessoas</button></div><input type="hidden" id="r-ambiente-cond"/></div>';
     h+='<div class="field"><label>Area do ambiente monitorado (m2)</label><input type="number" id="r-area-int" placeholder="Ex: 45"/></div>';
     h+='<div class="field"><button class="btn-next" style="width:100%" onclick="calcPontosRuidoInt()">Calcular pontos necessarios</button></div>';
-    h+='<div id="r-int-resultado" class="hidden"><div class="chk-alerta" style="background:#e8f4fd;border-color:#2d7db3;color:#1e5f8a;margin-bottom:10px;" id="r-int-msg"></div></div>';
+    h+='<div id="r-int-resultado" style="display:none;"><div class="chk-alerta" style="background:#e8f4fd;border-color:#2d7db3;color:#1e5f8a;margin-bottom:10px;" id="r-int-msg"></div></div>';
+    h+='<div id="rpi-pos-checks" style="display:none;"><div class="card"><div class="card-title blue">📍 Posicionamento dos pontos</div>'+
+      chk('rpi-pos1','Distribuir os pontos de forma uniforme no ambiente')+
+      chk('rpi-pos2','Priorizar locais onde há permanência de pessoas')+
+      chk('rpi-pos3','Garantir representatividade do campo sonoro')+
+      chk('rpi-pos4','Distância mínima de 0,5 m de paredes, teto e piso')+
+      chk('rpi-pos5','Distância mínima de 1 m de janelas, portas ou aberturas')+
+      chk('rpi-pos6','Garantir distância mínima de 0,7 m entre pontos')+
+      chk('rpi-pos7','Pontos distribuídos de forma representativa no ambiente')+
+      chk('rpi-pos8','Variar a altura do microfone entre os pontos (entre 1,2 e 1,5 m) sempre que possível')+
+      chk('rpi-pos9','Não é obrigatório usar protetor de vento no microfone')+
+      '<span class="passo-step">Montagem do equipamento</span>'+
+      chk('rpi-mont1','Instalar em tripé estável')+
+      chk('rpi-mont2','Garantir ausência de vibrações')+
+      chk('rpi-mont3','Conferir configurações do equipamento (ponderação A, tempo de integração, áudio)')+
+      chk('rpi-mont4','Configurar filtro 1/1 de oitava')+
+      chk('rpi-mont5','Verificar bateria e funcionamento geral')+
+      '</div></div>';
     h+='</div>';
-    h+='<div id="sala-canvas-wrap" style="display:none"><div class="card"><div class="card-title blue">Layout da sala</div>';
+    // Layout da sala - aparece junto com checks (dentro do rpi-pos-checks)
+    h+='<div id="sala-canvas-wrap"><div class="card"><div class="card-title blue">📐 Layout da sala</div>';
     h+='<p style="font-size:12px;color:#718096;margin-bottom:8px;">Desenhe o layout e posicione os pontos</p>';
     h+='<canvas id="sala-canvas" style="width:100%;height:250px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;display:block;touch-action:none;"></canvas>';
     h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:5px;margin-top:8px;">';
-    h+='<button id="btn-modo-ponto" onclick="canvasMode(\'ponto\')" style="background:#2d7db3;color:white;border:none;border-radius:8px;padding:7px 4px;font-size:10px;font-weight:600;cursor:pointer;">Ponto</button>';
-    h+='<button id="btn-modo-paredeH" onclick="canvasMode(\'paredeH\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Parede H</button>';
-    h+='<button id="btn-modo-paredeV" onclick="canvasMode(\'paredeV\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Parede V</button>';
-    h+='<button id="btn-modo-lapis" onclick="canvasMode(\'lapis\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Lapis</button>';
-    h+='<button id="btn-modo-borracha" onclick="canvasMode(\'borracha\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">Borracha</button>';
-    h+='</div><button onclick="canvasLimpar()" style="width:100%;margin-top:6px;background:#fff3f3;color:#e53e3e;border:1px solid #fecaca;border-radius:8px;padding:8px;font-size:12px;cursor:pointer;">Limpar tudo</button>';
+    h+='<button id="btn-modo-ponto" onclick="canvasMode(\'ponto\')" style="background:#2d7db3;color:white;border:none;border-radius:8px;padding:7px 4px;font-size:10px;font-weight:600;cursor:pointer;">📍 Ponto</button>';
+    h+='<button id="btn-modo-paredeH" onclick="canvasMode(\'paredeH\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">━ H</button>';
+    h+='<button id="btn-modo-paredeV" onclick="canvasMode(\'paredeV\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">┃ V</button>';
+    h+='<button id="btn-modo-lapis" onclick="canvasMode(\'lapis\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">✏️</button>';
+    h+='<button id="btn-modo-borracha" onclick="canvasMode(\'borracha\')" style="background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 4px;font-size:10px;cursor:pointer;">🧹</button>';
+    h+='</div><button onclick="canvasLimpar()" style="width:100%;margin-top:6px;background:#fff3f3;color:#e53e3e;border:1px solid #fecaca;border-radius:8px;padding:8px;font-size:12px;cursor:pointer;">🗑️ Limpar tudo</button>';
     h+='</div></div>';
-    h+='<div id="rp-nav-wrap-int"></div><div id="rp-cont-int"></div>';
+    // Botão para ir aos pontos
+    h+='<button class="btn-next" id="btn-ir-pontos" style="width:100%;margin-top:8px;display:none;" onclick="mostrarPontosInt()">Ir para os pontos →</button>';
+    // Container dos pontos - oculto até clicar no botão acima
+    h+='<div id="rpi-pontos-wrap" style="display:none;"><div id="rp-nav-wrap-int"></div><div id="rp-cont-int"></div></div>';
   } else if(sub==='ferroviario'){
     h+='<div class="card"><div class="card-title blue">Ruido Ferroviario</div>';
     h+='<div class="field"><label>Finalidade do monitoramento</label><select id="r-finalidade-ferro" onchange="renderFerroSub(this.value)"><option value="">Selecione...</option><option>Passagem de composicao ferroviaria</option><option>Operacoes em patios / manobras / cruzamentos</option></select></div>';
@@ -2139,26 +1570,9 @@ function montarLinhaPorTipo(dados){
 }
 
 // SALVAR
-async function salvar(){
-  var btn=document.getElementById('btn-salvar');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Salvando...';
-  var dados=coletarDados();_ultimoDados=dados;var resultado=montarLinhaPorTipo(dados);
-  if(navigator.onLine){
-    try{await obterToken();for(var ri=0;ri<resultado.rows.length;ri++){await appendLinha(resultado.rows[ri],resultado.sheet);}await uploadFotos(dados);mostrarSucesso(dados,false);}
-    catch(e){salvarOffline(dados,resultado);mostrarSucesso(dados,true);}
-  }else{salvarOffline(dados,resultado);mostrarSucesso(dados,true);}
-  btn.disabled=false;btn.innerHTML='Salvar registro';
-}
+
 function salvarOffline(dados,resultado){pending.push({dados:dados,resultado:resultado,ts:Date.now()});localStorage.setItem('engear_pending',JSON.stringify(pending));atualizarOfflineBar();}
 
-async function sincronizar(){
-  if(!navigator.onLine||pending.length===0)return;
-  toast('Sincronizando '+pending.length+' registro(s)...');
-  try{await obterToken();var falhas=[];
-    for(var i=0;i<pending.length;i++){try{var r=pending[i].resultado||montarLinhaPorTipo(pending[i].dados);for(var ri=0;ri<r.rows.length;ri++){await appendLinha(r.rows[ri],r.sheet);}}catch(e){falhas.push(pending[i]);}}
-    pending=falhas;localStorage.setItem('engear_pending',JSON.stringify(pending));atualizarOfflineBar();
-    if(falhas.length===0)toast('Sincronização concluída!',false,true);else toast(falhas.length+' registro(s) falharam',true);
-  }catch(e){toast('Erro: '+e.message,true);}
-}
 
 function mostrarSucesso(d,offline){
   salvarHistorico(d);
@@ -2170,64 +1584,12 @@ function mostrarSucesso(d,offline){
 }
 
 // UPLOAD FOTOS
-async function uploadFotos(dados){
-  if(!token||Object.keys(fotosAnexadas).length===0)return;
-  try{
-    var site=await gGet('/sites/engearlaboratorio.sharepoint.com:/sites/EngearLaboratorio');
-    var drives=await gGet('/sites/'+site.id+'/drives');
-    var drive=drives.value.find(function(d){return d.name==='Documentos'||d.name==='Documents';})||drives.value[0];
-    var cliente=(dados.cliente||'Sem_Cliente').replace(/[^a-zA-Z0-9 _-]/g,'').trim()||'Sem_Cliente';
-    var pastaBase='/LABORAT%C3%93RIO/SERVI%C3%87OS/0%20INFO%20CAMPO%20-%20APP/Fotos/'+encodeURIComponent(cliente);
-    for(var pid in fotosAnexadas){
-      for(var i=0;i<fotosAnexadas[pid].length;i++){
-        var f=fotosAnexadas[pid][i];
-        var ext=(f.name.split('.').pop()||'jpg').toLowerCase();
-        var nome=(dados.data||'foto')+'_'+pid+'_'+Date.now()+'.'+ext;
-        var buf=await f.arrayBuffer();
-        await fetch(CFG.workerUrl+'/graph/drives/'+drive.id+'/root:'+pastaBase+'/'+encodeURIComponent(nome)+':/content',{
-          method:'PUT',
-          headers:{Authorization:'Bearer '+token,'Content-Type':f.type||'image/jpeg'},
-          body:buf
-        });
-      }
-    }
-  }catch(e){console.error('Erro upload fotos:',e);}
-}
+
 
 // GRAPH API
-async function appendLinha(vals,sheetName){
-  sheetName=sheetName||'Outro';
-  // Buscar site
-  var site=await gGet('/sites/engearlaboratorio.sharepoint.com:/sites/EngearLaboratorio');
-  var siteId=site.id;
-  // Buscar drive de documentos
-  var drives=await gGet('/sites/'+siteId+'/drives');
-  var drive=drives.value.find(function(d){return d.name==='Documentos'||d.name==='Documents';})||drives.value[0];
-  var driveId=drive.id;
-  // Buscar o arquivo monitoramento.xlsx por search (mais robusto que caminho)
-  var itemId=null;
-  try{
-    var search=await gGet('/drives/'+driveId+"/root/search(q='monitoramento.xlsx')");
-    var found=(search.value||[]).find(function(i){return i.name==='monitoramento.xlsx';});
-    if(found)itemId=found.id;
-  }catch(e){console.log('Search falhou:',e.message);}
-  // Fallback: tentar pelo caminho usando o siteId
-  if(!itemId){
-    try{
-      var r=await gGet('/sites/'+siteId+'/drive/root:/LABORAT%C3%93RIO/SERVI%C3%87OS/0%20INFO%20CAMPO%20-%20APP/monitoramento.xlsx');
-      itemId=r.id;
-    }catch(e){console.log('Caminho falhou:',e.message);}
-  }
-  if(!itemId)throw new Error('monitoramento.xlsx não encontrado');
-  // Buscar linha usada e escrever
-  var used=await gGet('/drives/'+driveId+'/items/'+itemId+'/workbook/worksheets/'+encodeURIComponent(sheetName)+'/usedRange');
-  var row=(used.rowCount||1)+1;
-  var col=String.fromCharCode(64+vals.length);
-  var rangePath='/drives/'+driveId+'/items/'+itemId+'/workbook/worksheets/'+encodeURIComponent(sheetName)+"/range(address='A"+row+":"+col+row+"')";
-  await gPatch(rangePath,{values:[vals]});
-}
-async function gGet(path){var r=await fetch(CFG.workerUrl+'/graph'+path,{headers:{Authorization:'Bearer '+token}});if(!r.ok)throw new Error(r.status+'');return r.json();}
-async function gPatch(path,body){var r=await fetch(CFG.workerUrl+'/graph'+path,{method:'PATCH',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error(r.status+'');return r.json();}
+
+
+
 
 // PDF
 function gerarPDF(){
@@ -2593,6 +1955,124 @@ async function _salvarRascunhoExcel(dados){
     await appendLinha(row,resultado.sheet);
   }
 }
+
+async function salvar(){
+  var btn=document.getElementById('btn-salvar');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Salvando...';
+  var dados=coletarDados();_ultimoDados=dados;var resultado=montarLinhaPorTipo(dados);
+  if(navigator.onLine){
+    try{await obterToken();for(var ri=0;ri<resultado.rows.length;ri++){await appendLinha(resultado.rows[ri],resultado.sheet);}await uploadFotos(dados);mostrarSucesso(dados,false);}
+    catch(e){salvarOffline(dados,resultado);mostrarSucesso(dados,true);}
+  }else{salvarOffline(dados,resultado);mostrarSucesso(dados,true);}
+  btn.disabled=false;btn.innerHTML='Salvar registro';
+}
+
+async function appendLinha(vals,sheetName){
+  sheetName=sheetName||'Outro';
+  // Buscar site
+  var site=await gGet('/sites/engearlaboratorio.sharepoint.com:/sites/EngearLaboratorio');
+  var siteId=site.id;
+  // Buscar drive de documentos
+  var drives=await gGet('/sites/'+siteId+'/drives');
+  var drive=drives.value.find(function(d){return d.name==='Documentos'||d.name==='Documents';})||drives.value[0];
+  var driveId=drive.id;
+  // Buscar o arquivo monitoramento.xlsx por search (mais robusto que caminho)
+  var itemId=null;
+  try{
+    var search=await gGet('/drives/'+driveId+"/root/search(q='monitoramento.xlsx')");
+    var found=(search.value||[]).find(function(i){return i.name==='monitoramento.xlsx';});
+    if(found)itemId=found.id;
+  }catch(e){console.log('Search falhou:',e.message);}
+  // Fallback: tentar pelo caminho usando o siteId
+  if(!itemId){
+    try{
+      var r=await gGet('/sites/'+siteId+'/drive/root:/LABORAT%C3%93RIO/SERVI%C3%87OS/0%20INFO%20CAMPO%20-%20APP/monitoramento.xlsx');
+      itemId=r.id;
+    }catch(e){console.log('Caminho falhou:',e.message);}
+  }
+  if(!itemId)throw new Error('monitoramento.xlsx não encontrado');
+  // Buscar linha usada e escrever
+  var used=await gGet('/drives/'+driveId+'/items/'+itemId+'/workbook/worksheets/'+encodeURIComponent(sheetName)+'/usedRange');
+  var row=(used.rowCount||1)+1;
+  var col=String.fromCharCode(64+vals.length);
+  var rangePath='/drives/'+driveId+'/items/'+itemId+'/workbook/worksheets/'+encodeURIComponent(sheetName)+"/range(address='A"+row+":"+col+row+"')";
+  await gPatch(rangePath,{values:[vals]});
+}
+
+async function sincronizar(){
+  if(!navigator.onLine||pending.length===0)return;
+  toast('Sincronizando '+pending.length+' registro(s)...');
+  try{await obterToken();var falhas=[];
+    for(var i=0;i<pending.length;i++){try{var r=pending[i].resultado||montarLinhaPorTipo(pending[i].dados);for(var ri=0;ri<r.rows.length;ri++){await appendLinha(r.rows[ri],r.sheet);}}catch(e){falhas.push(pending[i]);}}
+    pending=falhas;localStorage.setItem('engear_pending',JSON.stringify(pending));atualizarOfflineBar();
+    if(falhas.length===0)toast('Sincronização concluída!',false,true);else toast(falhas.length+' registro(s) falharam',true);
+  }catch(e){toast('Erro: '+e.message,true);}
+}
+
+async function gGet(path){var r=await fetch(CFG.workerUrl+'/graph'+path,{headers:{Authorization:'Bearer '+token}});if(!r.ok)throw new Error(r.status+'');return r.json();}
+
+async function gPatch(path,body){var r=await fetch(CFG.workerUrl+'/graph'+path,{method:'PATCH',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error(r.status+'');return r.json();}
+
+async function uploadFotos(dados){
+  if(!token||Object.keys(fotosAnexadas).length===0)return;
+  try{
+    var site=await gGet('/sites/engearlaboratorio.sharepoint.com:/sites/EngearLaboratorio');
+    var drives=await gGet('/sites/'+site.id+'/drives');
+    var drive=drives.value.find(function(d){return d.name==='Documentos'||d.name==='Documents';})||drives.value[0];
+    var cliente=(dados.cliente||'Sem_Cliente').replace(/[^a-zA-Z0-9 _-]/g,'').trim()||'Sem_Cliente';
+    var pastaBase='/LABORAT%C3%93RIO/SERVI%C3%87OS/0%20INFO%20CAMPO%20-%20APP/Fotos/'+encodeURIComponent(cliente);
+    for(var pid in fotosAnexadas){
+      for(var i=0;i<fotosAnexadas[pid].length;i++){
+        var f=fotosAnexadas[pid][i];
+        var ext=(f.name.split('.').pop()||'jpg').toLowerCase();
+        var nome=(dados.data||'foto')+'_'+pid+'_'+Date.now()+'.'+ext;
+        var buf=await f.arrayBuffer();
+        await fetch(CFG.workerUrl+'/graph/drives/'+drive.id+'/root:'+pastaBase+'/'+encodeURIComponent(nome)+':/content',{
+          method:'PUT',
+          headers:{Authorization:'Bearer '+token,'Content-Type':f.type||'image/jpeg'},
+          body:buf
+        });
+      }
+    }
+  }catch(e){console.error('Erro upload fotos:',e);}
+}
+
+
+
+
+async function entrar(){
+  var nome=document.getElementById('login-nome').value.trim();
+  var senha=document.getElementById('login-senha').value;
+  if(!nome){toast('Informe seu nome');return;}
+  if(senha!==CFG.senha){document.getElementById('login-error').style.display='block';return;}
+  document.getElementById('login-error').style.display='none';
+  if(document.getElementById('lembrar-senha').checked){localStorage.setItem('engear_saved_nome',nome);localStorage.setItem('engear_saved_senha',senha);}else{localStorage.removeItem('engear_saved_nome');localStorage.removeItem('engear_saved_senha');}
+  nomeLogado=nome;
+  document.getElementById('user-name').textContent=nome.split(' ')[0];
+  document.getElementById('avatar').textContent=nome.split(' ').map(function(n){return n[0];}).slice(0,2).join('').toUpperCase();
+  if(navigator.onLine){try{await obterToken();}catch(e){}}
+  var a=new Date();
+  var ano=a.getFullYear(),mes=String(a.getMonth()+1).padStart(2,'0'),dia=String(a.getDate()).padStart(2,'0');
+  document.getElementById('data').value=ano+'-'+mes+'-'+dia;
+  document.getElementById('hora').value=String(a.getHours()).padStart(2,'0')+':'+String(a.getMinutes()).padStart(2,'0');
+  document.getElementById('tecnico').value=nome;
+  document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='block';
+  atualizarSteps(1);atualizarOfflineBar();
+  if(navigator.onLine&&pending.length>0)sincronizar();
+}
+
+function selEventualidade(pid, sim){
+  var btnSim=document.getElementById(pid+'-ev-sim');
+  var btnNao=document.getElementById(pid+'-ev-nao');
+  var desc=document.getElementById(pid+'-ev-desc');
+  if(btnSim){btnSim.style.background=sim?'#fee2e2':'';btnSim.style.color=sim?'#b91c1c':'';btnSim.style.borderColor=sim?'#e53e3e':'#e2e8f0';}
+  if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
+  if(desc)desc.style.display=sim?'block':'none';
+}
+
+
+
+
+
 </script>
 </body>
 </html>
