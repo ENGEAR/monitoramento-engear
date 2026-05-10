@@ -333,6 +333,8 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 
 
+
+
 const CFG={clientId:'756385e2-9a87-4997-a939-60129e4c1573',tenantId:'f84b416a-a586-42bf-b3ae-46d4d8e882da',clientSecret:'YOC8Q~~1S0wTi3f~qyeMq5VIbXkg31T3gIwjgc.4',siteHost:'engearlaboratorio.sharepoint.com',sitePath:'/sites/EngearLaboratorio',filePath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/monitoramento.xlsx',fotosPath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/Fotos',sheetName:'Plan1',senha:'campo26*',workerUrl:'https://engear-auth.red-cell-b560.workers.dev'};
 var token=null,tokenExp=0,nomeLogado='',tipoSel='',fotosAnexadas={};
 var pending=JSON.parse(localStorage.getItem('engear_pending')||'[]');
@@ -1738,6 +1740,109 @@ function montarLinhaPorTipo(dados){
 }
 
 
+
+// ── PRÉ-CAMPO PLANILHA ────────────────────────────────────────────────────
+var _precampoCheckIds = {
+  ruido: ['rom-568525','rom-5364','rom-438334','rom-159899','rom-889641','rom-584070','rom-566037','rom-840106','rom-222656','rom-96008','rom-997576','rom-714317','rom-221398','rom-276498','rom-695777','rom-155030','rom-63335','rom-807937','rom-397932','rom-695328','rom-670692','rom-26412','rom-304268','rom-63203','rom-246084','rom-785587','rom-53570','rom-13385','rom-20614','rom-593904','rom-490531','rom-250214','rom-771730','rom-579366','rom-46331','rom-369462','rom-898210','rom-99113','rom-570732','rom-934420','rom-752699','rom-602519','rom-112385','rom-421730','rom-202621','rom-638101','rom-80556','rom-167215','rom-551728','rom-348438','rom-647745','rom-17418','rom-355085','rom-507258','rom-364514','rom-290689','rom-946905','rom-995828','rom-577336','rom-652899','rom-717638','rom-716901','rom-774430','rom-846428','rom-463060','rom-808753','rom-477211','rom-305574','rom-316305','rom-610239','rom-810488','rom-726461','rom-977320','rom-587054','rom-224207','rom-740589','rom-526548','rom-173956','rom-561743','rom-664611','rom-588548','rom-729448'],
+  sismo: ['rom-695328','rom-670692','rom-26412','rom-304268','rom-63203','rom-246084','rom-785587','rom-53570','rom-13385','rom-20614','rom-593904','rom-490531','rom-250214','rom-771730','rom-579366','rom-46331','rom-369462','rom-898210','rom-99113','rom-570732','rom-934420','rom-752699','rom-602519','rom-112385','rom-421730','rom-202621','rom-638101','rom-80556','rom-167215','rom-551728','rom-348438','rom-647745','rom-17418','rom-355085','rom-507258','rom-364514','rom-290689','rom-946905','rom-995828','rom-577336','rom-652899','rom-717638','rom-716901','rom-774430','rom-846428','rom-463060','rom-808753','rom-477211','rom-305574','rom-316305','rom-610239','rom-810488','rom-726461','rom-977320','rom-587054','rom-224207','rom-740589','rom-526548','rom-173956','rom-561743','rom-664611','rom-588548','rom-729448'],
+  qarint: ['rom-421730','rom-202621','rom-638101','rom-80556','rom-167215','rom-551728','rom-348438','rom-647745','rom-17418','rom-355085','rom-507258','rom-364514','rom-290689','rom-946905','rom-995828','rom-577336','rom-652899','rom-717638','rom-716901','rom-774430','rom-846428','rom-463060','rom-808753','rom-477211','rom-305574','rom-316305','rom-610239','rom-810488','rom-726461','rom-977320','rom-587054','rom-224207','rom-740589','rom-526548','rom-173956','rom-561743','rom-664611','rom-588548','rom-729448'],
+  outro: ['rom-810488','rom-726461','rom-977320','rom-587054','rom-224207','rom-740589','rom-526548','rom-173956','rom-561743','rom-664611','rom-588548','rom-729448'],
+  qar_part: ['rom-229461','rom-132287','rom-866663','rom-206887','rom-108793','rom-140808','rom-189213','rom-8844','rom-87821','rom-729119','rom-338862','rom-821441','rom-412641','rom-24701','rom-770900','rom-434247','rom-883622','rom-989297','rom-634488','rom-170914','rom-188482','rom-29880','rom-448820','rom-112119','rom-404362','rom-866217','rom-335669','rom-499110','rom-421560','rom-483133','rom-321286','rom-624536','rom-488083','rom-570459','rom-888916','rom-327603','rom-717561','rom-529582','rom-166877','rom-642369','rom-6932','rom-850134','rom-826908','rom-728595','rom-269429','rom-58816','rom-700938'],
+  qar_trigas: ['rom-624536','rom-488083','rom-570459','rom-888916','rom-327603','rom-717561','rom-529582','rom-166877','rom-642369','rom-6932','rom-850134','rom-826908','rom-728595','rom-269429','rom-58816','rom-700938','rom-193662','rom-868616','rom-881524','rom-890515','rom-891218','rom-161198','rom-488766','rom-666325','rom-20103','rom-235393','rom-152501','rom-296344','rom-488995','rom-767857','rom-74499','rom-309092','rom-212875','rom-646277','rom-363505','rom-668279','rom-354496','rom-173402','rom-510908','rom-547931','rom-339354'],
+  qar_poeira: [],
+  opac_ring: ['rom-983872','rom-867698','rom-340933','rom-524890','rom-412721','rom-828935','rom-856308','rom-126370','rom-501923','rom-858755','rom-395344','rom-191157','rom-890924','rom-725307','rom-841177','rom-530343','rom-315834','rom-861944','rom-625801','rom-649017','rom-583363','rom-396211','rom-958172','rom-427714','rom-485579','rom-218765'],
+  opac_opac: []
+};
+
+function coletarChecksPreCampo(tipo, subTipo) {
+  var chaveMap = {
+    ruido: 'ruido',
+    sismo: 'sismo',
+    qarint: 'qarint',
+    outro: 'outro'
+  };
+  var chave = chaveMap[tipo] || tipo;
+  // QAR e opacidade dependem do subtipo
+  if(tipo === 'qar') {
+    var s = subTipo || '';
+    if(s.indexOf('trigas') >= 0) chave = 'qar_trigas';
+    else if(s.indexOf('poeira') >= 0) chave = 'qar_poeira';
+    else chave = 'qar_part';
+  }
+  if(tipo === 'opacidade') {
+    chave = (subTipo || '').indexOf('ring') >= 0 ? 'opac_ring' : 'opac_opac';
+  }
+  var ids = _precampoCheckIds[chave] || [];
+  return ids.map(function(id) {
+    var el = document.getElementById(id);
+    if(!el) return 'N/A';
+    return el.classList.contains('checked') || el.querySelector('input[type=checkbox]')&&el.querySelector('input[type=checkbox]').checked ? 'Sim' : 'Não';
+  });
+}
+
+async function salvarPreCampoExcel(idRegistro, dados) {
+  if(!token) return;
+  var tipo = dados.tipo || tipoSel;
+  var subTipo = dados.subTipo || '';
+  var checks = coletarChecksPreCampo(tipo, subTipo);
+  if(!checks.length) return;
+
+  // Montar linha: [ID, Data, Hora, Técnico, Cliente, Cidade, Tipo, ...checks, Status]
+  var subTipoLabel = dados.subTipo || subTipo || '';
+  var linha = [
+    idRegistro,
+    dados.data || '', dados.hora || '',
+    dados.tecnico || '', dados.cliente || '', dados.cidade || '',
+    dados.tipoLabel || tipo,
+    subTipoLabel
+  ].concat(checks).concat(['✅ Concluído']);
+
+  // Determinar aba
+  var abaMap = {
+    ruido: 'Ruído', sismo: 'Vibração',
+    qarint: 'QAR Interno', outro: 'Outro',
+    qar_part: 'QAR Externo — Particulados',
+    qar_trigas: 'QAR Externo — TRIGÁS',
+    qar_poeira: 'QAR Externo — Poeiras Sed.',
+    opac_ring: 'Opacidade — Ringelmann',
+    opac_opac: 'Opacidade — Opacímetro'
+  };
+  // Ruído usa aba única independente do subtipo (externo/interno/ferro/aero)
+  var chaveMap2 = {ruido:'ruido',sismo:'sismo',qarint:'qarint',outro:'outro'};
+  var chave2 = chaveMap2[tipo] || tipo;
+  if(tipo==='qar') {
+    if(subTipo.indexOf('trigas')>=0) chave2='qar_trigas';
+    else if(subTipo.indexOf('poeira')>=0) chave2='qar_poeira';
+    else chave2='qar_part';
+  }
+  if(tipo==='opacidade') chave2=(subTipo.indexOf('ring')>=0)?'opac_ring':'opac_opac';
+  var aba = abaMap[chave2] || 'Outro';
+
+  try {
+    await appendLinhaArquivo(linha, aba, 'pre_campo.xlsx');
+  } catch(e) {
+    console.error('Erro ao salvar pré-campo:', e.message);
+  }
+}
+
+async function appendLinhaArquivo(vals, sheetName, fileName) {
+  var site = await gGet('/sites/engearlaboratorio.sharepoint.com:/sites/EngearLaboratorio');
+  var drives = await gGet('/sites/' + site.id + '/drives');
+  var drive = drives.value.find(function(d){return d.name==='Documentos'||d.name==='Documents';}) || drives.value[0];
+  var itemId = null;
+  try {
+    var search = await gGet('/drives/' + drive.id + "/root/search(q='" + fileName + "')");
+    var found = (search.value||[]).find(function(i){return i.name===fileName;});
+    if(found) itemId = found.id;
+  } catch(e) {}
+  if(!itemId) throw new Error(fileName + ' não encontrado no SharePoint');
+  var used = await gGet('/drives/' + drive.id + '/items/' + itemId + '/workbook/worksheets/' + encodeURIComponent(sheetName) + '/usedRange');
+  var novaLinha = (used.rowCount || 1) + 1;
+  var col = String.fromCharCode(64 + vals.length);
+  var rangePath = '/drives/' + drive.id + '/items/' + itemId + '/workbook/worksheets/' + encodeURIComponent(sheetName) + "/range(address='A" + novaLinha + ":" + col + novaLinha + "')";
+  await gPatch(rangePath, {values: [vals]});
+}
+
 // SALVAR
 
 function salvarOffline(dados,resultado){pending.push({dados:dados,resultado:resultado,ts:Date.now()});localStorage.setItem('engear_pending',JSON.stringify(pending));atualizarOfflineBar();}
@@ -2174,6 +2279,8 @@ async function salvar(){
   if(navigator.onLine){
     try{
       await obterToken();
+      // Salvar pré-campo na planilha separada
+      try{ await salvarPreCampoExcel(idReg, dados); }catch(e){ console.log('PreCampo:', e.message); }
       for(var ri=0;ri<resultado.rows.length;ri++){
         var row=resultado.rows[ri].slice();
         // Inserir ID antes do Status e marcar como Finalizado
@@ -2345,6 +2452,8 @@ function selEventualidade(pid, sim){
   if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
   if(desc)desc.style.display=sim?'block':'none';
 }
+
+
 
 
 
