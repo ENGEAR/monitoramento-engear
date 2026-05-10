@@ -668,8 +668,13 @@ function renderPontosQAR(n){
     h+=gpsBlock(p);
     h+='<span class="passo-step">1\u00ba Passo \u2014 Aquecimento do motor</span>'+chk(p+'-motor','Motor aquecido');
     h+='<div class="divider"></div><span class="passo-step">2\u00ba Passo \u2014 Zerar Man\u00f4metro</span>'+chk(p+'-manz','Man\u00f4metro zerado')+chk(p+'-valv','V\u00e1lvulas fechadas');
-    h+='<div class="divider"></div><span class="passo-step">3\u00ba Passo \u2014 Teste de Vazamento</span>'+chk(p+'-v800','Man\u00f4metro 800mm \u2014 vazamento OK')+chk(p+'-v400','Man\u00f4metro 400mm \u2014 vazamento OK');
-    h+='<div class="divider"></div><span class="passo-step">4\u00ba Passo \u2014 Porta filtro e porta motor</span>'+chk(p+'-fuga','Nenhuma fuga de ar detectada');
+    h+='<div class="divider"></div><span class="passo-step">3\u00ba Passo \u2014 Teste de Vazamento</span>'+
+    chk(p+'-vaz-valv','Fechar as válvulas antes do teste')+
+    chk(p+'-v800','Teste de vazamento no Manômetro de 800 mm (mínimo 1 minuto)')+
+    '<div class="field"><button onclick="iniciarCronometro(\'cron800-'+p+'\',60)" style="background:#e8f4fd;border:1.5px solid #2d7db3;color:#1e5f8a;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;width:100%;">&#9200;&#65039; Iniciar cronômetro 800mm</button><div id="cron800-'+p+'" style="text-align:center;font-size:22px;font-weight:700;color:#2d7db3;letter-spacing:2px;display:none;margin:4px 0;">00:00</div></div>'+
+    chk(p+'-v400','Teste de vazamento no Manômetro de 400 mm (mínimo 1 minuto)')+
+    '<div class="field"><button onclick="iniciarCronometro(\'cron400-'+p+'\',60)" style="background:#e8f4fd;border:1.5px solid #2d7db3;color:#1e5f8a;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;width:100%;">&#9200;&#65039; Iniciar cronômetro 400mm</button><div id="cron400-'+p+'" style="text-align:center;font-size:22px;font-weight:700;color:#2d7db3;letter-spacing:2px;display:none;margin:4px 0;">00:00</div></div>';
+    h+='<div class="divider"></div><span class="passo-step">4\u00ba Passo \u2014 Teste de vazamento do porta filtro e porta motor</span>'+chk(p+'-fuga','Nenhuma fuga de ar detectada');
     h+='<div class="divider"></div><span class="passo-step">5\u00ba Passo \u2014 Condi\u00e7\u00f5es ambientais</span>';
     h+='<div class="row3">'+inp(p+'-temp','Temperatura (\u00b0C)','number','')+inp(p+'-press','Press\u00e3o','number','')+inp(p+'-umid','Umidade (%)','number','')+'</div>';
     h+='<div class="divider"></div><span class="passo-step">6\u00ba Passo \u2014 Calibra\u00e7\u00e3o</span>';
@@ -1506,6 +1511,7 @@ function renderPasso3() {
   else if (tipoSel === 'opacidade') { cont.innerHTML = _romaneioOpacChoice(); }
   else if (tipoSel === 'qar') { cont.innerHTML = _romaneioQARChoice(); }
   else if (tipoSel === 'qarint') { cont.innerHTML = _romaneioQARInt(); }
+  else if (tipoSel === 'outro') { cont.innerHTML = _romaneioOutro(); }
   else { cont.innerHTML = '<p style="color:var(--muted);font-size:14px;">Nenhum romaneio específico para este tipo.</p>'; }
 }
 
@@ -1537,6 +1543,25 @@ document.addEventListener('click', function(e) {
   }
 });
 
+
+function _romaneioOutro() {
+  return _card('Romaneio — Outros Ensaios',
+    _sec('1. Antes de sair do laboratório') +
+    _ci('Ordem de Serviço avaliada') +
+    _ci('Pontos amostrais previamente identificados por coordenadas') +
+    _ci('Trajeto planejado para chegada com antecedência mínima de 1h') +
+    _ci('Acesso ao local confirmado com o cliente') +
+    _ci('EPIs disponíveis') +
+    _sec('2. Equipamentos e Insumos') +
+    _ci('Equipamento específico com calibração em dia') +
+    _ci('Termohigroanemômetro') +
+    _ci('Carregador / baterias reservas') +
+    _ci('Maleta/mochila de transporte (limpa e em bom estado)') +
+    _ci('Power Bank') +
+    _ci('Trena métrica') +
+    _ci('Celular carregado e carregador')
+  );
+}
 function _romaneioRuido() {
   return _card('Romaneio — Ruído',
     _sec('1. Antes de sair do laboratório') +
@@ -1801,6 +1826,65 @@ function _romaneioQARInt() {
 }
 
 
+
+function selEsq(val){
+  document.getElementById('r-esquadria').value=val;
+  var a=document.getElementById('btn-esq-aberta');
+  var b=document.getElementById('btn-esq-fechada');
+  if(a){a.style.background=val==='aberta'?'#2d7db3':'#f0f4f8';a.style.color=val==='aberta'?'white':'#1a202c';a.style.border='1.5px solid '+(val==='aberta'?'#2d7db3':'#e2e8f0');}
+  if(b){b.style.background=val==='fechada'?'#2d7db3':'#f0f4f8';b.style.color=val==='fechada'?'white':'#1a202c';b.style.border='1.5px solid '+(val==='fechada'?'#2d7db3':'#e2e8f0');}
+}
+function selAmb(val){
+  document.getElementById('r-ambiente-cond').value=val;
+  var a=document.getElementById('btn-amb-vazio');
+  var b=document.getElementById('btn-amb-pessoas');
+  if(a){a.style.background=val==='vazio'?'#2d7db3':'#f0f4f8';a.style.color=val==='vazio'?'white':'#1a202c';a.style.border='1.5px solid '+(val==='vazio'?'#2d7db3':'#e2e8f0');}
+  if(b){b.style.background=val==='pessoas'?'#2d7db3':'#f0f4f8';b.style.color=val==='pessoas'?'white':'#1a202c';b.style.border='1.5px solid '+(val==='pessoas'?'#2d7db3':'#e2e8f0');}
+}
+function calcPontosRuidoInt(){
+  var area=parseFloat(v('r-area-int'));
+  if(!area||area<=0){toast('Informe a área do ambiente');return;}
+  var n=area<=30?3:3+Math.ceil((area-30)/30);
+  document.getElementById('r-int-resultado').classList.remove('hidden');
+  document.getElementById('r-int-msg').textContent='Área: '+area+' m² → '+n+' ponto(s) necessário(s)';
+  var wrap=document.getElementById('sala-canvas-wrap');
+  if(wrap){wrap.style.display='block';setTimeout(function(){iniciarCanvas();},200);}
+  if(typeof _rpiN!=='undefined'){_rpiN=n;_rpiIdx=1;_rpiDados={};}
+  var cont=document.getElementById('rp-cont-int');
+  if(cont)cont.innerHTML=renderPontosRuidoInt(n);
+  mostrarBtnRascunho(true);
+}
+function renderPontosRuidoInt(n){
+  if(typeof _rpiN==='undefined'){_rpiN=n;_rpiIdx=1;_rpiDados={};}
+  return _rpiNav()+_rpiPage(1);
+}
+
+var _cronTimers = {};
+function iniciarCronometro(id, meta) {
+  meta = meta || 60;
+  if (_cronTimers[id]) {
+    clearInterval(_cronTimers[id]);
+    delete _cronTimers[id];
+    var el = document.getElementById(id);
+    if (el) { el.style.display = 'none'; el.textContent = '00:00'; el.style.color = '#2d7db3'; }
+    return;
+  }
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.color = '#2d7db3';
+  var start = Date.now();
+  _cronTimers[id] = setInterval(function() {
+    var elapsed = Math.floor((Date.now() - start) / 1000);
+    var m = Math.floor(elapsed / 60);
+    var s = elapsed % 60;
+    el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    if (elapsed >= meta) {
+      el.style.color = '#00b894';
+      el.textContent = '✓ ' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }
+  }, 500);
+}
 function novoRegistro(){
   tipoSel='';fotosAnexadas={};
   document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
