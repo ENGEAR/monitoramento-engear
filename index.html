@@ -262,14 +262,7 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
       <button class="btn-outline" onclick="gerarPDF()" style="width:100%;margin-top:8px;">📄 Gerar PDF</button>
     </div>
 
-    <div id="pendencias" class="hidden">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
-        <button class="btn-back" style="flex:none;padding:10px 16px;" onclick="fecharPendencias()">← Voltar</button>
-        <h2 style="font-size:15px;font-weight:600;">Registros pendentes de sincronização</h2>
-      </div>
-      <div id="pendencias-lista"></div>
-      <button class="btn-full" onclick="sincronizar()" style="margin-top:8px;">🔄 Sincronizar todos</button>
-    </div>
+
 
     <div id="historico" class="hidden">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
@@ -315,6 +308,9 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 <div id="toast"></div>
 <script>
+
+
+
 
 
 
@@ -737,7 +733,7 @@ function irP4(){
 
 function irP5(){mostrar('passo5');atualizarSteps(5);}
 
-function mostrar(id){['passo1','passo2','passo3','passo4','passo5','sucesso','pendencias'].forEach(function(s){var e=document.getElementById(s);if(e)e.classList.add('hidden');});var t=document.getElementById(id);if(t)t.classList.remove('hidden');}
+function mostrar(id){['passo1','passo2','passo3','passo4','passo5','sucesso'].forEach(function(s){var e=document.getElementById(s);if(e)e.classList.add('hidden');});var t=document.getElementById(id);if(t)t.classList.remove('hidden');}
 
 function mostrarBtnRascunho(show){
   var el=document.getElementById('rascunho-btn-wrap');
@@ -1595,8 +1591,25 @@ function coletarDados(){
   var esp={};
   if(tipoSel==='ruido'){esp.subTipo=_subRuido||'externo';
     esp.finalidade=v('r-finalidade')==='Outros'?v('r-finalidade-outro'):v('r-finalidade');
-    var nP=parseInt(v('r-npontos'))||0;esp.pontos=[];
-    for(var i=1;i<=nP;i++){var p='rp'+i;esp.pontos.push({nome:v(p+'-nome'),gps:getGPS(p),chkIni:v(p+'-chkini'),chkFim:v(p+'-chkfim'),temp:v(p+'-temp'),umid:v(p+'-umid'),vento:v(p+'-vento'),residual:isChk(p+'-residual'),total:isChk(p+'-total'),fontesEmpresa:v(p+'-fontes-empresa'),fontesAmbiente:v(p+'-fontes-ambiente'),obs:v(p+'-obs')});}
+    // Salvar o ponto atual no _rpDados antes de coletar
+    if(typeof _rpSave==='function') try{_rpSave(esp.subTipo);}catch(e){}
+    var nP=_rpN||parseInt(v('r-npontos'))||0;esp.pontos=[];
+    for(var i=1;i<=nP;i++){
+      var p='rp'+esp.subTipo+i; // ID correto com subtipo
+      var saved=_rpDados[i]||{};
+      function gv(id){var el=document.getElementById(id);return el?el.value:(saved[id]||'');}
+      function gi(id){var el=document.getElementById(id);if(el)return el.classList.contains('checked');return saved[id+'__chk']||false;}
+      esp.pontos.push({
+        nome:gv(p+'-nome'),horaIni:gv(p+'-hora-ini'),horaFim:gv(p+'-hora-fim'),
+        gps:{e:gv('gps-e-'+p),n:gv('gps-n-'+p),zona:gv('gps-zona-'+p)},
+        chkIniSinal:gv(p+'-chkini-sinal'),chkIni:gv(p+'-chkini'),
+        chkFimSinal:gv(p+'-chkfim-sinal'),chkFim:gv(p+'-chkfim'),
+        temp:gv(p+'-temp'),umid:gv(p+'-umid'),vento:gv(p+'-vento'),
+        residual:gi(p+'-residual'),total:gi(p+'-total'),
+        fontesEmpresa:gv(p+'-fontes-empresa'),fontesAmbiente:gv(p+'-fontes-ambiente'),
+        obs:gv(p+'-obs')
+      });
+    }
   } else if(tipoSel==='sismo'){
     esp.objetivo=v('s-objetivo');esp.finalidade=v('s-finalidade');
     _sismoSave();esp.pontos=[];
@@ -1891,7 +1904,8 @@ function gerarPDF(){
 var canvasDataUrl='';
 try{var canvasEl=document.getElementById('sala-canvas');if(canvasEl)canvasDataUrl=canvasEl.toDataURL('image/png');}catch(e){}
 
-if(d.tipo==='ruido'&&d.pontos){d.pontos.forEach(function(p,i){linhas.push(ponto('PONTO '+(i+1)+(p.nome?' — '+p.nome:'')));if(p.gps&&p.gps.e)linhas.push(row('Coordenadas UTM',gpsStr(p.gps)));linhas.push(row('Checagem inicial',p.chkIni+' dB'));linhas.push(row('Checagem final',p.chkFim+' dB'));if(p.chkIni&&p.chkFim){var diff=Math.abs(parseFloat(p.chkFim)-parseFloat(p.chkIni));linhas.push(row('Diferença',diff.toFixed(1)+' dB'+(diff>0.5?' ⚠️ Acima do limite':' ✅ OK')));}linhas.push(row('Temperatura',p.temp?p.temp+' °C':''));linhas.push(row('Umidade',p.umid?p.umid+' %':''));linhas.push(row('Vento',p.vento?p.vento+' m/s':''));linhas.push(row('Ruído residual',bool(p.residual)));linhas.push(row('Ruído total',bool(p.total)));linhas.push(row('Fontes empresa',p.fontesEmpresa));linhas.push(row('Fontes ambiente',p.fontesAmbiente));linhas.push(row('Observações',p.obs));});}
+if(d.tipo==='ruido'&&d.pontos){d.pontos.forEach(function(p,i){linhas.push(ponto('PONTO '+(i+1)+(p.nome?' — '+p.nome:'')));if(p.horaIni)linhas.push(row('Hora inicial',p.horaIni));if(p.gps&&p.gps.e)linhas.push(row('Coordenadas UTM',gpsStr(p.gps)));if(p.chkIni)linhas.push(row('Checagem inicial',(p.chkIniSinal||'+')+' '+p.chkIni+' dB'));
+            if(p.chkFim)linhas.push(row('Checagem final',(p.chkFimSinal||'+')+' '+p.chkFim+' dB'));if(p.chkIni&&p.chkFim){var diff=Math.abs(parseFloat(p.chkFim)-parseFloat(p.chkIni));linhas.push(row('Diferença',diff.toFixed(1)+' dB'+(diff>0.5?' ⚠️ Acima do limite':' ✅ OK')));}linhas.push(row('Temperatura',p.temp?p.temp+' °C':''));linhas.push(row('Umidade',p.umid?p.umid+' %':''));linhas.push(row('Vento',p.vento?p.vento+' m/s':''));linhas.push(row('Ruído residual',bool(p.residual)));linhas.push(row('Ruído total',bool(p.total)));linhas.push(row('Fontes empresa',p.fontesEmpresa));linhas.push(row('Fontes ambiente',p.fontesAmbiente));linhas.push(row('Observações',p.obs));});}
     if(d.tipo==='sismo'&&d.pontos){d.pontos.forEach(function(p,i){linhas.push(ponto('PONTO '+(i+1)+(p.nome?' — '+p.nome:'')));if(p.gps&&p.gps.e)linhas.push(row('Coordenadas UTM',gpsStr(p.gps)));linhas.push(row('Fonte de vibração',p.fonte));linhas.push(row('Auto verificação',bool(p.autov)));linhas.push(row('Temperatura',p.temp?p.temp+' °C':''));linhas.push(row('Umidade',p.umid?p.umid+' %':''));linhas.push(row('Trigger',bool(p.trigger)));linhas.push(row('Memória',bool(p.mem)));linhas.push(row('Programação',bool(p.prog)));linhas.push(row('Captação',bool(p.capt)));linhas.push(row('Intercorrências',p.interc||'Nenhuma'));});}
     if(d.tipo==='qar'&&d.pontos){d.pontos.forEach(function(p,i){linhas.push(ponto('PONTO '+(i+1)+(p.nome?' — '+p.nome:'')));if(p.gps&&p.gps.e)linhas.push(row('Coordenadas UTM',gpsStr(p.gps)));linhas.push(row('Calibração aprovada',bool(p.calibAprovada)));if(p.coletas){p.coletas.forEach(function(c,ci){if(!c.dini&&!c.dfim)return;linhas.push(row('<b>'+(ci+1)+'ª Coleta — Dados iniciais</b>',''));linhas.push(row('Data / Hora',c.dini+' '+c.hini));linhas.push(row('Horímetro',c.horamIni));linhas.push(row('Temp/Umid/Press',(c.tini||'—')+' °C / '+(c.uini||'—')+' % / '+(c.pini||'—')));linhas.push(row('<b>'+(ci+1)+'ª Coleta — Dados finais</b>',''));linhas.push(row('Data / Hora',c.dfim+' '+c.hfim));linhas.push(row('Horímetro',c.horamFim));linhas.push(row('Temp/Umid/Press',(c.tfim||'—')+' °C / '+(c.ufim||'—')+' % / '+(c.pfim||'—')));});}});}
     if(d.tipo==='opacidade'&&d.veiculos){d.veiculos.forEach(function(ve,i){linhas.push(ponto('VEÍCULO '+(i+1)+(ve.placa?' — '+ve.placa:'')));if(ve.gps&&ve.gps.e)linhas.push(row('Coordenadas UTM',gpsStr(ve.gps)));linhas.push(row('Equip. calibrado',bool(ve.calibrado)));linhas.push(row('Acelerações',bool(ve.acel)));linhas.push(row('Ensaio',bool(ve.ensaio)));linhas.push(row('3 leituras',bool(ve.leituras)));linhas.push(row('Dados registrados',bool(ve.dados)));linhas.push(row('Observações',ve.obs));});}
@@ -1926,9 +1940,8 @@ function lerFotoBase64(file){return new Promise(function(resolve){var reader=new
 
 // FILA DE PENDÊNCIAS
 function verPendencias(){
-  var appEl=document.getElementById('app');
-  if(appEl)appEl.style.display='block';
-  mostrar('pendencias');
+  var overlay=document.getElementById('pendencias-overlay');
+  if(overlay) overlay.style.display='block';
   var lista=document.getElementById('pendencias-lista');
   if(!lista)return;
   // Recarregar pending do localStorage (garante dados frescos)
@@ -2304,8 +2317,10 @@ function mostrarTela(id) {
 }
 
 function buscarCidadeGPS(){
-  if(!navigator.geolocation){toast('GPS nao disponivel');return;}
-  toast('Buscando localizacao...');
+  if(!navigator.geolocation){toast('GPS não disponível');return;}
+  var btn=document.getElementById('btn-gps-cidade');
+  if(btn){btn.disabled=true;btn.textContent='📡 Buscando...';}
+  toast('Buscando localização...');
   navigator.geolocation.getCurrentPosition(function(pos){
     fetch('https://nominatim.openstreetmap.org/reverse?lat='+pos.coords.latitude+'&lon='+pos.coords.longitude+'&format=json&accept-language=pt')
       .then(function(r){return r.json();})
@@ -2316,9 +2331,10 @@ function buscarCidadeGPS(){
         var uf=sigla[estado]||estado.substring(0,2).toUpperCase();
         var el=document.getElementById('cidade');
         if(el)el.value=cidade+(uf?' / '+uf:'');
+        if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
         toast('Localizado: '+cidade,false,true);
       }).catch(function(){toast('Erro ao buscar cidade',true);});
-  },function(){toast('GPS negado',true);},{enableHighAccuracy:true,timeout:10000});
+  },function(){if(btn){btn.disabled=false;btn.textContent='📍 GPS';}toast('GPS negado ou tempo esgotado',true);},{enableHighAccuracy:true,timeout:10000});
 }
 
 function chkIniField(pid){return '<div class="field"><label>Valor da checagem inicial (dB)</label><div style="display:flex;gap:6px;"><select id="'+pid+'-chkini-sinal" style="width:60px;flex-shrink:0;"><option value="+">+</option><option value="-">-</option></select><input type="number" id="'+pid+'-chkini" placeholder="Ex: 0,20" step="0.1" style="flex:1;"/></div></div>';}
@@ -2399,6 +2415,15 @@ function salvarRascunhoGeral(){
   // Capturar snapshot raw de TODOS os elementos do form
   dados._snapshot=capturarSnapshot();
   dados._subTipo=_subRuido||dados.subTipo||'';
+  // Salvar dados paginados de cada tipo
+  if(typeof _rpSave==='function'&&_subRuido) try{_rpSave(_subRuido);}catch(e){}
+  if(typeof _sismoSave==='function') try{_sismoSave();}catch(e){}
+  dados._rpDados=JSON.parse(JSON.stringify(_rpDados||{}));
+  dados._sismoDados=JSON.parse(JSON.stringify(_sismoDados||{}));
+  dados._rpiDados=JSON.parse(JSON.stringify(_rpiDados||{}));
+  dados._qarDados=JSON.parse(JSON.stringify(_qarDados||{}));
+  dados._ringDados=JSON.parse(JSON.stringify(_ringDados||{}));
+  dados._opacDados=JSON.parse(JSON.stringify(_opacDados||{}));
   var tipos={ruido:'Ruido',sismo:'Vibracao',qar:'QAR Externo',opacidade:'Opacidade',qarint:'QAR Interno',outro:'Outro'};
   var entry={
     id:Date.now(),
@@ -2637,6 +2662,20 @@ function selEventualidade(pid, sim){
 
 
 
+
+
+
 </script>
+
+<div id="pendencias-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;overflow-y:auto;">
+  <div style="background:var(--bg,#f6f7f9);max-width:430px;margin:0 auto;min-height:100vh;padding:1.25rem;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding-top:env(safe-area-inset-top,0);">
+      <button onclick="fecharPendencias()" style="background:none;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:600;cursor:pointer;color:#1e5f8a;">← Voltar</button>
+      <h2 style="font-size:15px;font-weight:600;color:#1a202c;">Pendentes de sincronização</h2>
+    </div>
+    <div id="pendencias-lista"></div>
+    <button onclick="sincronizar()" style="width:100%;background:#2d7db3;color:white;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;">🔄 Sincronizar todos</button>
+  </div>
+</div>
 </body>
 </html>
