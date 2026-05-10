@@ -330,6 +330,9 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 
 
+
+
+
 const CFG={clientId:'756385e2-9a87-4997-a939-60129e4c1573',tenantId:'f84b416a-a586-42bf-b3ae-46d4d8e882da',clientSecret:'YOC8Q~~1S0wTi3f~qyeMq5VIbXkg31T3gIwjgc.4',siteHost:'engearlaboratorio.sharepoint.com',sitePath:'/sites/EngearLaboratorio',filePath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/monitoramento.xlsx',fotosPath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/Fotos',sheetName:'Plan1',senha:'campo26*',workerUrl:'https://engear-auth.red-cell-b560.workers.dev'};
 var token=null,tokenExp=0,nomeLogado='',tipoSel='',fotosAnexadas={};
 var pending=JSON.parse(localStorage.getItem('engear_pending')||'[]');
@@ -465,12 +468,20 @@ function calcPontosRuidoInt(){
   if(canvasWrap)canvasWrap.style.display='block';
   var btnPontos=document.getElementById('btn-ir-pontos');
   if(btnPontos)btnPontos.style.display='block';
-  setTimeout(function(){iniciarCanvas();},300);
   mostrarBtnRascunho(true);
-  // Inicializar paginação (mas não mostrar ainda)
   _rpiN=n;_rpiIdx=1;_rpiDados={};
-  // Inicializar canvas
-  setTimeout(function(){iniciarCanvas();},200);
+  // Inicializar canvas com delay maior para garantir que o elemento está visível
+  setTimeout(function(){
+    var c=document.getElementById('sala-canvas');
+    if(c){
+      // Forçar dimensões
+      var wrap=c.parentElement;
+      c.width=wrap?wrap.offsetWidth||320:320;
+      c.height=250;
+      c._initDone=false; // Forçar re-inicialização
+      iniciarCanvas();
+    }
+  },400);
 }
 
 function mostrarPontosInt(){
@@ -491,8 +502,15 @@ function canvasMode(m){
   _canvasMode=m;
   ['ponto','paredeH','paredeV','lapis','borracha'].forEach(function(mo){
     var b=document.getElementById('btn-modo-'+mo);
-    if(b){b.style.background=m===mo?'#2d7db3':'#f0f4f8';b.style.color=m===mo?'white':'#1a202c';b.style.border=m===mo?'none':'1.5px solid #e2e8f0';}
+    if(b){
+      b.style.background=m===mo?'#2d7db3':'#f0f4f8';
+      b.style.color=m===mo?'white':'#1a202c';
+      b.style.border=m===mo?'none':'1.5px solid #e2e8f0';
+    }
   });
+  // Re-inicializar canvas se ainda não foi feito
+  var c=document.getElementById('sala-canvas');
+  if(c&&!c._initDone){iniciarCanvas();}
 }
 
 function carregarSenhasSalvas(){var nome=localStorage.getItem('engear_saved_nome');var senha=localStorage.getItem('engear_saved_senha');if(nome)document.getElementById('login-nome').value=nome;if(senha){document.getElementById('login-senha').value=senha;document.getElementById('lembrar-senha').checked=true;}}
@@ -507,7 +525,8 @@ function getXY(e){var r=c.getBoundingClientRect();var s=e.touches?e.touches[0]:e
 
 function iniciarCanvas(){
   var c=document.getElementById('sala-canvas');if(!c)return;
-  c.width=c.offsetWidth||320;c.height=250;
+  if(c._initDone)return; // Evitar listeners duplicados
+  c.width=c.offsetWidth>0?c.offsetWidth:320;c.height=250;
   c._initDone=true;
   c.addEventListener('click',function(e){
     if(_canvasMode==='lapis')return;
@@ -1798,30 +1817,61 @@ function lerFotoBase64(file){return new Promise(function(resolve){var reader=new
 
 // FILA DE PENDÊNCIAS
 function verPendencias(){
-  // Garantir que #app está visível
   var appEl=document.getElementById('app');
   if(appEl)appEl.style.display='block';
-  // Mostrar a seção de pendências
   mostrar('pendencias');
-  // Preencher a lista
   var lista=document.getElementById('pendencias-lista');
   if(!lista)return;
+  // Recarregar pending do localStorage (garante dados frescos)
+  try{pending=JSON.parse(localStorage.getItem('engear_pending')||'[]');}catch(e){pending=[];}
   var tipos={ruido:'Ruído',sismo:'Vibração',qar:'QAR Externo',opacidade:'Opacidade',qarint:'QAR Interno',outro:'Outro'};
-  if(pending.length===0){
+  if(!pending||pending.length===0){
     lista.innerHTML='<p style="color:var(--muted);font-size:14px;text-align:center;padding:1rem;">Nenhum registro pendente.</p>';
-  } else {
-    lista.innerHTML=pending.map(function(r,i){
-      var d=r.dados||{};var dt=new Date(r.ts||Date.now());
-      return '<div class="saved-info" style="margin-bottom:8px;">'+
-        '<div class="saved-row"><span>Data</span><span>'+(d.data||dt.toLocaleDateString('pt-BR'))+'</span></div>'+
-        '<div class="saved-row"><span>Tipo</span><span>'+(tipos[d.tipo]||d.tipo||'—')+'</span></div>'+
-        '<div class="saved-row"><span>Cliente</span><span>'+(d.cliente||'—')+'</span></div>'+
-        '<div class="saved-row"><span>Técnico</span><span>'+(d.tecnico||'—')+'</span></div>'+
-        '<div class="saved-row"><span>Salvo em</span><span>'+dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'</span></div>'+
-        '<div style="margin-top:8px;"><button onclick="excluirPendencia('+i+')" style="width:100%;background:#fff3f3;color:#e53e3e;border:1px solid #fecaca;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;">🗑️ Excluir este registro</button></div>'+
-        '</div>';
-    }).join('');
+    return;
   }
+  lista.innerHTML=pending.map(function(r,i){
+    // Suporte a estruturas antigas e novas
+    var d=r.dados||r||{};
+    var ts=r.ts||r.timestamp||Date.now();
+    var dt=new Date(typeof ts==='number'?ts:ts);
+    var tipo=d.tipo||r.tipo||'';
+    var cliente=d.cliente||r.cliente||'—';
+    var tecnico=d.tecnico||r.tecnico||'—';
+    var data=d.data||r.data||dt.toLocaleDateString('pt-BR');
+    return '<div class="saved-info" style="margin-bottom:12px;">'+
+      '<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--primary);margin-bottom:6px;">'+(tipos[tipo]||tipo||'Registro')+'</div>'+
+      '<div class="saved-row"><span>Data</span><span>'+data+'</span></div>'+
+      '<div class="saved-row"><span>Cliente</span><span>'+cliente+'</span></div>'+
+      '<div class="saved-row"><span>Técnico</span><span>'+tecnico+'</span></div>'+
+      '<div class="saved-row"><span>Salvo em</span><span>'+dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})+'</span></div>'+
+      '<div style="display:flex;gap:8px;margin-top:8px;">'+
+      '<button onclick="tentarSincronizarUm('+i+')" style="flex:1;background:#2d7db3;color:white;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;">🔄 Sincronizar</button>'+
+      '<button onclick="excluirPendencia('+i+')" style="flex:1;background:#fff3f3;color:#e53e3e;border:1px solid #fecaca;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;">🗑️ Excluir</button>'+
+      '</div>'+
+      '</div>';
+  }).join('');
+}
+
+function tentarSincronizarUm(idx){
+  var r=pending[idx];
+  if(!r){return;}
+  if(!navigator.onLine){toast('Sem conexão',true);return;}
+  obterToken().then(function(){
+    var res=r.resultado||montarLinhaPorTipo(r.dados||r);
+    var promises=[];
+    for(var ri=0;ri<res.rows.length;ri++){
+      promises.push(appendLinha(res.rows[ri],res.sheet));
+    }
+    return Promise.all(promises);
+  }).then(function(){
+    pending.splice(idx,1);
+    localStorage.setItem('engear_pending',JSON.stringify(pending));
+    atualizarOfflineBar();
+    toast('Registro sincronizado!',false,true);
+    verPendencias();
+  }).catch(function(e){
+    toast('Erro ao sincronizar: '+e.message,true);
+  });
 }
 
 function excluirPendencia(idx){
@@ -2295,6 +2345,9 @@ function selEventualidade(pid, sim){
   if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
   if(desc)desc.style.display=sim?'block':'none';
 }
+
+
+
 
 
 
