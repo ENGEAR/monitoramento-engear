@@ -263,14 +263,12 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
     </div>
 
     <div id="pendencias" class="hidden">
-      <div class="card">
-        <div class="card-title blue">Registros pendentes</div>
-        <div id="pendencias-lista"></div>
-        <div style="margin-top:1rem;display:flex;gap:10px;">
-          <button class="btn-back" onclick="fecharPendencias()">← Voltar</button>
-          <button class="btn-next" onclick="sincronizar()">Sincronizar todos</button>
-        </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+        <button class="btn-back" style="flex:none;padding:10px 16px;" onclick="fecharPendencias()">← Voltar</button>
+        <h2 style="font-size:15px;font-weight:600;">Registros pendentes de sincronização</h2>
       </div>
+      <div id="pendencias-lista"></div>
+      <button class="btn-full" onclick="sincronizar()" style="margin-top:8px;">🔄 Sincronizar todos</button>
     </div>
 
     <div id="historico" class="hidden">
@@ -317,6 +315,9 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 <div id="toast"></div>
 <script>
+
+
+
 
 
 
@@ -723,11 +724,14 @@ chk('rom-729448','Celular carregado e carregador')+
 function irP4(){
   if(!tipoSel){toast('Selecione o tipo de monitoramento');irP2();return;}
   var fd=document.getElementById('form-dinamico');
-  if(!fd||fd.innerHTML.trim()===''||fd.getAttribute('data-tipo')!==tipoSel){
+  var jaRenderizado=fd&&fd.innerHTML.trim()!==''&&fd.getAttribute('data-tipo')===tipoSel;
+  if(!jaRenderizado){
     fotosAnexadas={};renderForm();
     if(fd)fd.setAttribute('data-tipo',tipoSel);
   }
-  mostrarBtnRascunho(false);
+  // Só esconder o botão se o form for novo (sem pontos ainda)
+  // Se já renderizado, manter o estado atual do botão
+  if(!jaRenderizado) mostrarBtnRascunho(false);
   mostrar('passo4');atualizarSteps(4);
 }
 
@@ -2135,46 +2139,145 @@ function fecharRascunhos() { mostrarTela('passo1'); atualizarSteps(1); }
 function editarRascunho(idx) {
   var r = _rascunhos[idx];
   if (!r) return;
-  // Restaurar dados do rascunho
-  tipoSel = 'qar';
+  var d = r.dados || {};
+  var tipo = r.tipo || d.tipo || tipoSel;
+
+  // 1. Restaurar passo 1
+  if (d.data && document.getElementById('data')) document.getElementById('data').value = d.data;
+  if (d.hora && document.getElementById('hora')) document.getElementById('hora').value = d.hora;
+  if (d.tecnico && document.getElementById('tecnico')) document.getElementById('tecnico').value = d.tecnico;
+  if (d.cliente && document.getElementById('cliente')) document.getElementById('cliente').value = d.cliente;
+  if (d.cidade && document.getElementById('cidade')) document.getElementById('cidade').value = d.cidade;
+  if (d.numOS && document.getElementById('num-os')) document.getElementById('num-os').value = d.numOS;
+
+  // 2. Selecionar o tipo correto no passo 2
+  tipoSel = tipo;
   document.querySelectorAll('.tipo-btn').forEach(function(b) { b.classList.remove('selected'); });
-  document.querySelectorAll('.tipo-btn').forEach(function(b) { if (b.onclick && b.onclick.toString().includes("'qar'")) b.classList.add('selected'); });
-  var d = r.dados;
-  if (document.getElementById('data')) document.getElementById('data').value = d.data || '';
-  if (document.getElementById('hora')) document.getElementById('hora').value = d.hora || '';
-  if (document.getElementById('tecnico')) document.getElementById('tecnico').value = d.tecnico || '';
-  if (document.getElementById('cliente')) document.getElementById('cliente').value = d.cliente || '';
-  if (document.getElementById('cidade')) document.getElementById('cidade').value = d.cidade || '';
+  document.querySelectorAll('.tipo-btn').forEach(function(b) {
+    var oc = b.getAttribute('onclick') || '';
+    if (oc.indexOf("'" + tipo + "'") >= 0) b.classList.add('selected');
+  });
+
+  // 3. Renderizar formulário correto
   fotosAnexadas = {};
   renderForm();
-  document.getElementById('form-dinamico').setAttribute('data-tipo', 'qar');
-  // Restaurar objetivo e pontos
+  var fd = document.getElementById('form-dinamico');
+  if (fd) fd.setAttribute('data-tipo', tipo);
+
+  // 4. Restaurar subtipo se houver (ruído, opacidade)
+  if (d.subTipo) {
+    setTimeout(function() {
+      document.querySelectorAll('.sub-tipo-btn, [data-sub]').forEach(function(b) {
+        var oc = b.getAttribute('onclick') || '';
+        if (oc.indexOf("'" + d.subTipo + "'") >= 0) b.click();
+      });
+    }, 50);
+  }
+
+  // 5. Restaurar dados específicos por tipo
   setTimeout(function() {
-    if (document.getElementById('qar-objetivo')) document.getElementById('qar-objetivo').value = d.objetivo || '';
-    var nP = (d.pontos || []).length;
-    if (nP > 0) {
-      atualizarPontosQAR(nP);
-      setTimeout(function() {
-        (d.pontos || []).forEach(function(p, i) {
-          var pid = 'qarp' + (i + 1);
-          if (document.getElementById(pid + '-nome')) document.getElementById(pid + '-nome').value = p.nome || '';
-          if (document.getElementById('gps-e-' + pid)) document.getElementById('gps-e-' + pid).value = (p.gps && p.gps.e) || '';
-          if (document.getElementById('gps-n-' + pid)) document.getElementById('gps-n-' + pid).value = (p.gps && p.gps.n) || '';
-          if (document.getElementById('gps-zona-' + pid)) document.getElementById('gps-zona-' + pid).value = (p.gps && p.gps.zona) || '';
-          (p.coletas || []).forEach(function(c, ci) {
-            var cp = pid + '-c' + (ci + 1);
-            ['dini','hini','horamini','tini','uini','pini','dfim','hfim','horamfim','tfim','ufim','pfim'].forEach(function(k) {
-              var el = document.getElementById(cp + '-' + k);
-              if (el) el.value = c[k.replace('hini','hini').replace('horamini','horamIni').replace('horamfim','horamFim')] || c[k] || '';
-            });
+    try {
+      if (tipo === 'ruido') {
+        if (d.subTipo) {
+          var btns = document.querySelectorAll('.tipo-btn');
+          btns.forEach(function(b) {
+            if ((b.getAttribute('onclick')||'').indexOf(d.subTipo) >= 0) b.click();
           });
-        });
-      }, 200);
-    }
-  }, 100);
-  mostrarTela('passo2');
-  atualizarSteps(2);
-  toast('Rascunho carregado! Complete os dados e salve.', false, true);
+        }
+        var n = (d.pontos || []).length;
+        if (n > 0) {
+          _rpSetN(n, d.subTipo || 'externo');
+          setTimeout(function() {
+            (d.pontos || []).forEach(function(p, i) {
+              var pid = 'rp' + (d.subTipo || 'externo') + (i + 1);
+              _setVal(pid + '-nome', p.nome);
+              _setVal(pid + '-hora-ini', p.horaIni);
+              _setVal(pid + '-hora-fim', p.horaFim);
+              _setVal(pid + '-temp', p.temp);
+              _setVal(pid + '-umid', p.umid);
+              _setVal(pid + '-vento', p.vento);
+              _setGPS(pid, p.gps);
+            });
+          }, 200);
+        }
+
+      } else if (tipo === 'sismo') {
+        _setVal('s-objetivo', d.objetivo);
+        var n = (d.pontos || []).length;
+        if (n > 0) {
+          _sismoSetN(n);
+          setTimeout(function() {
+            (d.pontos || []).forEach(function(p, i) {
+              var pid = 'sp' + (i + 1);
+              _setVal(pid + '-nome', p.nome);
+              _setVal(pid + '-hora-ini', p.horaIni);
+              _setVal(pid + '-hora-fim', p.horaFim);
+              _setGPS(pid, p.gps);
+            });
+          }, 200);
+        }
+
+      } else if (tipo === 'qar') {
+        _setVal('qar-objetivo', d.objetivo);
+        var n = (d.pontos || []).length;
+        if (n > 0) {
+          atualizarPontosQAR(n);
+          setTimeout(function() {
+            (d.pontos || []).forEach(function(p, i) {
+              var pid = 'qarp' + (i + 1);
+              _setVal(pid + '-nome', p.nome);
+              _setGPS(pid, p.gps);
+            });
+          }, 200);
+        }
+
+      } else if (tipo === 'opacidade') {
+        var n = (d.veiculos || []).length;
+        if (n > 0) {
+          if (d.subTipo === 'ringelmann') _ringSetN(n);
+          else _opacSetN(n);
+          setTimeout(function() {
+            (d.veiculos || []).forEach(function(ve, i) {
+              var pid = d.subTipo === 'ringelmann' ? 'ring' + (i + 1) : 'opac' + (i + 1);
+              _setVal(pid + '-placa', ve.placa);
+              _setVal(pid + '-ano', ve.ano);
+            });
+          }, 200);
+        }
+
+      } else if (tipo === 'qarint') {
+        var n = (d.pontos || []).length;
+        if (n > 0) {
+          setTimeout(function() {
+            (d.pontos || []).forEach(function(p, i) {
+              var pid = 'qarint' + (i + 1);
+              _setVal(pid + '-nome', p.nomeAmbiente || p.nome);
+              _setVal(pid + '-hora-ini', p.horaIni);
+              _setVal(pid + '-hora-fim', p.horaFim);
+            });
+          }, 300);
+        }
+
+      } else if (tipo === 'outro') {
+        _setVal('outro-objetivo', d.objetivo);
+      }
+    } catch(e) { console.log('Restore parcial:', e.message); }
+  }, 150);
+
+  mostrarTela('passo4');
+  atualizarSteps(4);
+  toast('Rascunho carregado! Complete e salve.', false, true);
+}
+
+function _setVal(id, val) {
+  var el = document.getElementById(id);
+  if (el && val !== undefined && val !== null) el.value = val;
+}
+function _setGPS(pid, gps) {
+  if (!gps) return;
+  _setVal('gps-e-' + pid, gps.e);
+  _setVal('gps-n-' + pid, gps.n);
+  _setVal('gps-zona-' + pid, gps.zona);
 }
 
 function excluirRascunho(idx) {
@@ -2226,14 +2329,76 @@ function validarChkDiff(iniId,fimId,alertaId){var ini=parseFloat(document.getEle
 function fotoTela(pid,sufixo,lbl){return '<div class="field"><label>'+lbl+'</label><div class="foto-area" onclick="document.getElementById(\'ft'+sufixo+'-'+pid+'\').click()"><input type="file" id="ft'+sufixo+'-'+pid+'" accept="image/*" capture="environment" data-pid="ft'+sufixo+'-'+pid+'" onchange="previewFotoCb(this)" style="display:none"/><div class="foto-icon">&#128247;</div><div class="foto-text">Foto da tela</div></div><div class="foto-preview" id="fp-ft'+sufixo+'-'+pid+'"></div></div>';}
 
 // ── RASCUNHOS ────────────────────────────────────────────────────────────
+
+// ── SNAPSHOT COMPLETO DO FORMULÁRIO ─────────────────────────────────────
+function capturarSnapshot() {
+  var snap = {};
+  var fd = document.getElementById('form-dinamico');
+  if (!fd) return snap;
+  // Inputs, selects, textareas
+  fd.querySelectorAll('input, select, textarea').forEach(function(el) {
+    if (!el.id) return;
+    if (el.type === 'file') return;
+    if (el.type === 'checkbox') snap[el.id] = el.checked;
+    else snap[el.id] = el.value;
+  });
+  // Checks customizados (divs com classe check-item)
+  fd.querySelectorAll('.check-item').forEach(function(el) {
+    if (!el.id) return;
+    snap[el.id + '__checked'] = el.classList.contains('checked');
+  });
+  return snap;
+}
+
+function restaurarSnapshot(snap) {
+  if (!snap) return;
+  // Tentar restaurar várias vezes pois o form pode ainda estar renderizando
+  var tentativas = 0;
+  function tentar() {
+    var fd = document.getElementById('form-dinamico');
+    if (!fd) return;
+    var restaurados = 0;
+    Object.keys(snap).forEach(function(id) {
+      if (id.endsWith('__checked')) {
+        // Check customizado
+        var elId = id.replace('__checked', '');
+        var el = document.getElementById(elId);
+        if (el) {
+          if (snap[id] && !el.classList.contains('checked')) el.classList.add('checked');
+          else if (!snap[id]) el.classList.remove('checked');
+          restaurados++;
+        }
+      } else {
+        var el = document.getElementById(id);
+        if (el && el.type !== 'file') {
+          if (el.type === 'checkbox') el.checked = snap[id];
+          else el.value = snap[id] || '';
+          restaurados++;
+        }
+      }
+    });
+    tentativas++;
+    // Se nem metade foi restaurado e ainda há tentativas, tentar de novo
+    if (restaurados < Object.keys(snap).length * 0.5 && tentativas < 5) {
+      setTimeout(tentar, 300);
+    }
+  }
+  setTimeout(tentar, 150);
+  setTimeout(tentar, 500);
+  setTimeout(tentar, 1000);
+}
+
 function salvarRascunhoGeral(){
   var dados={data:v('data'),hora:v('hora'),tecnico:v('tecnico'),cliente:v('cliente'),cidade:v('cidade'),numOS:v('num-os'),tipo:tipoSel,timestamp:new Date().toISOString()};
-  // Tentar coletar dados completos
+  // Coletar dados estruturados
   try{
     var completos=coletarDados();
     if(completos&&completos.tipo)dados=completos;
   }catch(e){console.log('Dados parciais salvos:',e.message);}
   dados.status='rascunho';
+  // Capturar snapshot raw de TODOS os elementos do form
+  dados._snapshot=capturarSnapshot();
+  dados._subTipo=_subRuido||dados.subTipo||'';
   var tipos={ruido:'Ruido',sismo:'Vibracao',qar:'QAR Externo',opacidade:'Opacidade',qarint:'QAR Interno',outro:'Outro'};
   var entry={
     id:Date.now(),
@@ -2452,6 +2617,9 @@ function selEventualidade(pid, sim){
   if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
   if(desc)desc.style.display=sim?'block':'none';
 }
+
+
+
 
 
 
