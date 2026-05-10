@@ -326,6 +326,9 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 
 
+
+
+
 const CFG={clientId:'756385e2-9a87-4997-a939-60129e4c1573',tenantId:'f84b416a-a586-42bf-b3ae-46d4d8e882da',clientSecret:'YOC8Q~~1S0wTi3f~qyeMq5VIbXkg31T3gIwjgc.4',siteHost:'engearlaboratorio.sharepoint.com',sitePath:'/sites/EngearLaboratorio',filePath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/monitoramento.xlsx',fotosPath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/Fotos',sheetName:'Plan1',senha:'campo26*',workerUrl:'https://engear-auth.red-cell-b560.workers.dev'};
 var token=null,tokenExp=0,nomeLogado='',tipoSel='',fotosAnexadas={};
 var pending=JSON.parse(localStorage.getItem('engear_pending')||'[]');
@@ -1592,37 +1595,128 @@ function getGPS(pid){return{e:v('gps-e-'+pid),n:v('gps-n-'+pid),zona:v('gps-zona
 
 // LINHA EXCEL
 function montarLinhaPorTipo(dados){
-  var base=[dados.data,dados.hora,dados.horaFim,dados.tecnico,dados.cliente||'',dados.cidade||''];
-  function bool(v){return v?'Sim':'Não';}
-  function gpsStr(g){return g&&g.e?(g.zona+' E:'+g.e+' N:'+g.n):'';}
+  var base=[dados.data,dados.hora,dados.horaFim||'',dados.tecnico,dados.cliente||'',dados.cidade||''];
+  function b(v){return v?'Sim':'Não';}
+  function gps(g){return g&&g.e?(g.zona+' E:'+g.e+' N:'+g.n):'';}
+  function dif(a,c){if(!a||!c)return '';var d=Math.abs(parseFloat(c)-parseFloat(a));return isNaN(d)?'':d.toFixed(1);}
+
   if(dados.tipo==='ruido'){
+    var sub=dados.subTipo||'externo';
+    var sheetMap={externo:'Ruído Externo',interno:'Ruído Interno',ferroviario:'Ruído Ferroviário',aeronautico:'Ruído Aeronáutico'};
+    var sheet=sheetMap[sub]||'Ruído Externo';
     var rows=[];
-    (dados.pontos||[]).forEach(function(p,i){var diff='';if(p.chkIni!==''&&p.chkFim!==''){var dv=Math.abs(parseFloat(p.chkFim)-parseFloat(p.chkIni));diff=isNaN(dv)?'':dv.toFixed(1);}
-      rows.push(base.concat([dados.finalidade||'',i+1,p.nome||'',gpsStr(p.gps),p.chkIni||'',p.chkFim||'',diff,p.temp||'',p.umid||'',p.vento||'',bool(p.residual),bool(p.total),p.fontesEmpresa||'',p.fontesAmbiente||'',p.obs||'',dados.obsGeral||'','']));});
-    rows.forEach(function(r){if(r.length&&(!r[r.length-1]||r[r.length-1]===''))r.push('Validado');});return {sheet:'Ruído',rows:rows};
+    (dados.pontos||[]).forEach(function(p,i){
+      var row=base.slice();
+      if(sub==='externo'||sub==='ferroviario'||sub==='aeronautico'){
+        row=row.concat([dados.finalidade||'',i+1,p.nome||'',gps(p.gps),
+          p.chkIniSinal||'',p.chkIni||'','',
+          p.horaIni||'',p.temp||'',p.umid||'',p.vento||'',p.vento>=5?'SIM':'',
+          b(p.residual),b(p.total),
+          p.fontesEmpresa||'',p.fontesAmbiente||'',
+          p.chkFimSinal||'',p.chkFim||'',dif(p.chkIni,p.chkFim),'',
+          p.horaFim||'',p.obs||'','Validado']);
+      } else if(sub==='interno'){
+        row=row.concat([dados.esquadria||'',dados.ambienteCond||'',dados.area||'',
+          b(dados.pos1),b(dados.pos2),b(dados.pos3),b(dados.pos4),b(dados.pos5),
+          b(dados.pos6),b(dados.pos7),b(dados.pos8),b(dados.pos9),
+          b(dados.mont1),b(dados.mont2),b(dados.mont3),b(dados.mont4),b(dados.mont5),
+          i+1,p.nome||'',gps(p.gps),
+          p.horaIni||'',p.alt||'',b(p.slow),
+          b(p.ltot1),b(p.ltot2),b(p.lres1),b(p.lres2),b(p.lres3),
+          p.chkIniSinal||'',p.chkIni||'',
+          p.temp||'',p.umid||'',p.vento||'',b(p.nochuva),
+          p.chkFimSinal||'',p.chkFim||'',dif(p.chkIni,p.chkFim),
+          p.eventualidade?'Sim':'Não',p.obs||'',p.horaFim||'','Validado']);
+      }
+      rows.push(row);
+    });
+    return {sheet:sheet,rows:rows};
   }
+
   if(dados.tipo==='sismo'){
     var rows=[];
-    (dados.pontos||[]).forEach(function(p,i){rows.push(base.concat([dados.objetivo||'',dados.finalidade||'',i+1,p.nome||'',gpsStr(p.gps),p.fonte||'',bool(p.autov),p.temp||'',p.umid||'',bool(p.trigger),bool(p.mem),bool(p.prog),bool(p.capt),p.interc||'Nenhuma',dados.obsGeral||'','']));});
-    rows.forEach(function(r){if(r.length&&(!r[r.length-1]||r[r.length-1]===''))r.push('Validado');});return {sheet:'Vibração',rows:rows};
+    (dados.pontos||[]).forEach(function(p,i){
+      rows.push(base.concat([
+        dados.objetivo||'',
+        b(dados.cfg1),b(dados.cfg2),b(dados.cfg3),
+        b(dados.pre1),b(dados.pre2),b(dados.pre3),b(dados.pre4),b(dados.pre5),b(dados.pre6),
+        p.horaIni||'',i+1,p.nome||'',gps(p.gps),
+        p.tipoEquip||'',p.numEquip||'',p.fonte||'',
+        b(p.loc1),b(p.loc2),b(p.loc3),b(p.loc4),b(p.loc5),b(p.loc6),b(p.loc7),b(p.loc8),b(p.loc9),
+        b(p.geo1),b(p.geo2),b(p.geo3),b(p.geo4),
+        b(p.geo5),b(p.geo6),b(p.geo7),b(p.geo8),b(p.geo9),b(p.geo10),
+        b(p.mic1),b(p.mic2),b(p.mic3),b(p.mic4),b(p.mic5),b(p.mic6),
+        b(p.autov),b(p.dur1),b(p.dur2),b(p.dur3),b(p.dur4),b(p.dur5),
+        p.interc||'Nenhuma',p.horaFim||'','Validado'
+      ]));
+    });
+    return {sheet:'Vibração',rows:rows};
   }
+
   if(dados.tipo==='qar'){
     var rows=[];
-    (dados.pontos||[]).forEach(function(p,i){(p.coletas||[]).forEach(function(c,ci){rows.push(base.concat([dados.objetivo||'',i+1,p.nome||'',gpsStr(p.gps),bool(p.calibAprovada),ci+1,c.dini||'',c.hini||'',c.horamIni||'',c.tini||'',c.uini||'',c.pini||'',c.dfim||'',c.hfim||'',c.horamFim||'',c.tfim||'',c.ufim||'',c.pfim||'',dados.obsGeral||'']));});});
-    rows.forEach(function(r){if(r.length&&(!r[r.length-1]||r[r.length-1]===''))r.push('Validado');});return {sheet:'QAR Externo',rows:rows};
+    (dados.pontos||[]).forEach(function(p,i){
+      (p.coletas||[]).forEach(function(c,ci){
+        rows.push(base.concat([
+          dados.objetivo||'',i+1,p.nome||'',gps(p.gps),
+          p.tipoEquip||'',p.numEquip||'',b(p.calibAprovada),ci+1,
+          c.dini||'',c.hini||'',c.horamIni||'',c.tini||'',c.uini||'',c.pini||'',
+          c.dfim||'',c.hfim||'',c.horamFim||'',c.tfim||'',c.ufim||'',c.pfim||'',
+          dados.obsGeral||'','Validado'
+        ]));
+      });
+    });
+    return {sheet:'QAR Externo',rows:rows};
   }
+
   if(dados.tipo==='opacidade'){
+    var sub=dados.subTipo||'opacimetro';
+    var sheet=sub==='ringelmann'?'Opacidade - Ringelmann':'Opacidade - Opacímetro';
     var rows=[];
-    (dados.veiculos||[]).forEach(function(ve,i){rows.push(base.concat([i+1,ve.placa||'',gpsStr(ve.gps),bool(ve.calibrado),bool(ve.acel),bool(ve.ensaio),bool(ve.leituras),bool(ve.dados),ve.obs||'','']));});
-    rows.forEach(function(r){if(r.length&&(!r[r.length-1]||r[r.length-1]===''))r.push('Validado');});return {sheet:'Opacidade',rows:rows};
+    (dados.veiculos||[]).forEach(function(ve,i){
+      var row=base.concat([i+1,ve.placa||'']);
+      if(sub==='ringelmann'){
+        var leit=ve.leituras||[];
+        row=base.concat([i+1,ve.placa||'',ve.ano||'',gps(ve.gps),
+          ve.horaIni||'',ve.horaFim||'',
+          leit[0]||'',leit[1]||'',leit[2]||'',leit[3]||'',leit[4]||'',
+          leit[5]||'',leit[6]||'',leit[7]||'',leit[8]||'',leit[9]||'',
+          ve.obs||'','Validado']);
+      } else {
+        row=base.concat([i+1,ve.placa||'',gps(ve.gps),
+          b(ve.calibrado),b(ve.acel),b(ve.ensaio),b(ve.leitura3ok),b(ve.dados),
+          ve.obs||'','Validado']);
+      }
+      rows.push(row);
+    });
+    return {sheet:sheet,rows:rows};
   }
+
   if(dados.tipo==='qarint'){
     var rows=[];
-    (dados.pontos||[]).forEach(function(p,i){rows.push(base.concat([dados.area||'',(dados.pontos||[]).length,i+1,p.nome||'',gpsStr(p.gps),bool(p.plano),bool(p.equip),bool(p.posic),bool(p.coleta),p.co2||'',p.temp||'',p.ur||'',p.vento||'',bool(p.conformidade),bool(p.amostras),p.obs||'','']));});
-    rows.forEach(function(r){if(r.length&&(!r[r.length-1]||r[r.length-1]===''))r.push('Validado');});return {sheet:'QAR Interno',rows:rows};
+    (dados.pontos||[]).forEach(function(p,i){
+      rows.push(base.concat([
+        p.nAmbiente||'',p.nomeAmbiente||'',dados.area||'',(dados.pontos||[]).length,
+        i+1,p.nome||'',gps(p.gps),
+        p.horaIni||'',p.horaFim||'',
+        p.npessoas||'',b(p.taxaOcup),
+        b(p.plano),b(p.equip),b(p.posic),b(p.coleta),
+        p.co2||'',p.temp||'',p.ur||'',p.vento||'',
+        p.pm25||'',p.pm10||'',p.part||'',
+        b(p.conformidade),b(p.amostras),
+        p.obs||'','Validado'
+      ]));
+    });
+    return {sheet:'QAR Interno',rows:rows};
   }
-  return {sheet:'Outro',rows:[base.concat([dados.tipoEspecifico||'',dados.objetivo||'',(dados.pontos||[]).map(function(p,i){return 'P'+(i+1)+':'+p.nome;}).join('; '),dados.obsGeral||'',''])]};
+
+  return {sheet:'Outro',rows:[base.concat([
+    dados.tipoEspecifico||'',dados.objetivo||'',
+    '','',(dados.pontos||[]).map(function(p,i){return 'P'+(i+1)+':'+p.nome;}).join('; '),
+    dados.obsGeral||'','Validado'
+  ])]};
 }
+
 
 // SALVAR
 
@@ -2002,23 +2096,90 @@ function salvarRascunhoGeral(){
 async function _salvarRascunhoExcel(dados){
   await obterToken();
   var resultado=montarLinhaPorTipo(dados);
-  // Adicionar status rascunho
+  var idRasc=dados.id||dados.numOS||('rasc_'+Date.now());
   for(var ri=0;ri<resultado.rows.length;ri++){
     var row=resultado.rows[ri].slice();
-    // Substituir status (ultima coluna) por Rascunho
     row[row.length-1]='⏸️ Rascunho';
-    await appendLinha(row,resultado.sheet);
+    // Inserir ID na penúltima posição (antes do Status)
+    row.splice(row.length-1,0,idRasc);
+    await appendOuAtualizarLinha(row,resultado.sheet,idRasc,'⏸️ Rascunho');
   }
 }
 
 async function salvar(){
   var btn=document.getElementById('btn-salvar');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Salvando...';
   var dados=coletarDados();_ultimoDados=dados;var resultado=montarLinhaPorTipo(dados);
+  var idReg=dados.id||dados.numOS||('reg_'+Date.now());
   if(navigator.onLine){
-    try{await obterToken();for(var ri=0;ri<resultado.rows.length;ri++){await appendLinha(resultado.rows[ri],resultado.sheet);}await uploadFotos(dados);mostrarSucesso(dados,false);}
-    catch(e){salvarOffline(dados,resultado);mostrarSucesso(dados,true);}
+    try{
+      await obterToken();
+      for(var ri=0;ri<resultado.rows.length;ri++){
+        var row=resultado.rows[ri].slice();
+        // Inserir ID antes do Status e marcar como Finalizado
+        row.splice(row.length-1,0,idReg);
+        row[row.length-1]='✅ Finalizado';
+        await appendOuAtualizarLinha(row,resultado.sheet,idReg,'✅ Finalizado');
+      }
+      // Remover rascunho local se existia
+      _rascunhos=_rascunhos.filter(function(r){return r.id!==idReg&&r.dados&&r.dados.id!==idReg;});
+      localStorage.setItem('engear_rascunhos',JSON.stringify(_rascunhos));
+      await uploadFotos(dados);
+      mostrarSucesso(dados,false);
+    }catch(e){salvarOffline(dados,resultado);mostrarSucesso(dados,true);}
   }else{salvarOffline(dados,resultado);mostrarSucesso(dados,true);}
   btn.disabled=false;btn.innerHTML='Salvar registro';
+}
+
+
+async function appendOuAtualizarLinha(vals,sheetName,idReg,status){
+  sheetName=sheetName||'Outro';
+  var site=await gGet('/sites/engearlaboratorio.sharepoint.com:/sites/EngearLaboratorio');
+  var siteId=site.id;
+  var drives=await gGet('/sites/'+siteId+'/drives');
+  var drive=drives.value.find(function(d){return d.name==='Documentos'||d.name==='Documents';})||drives.value[0];
+  var driveId=drive.id;
+  // Buscar o arquivo
+  var itemId=null;
+  try{
+    var search=await gGet('/drives/'+driveId+"/root/search(q='monitoramento.xlsx')");
+    var found=(search.value||[]).find(function(i){return i.name==='monitoramento.xlsx';});
+    if(found)itemId=found.id;
+  }catch(e){}
+  if(!itemId){
+    try{
+      var r=await gGet('/sites/'+siteId+'/drive/root:/LABORAT%C3%93RIO/SERVI%C3%87OS/0%20INFO%20CAMPO%20-%20APP/monitoramento.xlsx');
+      itemId=r.id;
+    }catch(e){}
+  }
+  if(!itemId)throw new Error('monitoramento.xlsx não encontrado');
+
+  // Buscar intervalo usado
+  var used=await gGet('/drives/'+driveId+'/items/'+itemId+'/workbook/worksheets/'+encodeURIComponent(sheetName)+'/usedRange');
+  var nRows=used.rowCount||1;
+  var nCols=used.columnCount||vals.length;
+  var values=used.values||[];
+  
+  // Procurar linha com o mesmo ID (penúltima coluna = ID)
+  var idColIdx=vals.length-2; // ID está na penúltima posição
+  var linhaEncontrada=-1;
+  for(var r2=1;r2<values.length;r2++){
+    if(values[r2]&&String(values[r2][idColIdx])===String(idReg)){
+      linhaEncontrada=r2+1; // +1 pois Excel é 1-based
+      break;
+    }
+  }
+
+  var col=String.fromCharCode(64+vals.length);
+  if(linhaEncontrada>0){
+    // Atualizar a linha existente
+    var rangePath='/drives/'+driveId+'/items/'+itemId+'/workbook/worksheets/'+encodeURIComponent(sheetName)+"/range(address='A"+linhaEncontrada+":"+col+linhaEncontrada+"')";
+    await gPatch(rangePath,{values:[vals]});
+  } else {
+    // Inserir nova linha
+    var novaLinha=nRows+1;
+    var rangePath='/drives/'+driveId+'/items/'+itemId+'/workbook/worksheets/'+encodeURIComponent(sheetName)+"/range(address='A"+novaLinha+":"+col+novaLinha+"')";
+    await gPatch(rangePath,{values:[vals]});
+  }
 }
 
 async function appendLinha(vals,sheetName){
@@ -2123,6 +2284,9 @@ function selEventualidade(pid, sim){
   if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
   if(desc)desc.style.display=sim?'block':'none';
 }
+
+
+
 
 
 
