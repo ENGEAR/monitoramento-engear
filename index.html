@@ -190,12 +190,16 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
         <div class="field"><label>Nome do técnico</label><input type="text" id="tecnico" placeholder="Nome completo"/></div>
         <div class="field"><label>Nome do cliente</label><input type="text" id="cliente" placeholder="Nome do cliente"/></div>
         <div class="field">
-          <label>Cidade / Estado <button id="btn-gps-cidade" onclick="buscarCidadeGPS()" style="background:none;border:none;color:#2d7db3;font-size:12px;cursor:pointer;margin-left:4px;">📍 GPS</button></label>
-          <input type="text" id="cidade" placeholder="Ex: Belo Horizonte / MG"/>
+          <label>Cidade / Estado</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="cidade" placeholder="Aguardando GPS..." style="flex:1;" readonly onclick="this.readOnly=false;this.placeholder='Ex: Belo Horizonte / MG'"/>
+            <button id="btn-gps-cidade" onclick="buscarCidadeGPS()" style="flex-shrink:0;background:#2d7db3;color:white;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;white-space:nowrap;">📍 Buscar GPS</button>
+          </div>
+          <p style="font-size:11px;color:#a0aec0;margin-top:4px;">Toque em "Buscar GPS" para localizar automaticamente. Ou edite manualmente.</p>
         </div>
         <div class="field"><label>Nº da OS</label><input type="text" id="num-os" placeholder="Ex: OS-2024-001" maxlength="30"/></div>
       </div>
-      <button class="btn-outline" onclick="salvarRascunhoGeral()" style="width:100%;margin-bottom:8px;">💾 Salvar rascunho</button>
+      <button id="btn-rasc-p1" class="btn-outline" onclick="salvarRascunhoGeral()" style="width:100%;margin-bottom:8px;">💾 Salvar rascunho</button>
       <button class="btn-full" onclick="irP2()">Próximo →</button>
     </div>
 
@@ -318,6 +322,12 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 <div id="toast"></div>
 <script>
+
+
+
+
+
+
 
 
 
@@ -1948,7 +1958,22 @@ function salvarOffline(dados,resultado){pending.push({dados:dados,resultado:resu
 
 
 function mostrarSucesso(d,offline){
-  salvarHistorico(d);
+  // Converter fotos para base64 antes de salvar no histórico
+  var fotoPromisesHist=[];
+  var fotosMap={};
+  for(var pid in fotosAnexadas){
+    (fotosAnexadas[pid]||[]).forEach(function(f,i){
+      var key=pid+'_'+i;
+      fotoPromisesHist.push(lerFotoBase64(f).then(function(b64){ fotosMap[key]=b64; }));
+    });
+  }
+  Promise.all(fotoPromisesHist).then(function(){
+    // Adicionar fotos base64 ao objeto de dados
+    d._fotosBase64=fotosMap;
+    salvarHistorico(d);
+  }).catch(function(){
+    salvarHistorico(d); // salvar sem fotos se falhar
+  });
   var tipos={ruido:'Ruído',sismo:'Vibração',qar:'Qualidade do Ar Externo',opacidade:'Opacidade',qarint:'Qualidade do Ar Interno',outro:'Outro'};
   document.getElementById('sucesso-titulo').textContent=offline?'Salvo offline!':'Registro salvo!';
   document.getElementById('sucesso-msg').textContent=offline?'Dados salvos no dispositivo. Serão enviados quando conectar.':'Dados gravados com sucesso na planilha do SharePoint.';
@@ -1974,7 +1999,15 @@ function gerarPDF(){
   function ponto(titulo){return '<tr><td colspan="2" style="background:#e8f4fd;color:#1e5f8a;font-weight:bold;padding:6px 10px;border:1px solid #bee3f8;">'+titulo+'</td></tr>';}
   function bool(v){return v?'✅ Sim':'☐ Não';}
   function gpsStr(g){return g&&g.e?(g.zona+' E:'+g.e+' N:'+g.n):'';}
-  var fotoPromises=[];for(var pid in fotosAnexadas){(fotosAnexadas[pid]||[]).forEach(function(f){fotoPromises.push(lerFotoBase64(f));});}
+  var fotoPromises=[];
+  // Se há fotos em File (acabou de preencher), converter. Senão, usar base64 do histórico
+  var temFotosFile=Object.keys(fotosAnexadas).some(function(k){return fotosAnexadas[k]&&fotosAnexadas[k].length>0;});
+  if(temFotosFile){
+    for(var pid in fotosAnexadas){(fotosAnexadas[pid]||[]).forEach(function(f){fotoPromises.push(lerFotoBase64(f));});}
+  } else if(d&&d._fotosBase64){
+    // Usar fotos base64 salvas no histórico
+    Object.keys(d._fotosBase64).forEach(function(k){fotoPromises.push(Promise.resolve(d._fotosBase64[k]));});
+  }
   Promise.all(fotoPromises).then(function(fotosB64){
     var linhas=['<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">'];
     linhas.push(secao('IDENTIFICAÇÃO'));
@@ -2023,7 +2056,10 @@ function lerFotoBase64(file){return new Promise(function(resolve){var reader=new
 // FILA DE PENDÊNCIAS
 function verPendencias(){
   var overlay=document.getElementById('pendencias-overlay');
-  if(overlay) overlay.style.display='block';
+  if(overlay){
+    overlay.style.display='block';
+    overlay.scrollTop=0; // garantir que começa do topo
+  }
   var lista=document.getElementById('pendencias-lista');
   if(!lista)return;
   // Recarregar pending do localStorage (garante dados frescos)
@@ -2033,27 +2069,28 @@ function verPendencias(){
     lista.innerHTML='<p style="color:var(--muted);font-size:14px;text-align:center;padding:1rem;">Nenhum registro pendente.</p>';
     return;
   }
-  lista.innerHTML=pending.map(function(r,i){
-    // Suporte a estruturas antigas e novas
+  var itens=pending.map(function(r,i){
     var d=r.dados||r||{};
     var ts=r.ts||r.timestamp||Date.now();
-    var dt=new Date(typeof ts==='number'?ts:ts);
-    var tipo=d.tipo||r.tipo||'';
+    var dt=new Date(typeof ts==='number'?ts:Number(ts)||Date.now());
+    var tipo=tipos[d.tipo||r.tipo||'']||d.tipo||r.tipo||'Registro';
     var cliente=d.cliente||r.cliente||'—';
     var tecnico=d.tecnico||r.tecnico||'—';
     var data=d.data||r.data||dt.toLocaleDateString('pt-BR');
-    return '<div class="saved-info" style="margin-bottom:12px;">'+
-      '<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--primary);margin-bottom:6px;">'+(tipos[tipo]||tipo||'Registro')+'</div>'+
-      '<div class="saved-row"><span>Data</span><span>'+data+'</span></div>'+
-      '<div class="saved-row"><span>Cliente</span><span>'+cliente+'</span></div>'+
-      '<div class="saved-row"><span>Técnico</span><span>'+tecnico+'</span></div>'+
-      '<div class="saved-row"><span>Salvo em</span><span>'+dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})+'</span></div>'+
-      '<div style="display:flex;gap:8px;margin-top:8px;">'+
-      '<button onclick="tentarSincronizarUm('+i+')" style="flex:1;background:#2d7db3;color:white;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;">🔄 Sincronizar</button>'+
-      '<button onclick="excluirPendencia('+i+')" style="flex:1;background:#fff3f3;color:#e53e3e;border:1px solid #fecaca;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;">🗑️ Excluir</button>'+
+    var salvoEm=dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return '<div style="background:#ffffff;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:12px;">'+
+      '<div style="font-size:12px;font-weight:700;color:#1e5f8a;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #f0f4f8;">'+tipo+'</div>'+
+      '<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;"><span style="color:#718096;">Data</span><span style="font-weight:500;color:#1a202c;">'+data+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;"><span style="color:#718096;">Cliente</span><span style="font-weight:500;color:#1a202c;">'+cliente+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;"><span style="color:#718096;">Técnico</span><span style="font-weight:500;color:#1a202c;">'+tecnico+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;"><span style="color:#718096;">Salvo em</span><span style="font-weight:500;color:#1a202c;">'+salvoEm+'</span></div>'+
+      '<div style="display:flex;gap:8px;margin-top:10px;">'+
+      '<button onclick="tentarSincronizarUm('+i+')" style="flex:1;background:#2d7db3;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;">🔄 Sincronizar</button>'+
+      '<button onclick="excluirPendencia('+i+')" style="flex:1;background:#fff3f3;color:#e53e3e;border:1.5px solid #fecaca;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;">🗑️ Excluir</button>'+
       '</div>'+
       '</div>';
-  }).join('');
+  });
+  lista.innerHTML=itens.length?itens.join(''):'<p style="color:#718096;text-align:center;padding:2rem;">Nenhum pendente.</p>';
 }
 
 function tentarSincronizarUm(idx){
@@ -2460,7 +2497,7 @@ function _preencherCidade(d,btn){
   if(!uf&&d.countrySubdivisionCode)uf=d.countrySubdivisionCode.replace('BR-','');
   var el=document.getElementById('cidade');
   if(el&&cidade){
-    el.value=cidade+(uf?' / '+uf:'');
+    el.value=cidade+(uf?' / '+uf:'');el.readOnly=false;
     if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
     toast('📍 '+cidade+(uf?' / '+uf:''),false,true);
   } else {
@@ -2477,11 +2514,56 @@ function _gpsNominatim(lat,lon,btn){
       toast('Não foi possível identificar a cidade. Digite manualmente.',true);
     });
 }
-function chkIniField(pid){return '<div class="field"><label>Valor da checagem inicial (dB)</label><div style="display:flex;gap:6px;"><select id="'+pid+'-chkini-sinal" style="width:60px;flex-shrink:0;"><option value="+">+</option><option value="-">-</option></select><input type="number" id="'+pid+'-chkini" placeholder="Ex: 0,20" step="0.1" style="flex:1;"/></div></div>';}
-function chkFimField(pid){return '<div class="field"><label>Valor da checagem final (dB)</label><div style="display:flex;gap:6px;"><select id="'+pid+'-chkfim-sinal" style="width:60px;flex-shrink:0;"><option value="+">+</option><option value="-">-</option></select><input type="number" id="'+pid+'-chkfim" placeholder="Ex: 0,20" step="0.1" style="flex:1;" oninput="validarChkDiff(\''+pid+'-chkini\',\''+pid+'-chkfim\',\''+pid+'-chkfim-alerta\')"/></div><div id="'+pid+'-chkfim-alerta" style="display:none;background:#fee2e2;border:1.5px solid #e53e3e;color:#b91c1c;border-radius:8px;padding:8px 12px;font-size:13px;margin-top:6px;">&#9888;&#65039; A diferenca entre as checagens deu maior ou igual a 0,5 dB. Repetir o monitoramento.</div></div>';}
+function chkIniField(pid){
+  var call='validarChkDiff(\''+pid+'-chkini\',\''+pid+'-chkfim\',\''+pid+'-chkfim-alerta\')';
+  return '<div class="field"><label>Valor da checagem inicial (dB)</label>'+
+    '<div style="display:flex;gap:6px;">'+
+    '<select id="'+pid+'-chkini-sinal" style="width:60px;flex-shrink:0;" onchange="'+call+'">'+
+      '<option value="+">+</option><option value="-">-</option>'+
+    '</select>'+
+    '<input type="number" id="'+pid+'-chkini" placeholder="Ex: 0,20" step="0.01" style="flex:1;" oninput="'+call+'"/>'+
+    '</div>'+
+    '</div>';
+}
+function chkFimField(pid){
+  var call='validarChkDiff(\''+pid+'-chkini\',\''+pid+'-chkfim\',\''+pid+'-chkfim-alerta\')';
+  return '<div class="field"><label>Valor da checagem final (dB)</label>'+
+    '<div style="display:flex;gap:6px;">'+
+    '<select id="'+pid+'-chkfim-sinal" style="width:60px;flex-shrink:0;" onchange="'+call+'">'+
+      '<option value="+">+</option><option value="-">-</option>'+
+    '</select>'+
+    '<input type="number" id="'+pid+'-chkfim" placeholder="Ex: 0,20" step="0.01" style="flex:1;" oninput="'+call+'"/>'+
+    '</div>'+
+    '<div id="'+pid+'-chkfim-alerta" style="display:none;background:#fee2e2;border:1.5px solid #e53e3e;color:#b91c1c;border-radius:8px;padding:8px 12px;font-size:13px;margin-top:6px;"></div>'+
+    '</div>';
+}
 function ventoField(pid){return '<div class="field"><label>Vento (m/s)</label><input type="number" id="'+pid+'-vento" placeholder="m/s" step="0.1" oninput="ventoAlerta(\''+pid+'-vento\')"/><div id="'+pid+'-vento-alerta" style="display:none;background:#fef3c7;border:1.5px solid #f59e0b;color:#92400e;border-radius:8px;padding:8px 12px;font-size:13px;margin-top:6px;">&#9888;&#65039; Esperar o vento abaixar. Nao e aceito vento acima de 5 m/s.</div></div>';}
 function ventoAlerta(id){var val=parseFloat(document.getElementById(id)&&document.getElementById(id).value||0);var al=document.getElementById(id+'-alerta');if(al)al.style.display=val>=5?'block':'none';}
-function validarChkDiff(iniId,fimId,alertaId){var ini=parseFloat(document.getElementById(iniId)&&document.getElementById(iniId).value||0);var fim=parseFloat(document.getElementById(fimId)&&document.getElementById(fimId).value||0);var al=document.getElementById(alertaId);if(al)al.style.display=(!isNaN(ini)&&!isNaN(fim)&&Math.abs(fim-ini)>=0.5)?'block':'none';}
+function validarChkDiff(iniId,fimId,alertaId){
+  var elIni=document.getElementById(iniId);
+  var elFim=document.getElementById(fimId);
+  var elSinalIni=document.getElementById(iniId+'-sinal');
+  var elSinalFim=document.getElementById(fimId+'-sinal');
+  var al=document.getElementById(alertaId);
+  if(!elIni||!elFim||!al)return;
+  var vIni=parseFloat(elIni.value);
+  var vFim=parseFloat(elFim.value);
+  if(isNaN(vIni)||isNaN(vFim)){al.style.display='none';return;}
+  // Aplicar sinal: se select for '-', o valor é negativo
+  var sinalIni=elSinalIni?elSinalIni.value:'+';
+  var sinalFim=elSinalFim?elSinalFim.value:'+';
+  var iniReal=sinalIni==='-'?-Math.abs(vIni):Math.abs(vIni);
+  var fimReal=sinalFim==='-'?-Math.abs(vFim):Math.abs(vFim);
+  var diff=Math.round(Math.abs(fimReal-iniReal)*100)/100; // arredondar 2 casas para evitar float
+  al.style.display=diff>=0.5?'block':'none';
+  // Atualizar texto do alerta com os valores
+  if(diff>=0.5){
+    al.innerHTML='&#9888;&#65039; Diferença entre checagens: '+diff.toFixed(2)+' dB ('+
+      (sinalIni==='-'?'-':'+')+(Math.abs(vIni).toFixed(2))+' → '+
+      (sinalFim==='-'?'-':'+')+(Math.abs(vFim).toFixed(2))+
+      '). Diferença ≥ 0,5 dB — Repetir o monitoramento.';
+  }
+}
 function fotoTela(pid,sufixo,lbl){return '<div class="field"><label>'+lbl+'</label><div class="foto-area" onclick="document.getElementById(\'ft'+sufixo+'-'+pid+'\').click()"><input type="file" id="ft'+sufixo+'-'+pid+'" accept="image/*" capture="environment" data-pid="ft'+sufixo+'-'+pid+'" onchange="previewFotoCb(this)" style="display:none"/><div class="foto-icon">&#128247;</div><div class="foto-text">Foto da tela</div></div><div class="foto-preview" id="fp-ft'+sufixo+'-'+pid+'"></div></div>';}
 
 // ── RASCUNHOS ────────────────────────────────────────────────────────────
@@ -2546,11 +2628,13 @@ function restaurarSnapshot(snap) {
 
 function salvarRascunhoGeral(){
   var dados={data:v('data'),hora:v('hora'),tecnico:v('tecnico'),cliente:v('cliente'),cidade:v('cidade'),numOS:v('num-os'),tipo:tipoSel,timestamp:new Date().toISOString()};
-  // Coletar dados estruturados
-  try{
-    var completos=coletarDados();
-    if(completos&&completos.tipo)dados=completos;
-  }catch(e){console.log('Dados parciais salvos:',e.message);}
+  // Coletar dados estruturados (só se tipo estiver selecionado)
+  if(tipoSel){
+    try{
+      var completos=coletarDados();
+      if(completos&&completos.tipo)dados=completos;
+    }catch(e){console.log('Dados parciais salvos:',e.message);}
+  }
   dados.status='rascunho';
   // Capturar snapshot raw de TODOS os elementos do form
   dados._snapshot=capturarSnapshot();
@@ -2586,8 +2670,16 @@ function salvarRascunhoGeral(){
   if(navigator.onLine&&token){
     _salvarRascunhoExcel(dados).catch(function(e){console.log('Nao foi possivel salvar rascunho no Excel:',e.message);});
   }
-  // Feedback visual no botão
-  var btnRasc=document.querySelector('#rascunho-btn-wrap button');
+  // Feedback visual: encontrar o botão de rascunho que está visível agora
+  var btnRasc=document.querySelector('#btn-rasc-p1:not([style*="display:none"])')||
+              document.querySelector('#btn-rasc-p2:not([style*="display:none"])')||
+              document.querySelector('#btn-rasc-p3:not([style*="display:none"])')||
+              document.querySelector('#rascunho-btn-wrap button');
+  // Buscar o botão no passo atual visível
+  if(!btnRasc){
+    var passoVisivel=document.querySelector('#passo1:not(.hidden),#passo2:not(.hidden),#passo3:not(.hidden)');
+    if(passoVisivel)btnRasc=passoVisivel.querySelector('button.btn-outline');
+  }
   if(btnRasc){
     var textoOrig=btnRasc.innerHTML;
     btnRasc.innerHTML='✅ Rascunho salvo!';
@@ -2799,6 +2891,12 @@ function selEventualidade(pid, sim){
   if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
   if(desc)desc.style.display=sim?'block':'none';
 }
+
+
+
+
+
+
 
 
 
