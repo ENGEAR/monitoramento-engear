@@ -109,7 +109,7 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 .biblio-sub-item:last-child{border-bottom:none;}
 .biblio-sub-icon{font-size:20px;flex-shrink:0;}.biblio-sub-name{font-size:14px;color:var(--primary);font-weight:500;}
 .biblio-back{display:flex;align-items:center;gap:8px;color:var(--primary);font-weight:500;font-size:14px;cursor:pointer;margin-bottom:1rem;}
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:#2d3748;color:white;padding:12px 20px;border-radius:30px;font-size:13px;font-weight:500;z-index:999;transition:transform .3s;white-space:nowrap;max-width:90vw;text-align:center;}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:#2d3748;color:white;padding:12px 20px;border-radius:30px;font-size:13px;font-weight:500;z-index:9999999;transition:transform .3s;white-space:nowrap;max-width:90vw;text-align:center;}
 #toast.show{transform:translateX(-50%) translateY(0);}#toast.error{background:var(--danger);}#toast.success{background:var(--accent2);}
 .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -190,7 +190,7 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
         <div class="field"><label>Nome do técnico</label><input type="text" id="tecnico" placeholder="Nome completo"/></div>
         <div class="field"><label>Nome do cliente</label><input type="text" id="cliente" placeholder="Nome do cliente"/></div>
         <div class="field">
-          <label>Cidade / Estado <button onclick="buscarCidadeGPS()" style="background:none;border:none;color:#2d7db3;font-size:12px;cursor:pointer;margin-left:4px;">📍 GPS</button></label>
+          <label>Cidade / Estado <button id="btn-gps-cidade" onclick="buscarCidadeGPS()" style="background:none;border:none;color:#2d7db3;font-size:12px;cursor:pointer;margin-left:4px;">📍 GPS</button></label>
           <input type="text" id="cidade" placeholder="Ex: Belo Horizonte / MG"/>
         </div>
         <div class="field"><label>Nº da OS</label><input type="text" id="num-os" placeholder="Ex: OS-2024-001" maxlength="30"/></div>
@@ -318,6 +318,7 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 <div id="toast"></div>
 <script>
+
 
 
 
@@ -2386,8 +2387,8 @@ function buscarCidadeGPS(){
       .then(function(d){
         var cidade=d.address.city||d.address.town||d.address.village||d.address.municipality||'';
         var estado=d.address.state||'';
-        var sigla={'Minas Gerais':'MG','Sao Paulo':'SP','Rio de Janeiro':'RJ','Bahia':'BA','Parana':'PR','Rio Grande do Sul':'RS','Santa Catarina':'SC','Goias':'GO','Espirito Santo':'ES','Pernambuco':'PE','Ceara':'CE','Para':'PA','Maranhao':'MA','Mato Grosso':'MT','Mato Grosso do Sul':'MS','Amazonas':'AM','Acre':'AC','Rondonia':'RO','Roraima':'RR','Amapa':'AP','Tocantins':'TO','Sergipe':'SE','Alagoas':'AL','Paraiba':'PB','Rio Grande do Norte':'RN','Piaui':'PI','Distrito Federal':'DF'};
-        var uf=sigla[estado]||estado.substring(0,2).toUpperCase();
+        var sigla={'Minas Gerais':'MG','São Paulo':'SP','Sao Paulo':'SP','Paraná':'PR','Goiás':'GO','Espírito Santo':'ES','Ceará':'CE','Pará':'PA','Maranhão':'MA','Rondônia':'RO','Amapá':'AP','Piauí':'PI','Paraíba':'PB','Rio de Janeiro':'RJ','Bahia':'BA','Parana':'PR','Rio Grande do Sul':'RS','Santa Catarina':'SC','Goias':'GO','Espirito Santo':'ES','Pernambuco':'PE','Ceara':'CE','Para':'PA','Maranhao':'MA','Mato Grosso':'MT','Mato Grosso do Sul':'MS','Amazonas':'AM','Acre':'AC','Rondonia':'RO','Roraima':'RR','Amapa':'AP','Tocantins':'TO','Sergipe':'SE','Alagoas':'AL','Paraiba':'PB','Rio Grande do Norte':'RN','Piaui':'PI','Distrito Federal':'DF'};
+        var estadoN=estado.normalize?estado.normalize('NFD').replace(/[\u0300-\u036f]/g,''):estado;var uf=sigla[estado]||sigla[estadoN]||estado.substring(0,2).toUpperCase();
         var el=document.getElementById('cidade');
         if(el)el.value=cidade+(uf?' / '+uf:'');
         if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
@@ -2504,6 +2505,23 @@ function salvarRascunhoGeral(){
   // Tentar salvar no Excel como rascunho
   if(navigator.onLine&&token){
     _salvarRascunhoExcel(dados).catch(function(e){console.log('Nao foi possivel salvar rascunho no Excel:',e.message);});
+  }
+  // Feedback visual no botão
+  var btnRasc=document.querySelector('#rascunho-btn-wrap button');
+  if(btnRasc){
+    var textoOrig=btnRasc.innerHTML;
+    btnRasc.innerHTML='✅ Rascunho salvo!';
+    btnRasc.style.background='#f0fdf4';
+    btnRasc.style.borderColor='#22c55e';
+    btnRasc.style.color='#166534';
+    btnRasc.disabled=true;
+    setTimeout(function(){
+      btnRasc.innerHTML=textoOrig;
+      btnRasc.style.background='';
+      btnRasc.style.borderColor='';
+      btnRasc.style.color='';
+      btnRasc.disabled=false;
+    },2000);
   }
   toast('Rascunho salvo!',false,true);
 }
@@ -2701,6 +2719,7 @@ function selEventualidade(pid, sim){
   if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
   if(desc)desc.style.display=sim?'block':'none';
 }
+
 
 
 
