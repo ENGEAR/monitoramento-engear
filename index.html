@@ -360,6 +360,7 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 
 
+
 const CFG={clientId:'756385e2-9a87-4997-a939-60129e4c1573',tenantId:'f84b416a-a586-42bf-b3ae-46d4d8e882da',clientSecret:'YOC8Q~~1S0wTi3f~qyeMq5VIbXkg31T3gIwjgc.4',siteHost:'engearlaboratorio.sharepoint.com',sitePath:'/sites/EngearLaboratorio',filePath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/monitoramento.xlsx',fotosPath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/Fotos',sheetName:'Plan1',senha:'campo26*',workerUrl:'https://engear-auth.red-cell-b560.workers.dev'};
 var token=null,tokenExp=0,nomeLogado='',tipoSel='',fotosAnexadas={};
 var pending=JSON.parse(localStorage.getItem('engear_pending')||'[]');
@@ -2732,7 +2733,7 @@ async function salvar(){
       localStorage.setItem('engear_rascunhos',JSON.stringify(_rascunhos));
       await uploadFotos(dados);
       mostrarSucesso(dados,false);
-    }catch(e){salvarOffline(dados,resultado);mostrarSucesso(dados,true);}
+    }catch(e){console.error('Erro salvar:',e);toast('Erro ao salvar: '+e.message,true);salvarOffline(dados,resultado);mostrarSucesso(dados,true);}
   }else{salvarOffline(dados,resultado);mostrarSucesso(dados,true);}
   btn.disabled=false;btn.innerHTML='Salvar registro';
 }
@@ -2776,7 +2777,7 @@ async function appendOuAtualizarLinha(vals,sheetName,idReg,status){
     }
   }
 
-  var col=String.fromCharCode(64+vals.length);
+  var col=numParaColExcel(vals.length);
   if(linhaEncontrada>0){
     // Atualizar a linha existente
     var rangePath='/drives/'+driveId+'/items/'+itemId+'/workbook/worksheets/'+encodeURIComponent(sheetName)+"/range(address='A"+linhaEncontrada+":"+col+linhaEncontrada+"')";
@@ -2789,6 +2790,8 @@ async function appendOuAtualizarLinha(vals,sheetName,idReg,status){
   }
 }
 
+
+function numParaColExcel(n){var r='';while(n>0){n--;r=String.fromCharCode(65+(n%26))+r;n=Math.floor(n/26);}return r;}
 async function appendLinha(vals,sheetName){
   sheetName=sheetName||'Outro';
   // Buscar site
@@ -2816,7 +2819,7 @@ async function appendLinha(vals,sheetName){
   // Buscar linha usada e escrever
   var used=await gGet('/drives/'+driveId+'/items/'+itemId+'/workbook/worksheets/'+encodeURIComponent(sheetName)+'/usedRange');
   var row=(used.rowCount||1)+1;
-  var col=String.fromCharCode(64+vals.length);
+  var col=numParaColExcel(vals.length);
   var rangePath='/drives/'+driveId+'/items/'+itemId+'/workbook/worksheets/'+encodeURIComponent(sheetName)+"/range(address='A"+row+":"+col+row+"')";
   await gPatch(rangePath,{values:[vals]});
 }
@@ -2891,6 +2894,7 @@ function selEventualidade(pid, sim){
   if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
   if(desc)desc.style.display=sim?'block':'none';
 }
+
 
 
 
