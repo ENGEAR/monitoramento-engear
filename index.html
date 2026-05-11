@@ -362,6 +362,7 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 
 
+
 const CFG={clientId:'756385e2-9a87-4997-a939-60129e4c1573',tenantId:'f84b416a-a586-42bf-b3ae-46d4d8e882da',clientSecret:'YOC8Q~~1S0wTi3f~qyeMq5VIbXkg31T3gIwjgc.4',siteHost:'engearlaboratorio.sharepoint.com',sitePath:'/sites/EngearLaboratorio',filePath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/monitoramento.xlsx',fotosPath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/Fotos',sheetName:'Plan1',senha:'campo26*',workerUrl:'https://engear-auth.red-cell-b560.workers.dev'};
 var token=null,tokenExp=0,nomeLogado='',tipoSel='',fotosAnexadas={};
 var pending=JSON.parse(localStorage.getItem('engear_pending')||'[]');
@@ -1795,44 +1796,96 @@ function getGPS(pid){return{e:v('gps-e-'+pid),n:v('gps-n-'+pid),zona:v('gps-zona
 
 // LINHA EXCEL
 function montarLinhaPorTipo(dados){
-  var base=[dados.data,dados.hora,dados.horaFim||'',dados.tecnico,dados.cliente||'',dados.cidade||''];
+  var base=[dados.data||'',dados.hora||'',dados.horaFim||'',dados.tecnico||'',dados.cliente||'',dados.cidade||''];
   function b(v){return v?'Sim':'Não';}
-  function gps(g){return g&&g.e?(g.zona+' E:'+g.e+' N:'+g.n):'';}
-  function dif(a,c){if(!a||!c)return '';var d=Math.abs(parseFloat(c)-parseFloat(a));return isNaN(d)?'':d.toFixed(1);}
+  function gps(g){return g&&g.e?(g.zona||'')+' E:'+g.e+' N:'+g.n:'';}
+  function dif(sIni,vIni,sFim,vFim){
+    if(!vIni||!vFim)return '';
+    var i=(sIni==='-'?-1:1)*Math.abs(parseFloat(vIni));
+    var f=(sFim==='-'?-1:1)*Math.abs(parseFloat(vFim));
+    var d=Math.round(Math.abs(f-i)*100)/100;
+    return isNaN(d)?'':d.toFixed(2);
+  }
 
+  // ── RUÍDO ──────────────────────────────────────────────────────────────
   if(dados.tipo==='ruido'){
     var sub=dados.subTipo||'externo';
-    var sheetMap={externo:'Ruído Externo',interno:'Ruído Interno',ferroviario:'Ruído Ferroviário',aeronautico:'Ruído Aeronáutico'};
-    var sheet=sheetMap[sub]||'Ruído Externo';
+    var sheets={externo:'Ruído Externo',interno:'Ruído Interno',ferroviario:'Ruído Ferroviário',aeronautico:'Ruído Aeronáutico'};
     var rows=[];
-    (dados.pontos||[]).forEach(function(p,i){
-      var row=base.slice();
-      if(sub==='externo'||sub==='ferroviario'||sub==='aeronautico'){
-        row=row.concat([dados.finalidade||'',i+1,p.nome||'',gps(p.gps),
-          p.chkIniSinal||'',p.chkIni||'','',
-          p.horaIni||'',p.temp||'',p.umid||'',p.vento||'',p.vento>=5?'SIM':'',
-          b(p.residual),b(p.total),
-          p.fontesEmpresa||'',p.fontesAmbiente||'',
-          p.chkFimSinal||'',p.chkFim||'',dif(p.chkIni,p.chkFim),'',
-          p.horaFim||'',p.obs||'','Validado']);
-      } else if(sub==='interno'){
-        row=row.concat([dados.esquadria||'',dados.ambienteCond||'',dados.area||'',
+
+    if(sub==='externo'){
+      // 28 cols: base(6)+finalidade+nPonto+nome+gps+horaIni+chkIniS+chkIni+chkFimS+chkFim+dif+temp+umid+vento+semChuva+residual+total+fontesEmp+fontesAmb+horaFim+obs + ID+Status
+      (dados.pontos||[]).forEach(function(p,i){
+        rows.push(base.concat([
+          dados.finalidade||'', i+1, p.nome||'', gps(p.gps),
+          p.horaIni||'',
+          p.chkIniSinal||'+', p.chkIni||'',
+          p.chkFimSinal||'+', p.chkFim||'', dif(p.chkIniSinal,p.chkIni,p.chkFimSinal,p.chkFim),
+          p.temp||'', p.umid||'', p.vento||'', b(p.nochuva),
+          b(p.residual), b(p.total),
+          p.fontesEmpresa||'', p.fontesAmbiente||'',
+          p.horaFim||'', p.obs||'', 'Validado'
+        ]));
+      });
+    }
+
+    else if(sub==='interno'){
+      // 44 cols: base(6)+esquadria+cond+area+pos1-9(9)+mont1-5(5)+nPonto+nome+gps+horaIni+alt+slow+ltot1+ltot2+lres1+lres2+lres3+chkIniS+chkIni+chkFimS+chkFim+dif+temp+umid+vento+semChuva+event+descEvent+horaFim + ID+Status
+      (dados.pontos||[]).forEach(function(p,i){
+        rows.push(base.concat([
+          dados.esquadria||'', dados.ambienteCond||'', dados.area||'',
           b(dados.pos1),b(dados.pos2),b(dados.pos3),b(dados.pos4),b(dados.pos5),
           b(dados.pos6),b(dados.pos7),b(dados.pos8),b(dados.pos9),
           b(dados.mont1),b(dados.mont2),b(dados.mont3),b(dados.mont4),b(dados.mont5),
-          i+1,p.nome||'',gps(p.gps),
-          p.horaIni||'',p.alt||'',b(p.slow),
+          i+1, p.nome||'', gps(p.gps), p.horaIni||'',
+          p.alt||'', b(p.slow),
           b(p.ltot1),b(p.ltot2),b(p.lres1),b(p.lres2),b(p.lres3),
-          p.chkIniSinal||'',p.chkIni||'',
-          p.temp||'',p.umid||'',p.vento||'',b(p.nochuva),
-          p.chkFimSinal||'',p.chkFim||'',dif(p.chkIni,p.chkFim),
-          p.eventualidade?'Sim':'Não',p.obs||'',p.horaFim||'','Validado']);
-      }
-      rows.push(row);
-    });
-    return {sheet:sheet,rows:rows};
+          p.chkIniSinal||'+', p.chkIni||'',
+          p.chkFimSinal||'+', p.chkFim||'', dif(p.chkIniSinal,p.chkIni,p.chkFimSinal,p.chkFim),
+          p.temp||'', p.umid||'', p.vento||'', b(p.nochuva),
+          p.eventualidade?'Sim':'Não', p.obs||'',
+          p.horaFim||'', 'Validado'
+        ]));
+      });
+    }
+
+    else if(sub==='ferroviario'){
+      // 30 cols: base(6)+finalidade+nPonto+nome+gps+horaIni+checksInstalOK+residCurtoOK+residLongoOK+passagemOK+composicoes+semChuva+vento5+chkIniS+chkIni+chkFimS+chkFim+dif+temp+umid+vento+horaFim+obs + ID+Status
+      (dados.pontos||[]).forEach(function(p,i){
+        rows.push(base.concat([
+          dados.finalidade||'', i+1, p.nome||'', gps(p.gps), p.horaIni||'',
+          b(p['fp-rc-0'])||'',  // checks instalação (simplificado)
+          b(p['fp-rc-0']), b(p['fp-rl-0']), b(p['fp-pp-0']),
+          p.composicoes||'',
+          b(p.nochuva), b(p.novento),
+          p.chkIniSinal||'+', p.chkIni||'',
+          p.chkFimSinal||'+', p.chkFim||'', dif(p.chkIniSinal,p.chkIni,p.chkFimSinal,p.chkFim),
+          p.temp||'', p.umid||'', p.vento||'',
+          p.horaFim||'', p.obs||'', 'Validado'
+        ]));
+      });
+    }
+
+    else if(sub==='aeronautico'){
+      // 29 cols: base(6)+finalidade+nPonto+nome+gps+horaIni+checksInstalOK+chkIniS+chkIni+chkFimS+chkFim+dif+temp+umid+vento+semChuva+vento5+residual+total+estMet+horaFim+obs + ID+Status
+      (dados.pontos||[]).forEach(function(p,i){
+        rows.push(base.concat([
+          dados.finalidade||'', i+1, p.nome||'', gps(p.gps), p.horaIni||'',
+          b(p['aero-rc-0'])||'',
+          p.chkIniSinal||'+', p.chkIni||'',
+          p.chkFimSinal||'+', p.chkFim||'', dif(p.chkIniSinal,p.chkIni,p.chkFimSinal,p.chkFim),
+          p.temp||'', p.umid||'', p.vento||'',
+          b(p.nochuva), b(p.novento),
+          b(p.residual), b(p.total), b(p.estmet),
+          p.horaFim||'', p.obs||'', 'Validado'
+        ]));
+      });
+    }
+
+    return {sheet:sheets[sub]||'Ruído Externo', rows:rows};
   }
 
+  // ── VIBRAÇÃO ──────────────────────────────────────────────────────────
   if(dados.tipo==='sismo'){
     var rows=[];
     (dados.pontos||[]).forEach(function(p,i){
@@ -1840,83 +1893,87 @@ function montarLinhaPorTipo(dados){
         dados.objetivo||'',
         b(dados.cfg1),b(dados.cfg2),b(dados.cfg3),
         b(dados.pre1),b(dados.pre2),b(dados.pre3),b(dados.pre4),b(dados.pre5),b(dados.pre6),
-        p.horaIni||'',i+1,p.nome||'',gps(p.gps),
-        p.tipoEquip||'',p.numEquip||'',p.fonte||'',
+        p.horaIni||'', i+1, p.nome||'', gps(p.gps),
+        p.tipoEquip||'', p.numEquip||'', p.fonte||'',
         b(p.loc1),b(p.loc2),b(p.loc3),b(p.loc4),b(p.loc5),b(p.loc6),b(p.loc7),b(p.loc8),b(p.loc9),
         b(p.geo1),b(p.geo2),b(p.geo3),b(p.geo4),
         b(p.geo5),b(p.geo6),b(p.geo7),b(p.geo8),b(p.geo9),b(p.geo10),
         b(p.mic1),b(p.mic2),b(p.mic3),b(p.mic4),b(p.mic5),b(p.mic6),
         b(p.autov),b(p.dur1),b(p.dur2),b(p.dur3),b(p.dur4),b(p.dur5),
-        p.interc||'Nenhuma',p.horaFim||'','Validado'
+        p.interc||'Nenhuma', p.horaFim||'', 'Validado'
       ]));
     });
-    return {sheet:'Vibração',rows:rows};
+    return {sheet:'Vibração', rows:rows};
   }
 
+  // ── QAR EXTERNO ───────────────────────────────────────────────────────
   if(dados.tipo==='qar'){
     var rows=[];
     (dados.pontos||[]).forEach(function(p,i){
-      (p.coletas||[]).forEach(function(c,ci){
+      (p.coletas||[{}]).forEach(function(c,ci){
         rows.push(base.concat([
-          dados.objetivo||'',i+1,p.nome||'',gps(p.gps),
-          p.tipoEquip||'',p.numEquip||'',b(p.calibAprovada),ci+1,
+          dados.objetivo||'', i+1, p.nome||'', gps(p.gps),
+          p.tipoEquip||'', p.numEquip||'', b(p.calibAprovada), ci+1,
           c.dini||'',c.hini||'',c.horamIni||'',c.tini||'',c.uini||'',c.pini||'',
           c.dfim||'',c.hfim||'',c.horamFim||'',c.tfim||'',c.ufim||'',c.pfim||'',
-          dados.obsGeral||'','Validado'
+          dados.obsGeral||'', 'Validado'
         ]));
       });
     });
-    return {sheet:'QAR Externo',rows:rows};
+    return {sheet:'QAR Externo', rows:rows};
   }
 
+  // ── OPACIDADE ─────────────────────────────────────────────────────────
   if(dados.tipo==='opacidade'){
     var sub=dados.subTipo||'opacimetro';
-    var sheet=sub==='ringelmann'?'Opacidade - Ringelmann':'Opacidade - Opacímetro';
     var rows=[];
     (dados.veiculos||[]).forEach(function(ve,i){
-      var row=base.concat([i+1,ve.placa||'']);
       if(sub==='ringelmann'){
-        var leit=ve.leituras||[];
-        row=base.concat([i+1,ve.placa||'',ve.ano||'',gps(ve.gps),
-          ve.horaIni||'',ve.horaFim||'',
-          leit[0]||'',leit[1]||'',leit[2]||'',leit[3]||'',leit[4]||'',
-          leit[5]||'',leit[6]||'',leit[7]||'',leit[8]||'',leit[9]||'',
-          ve.obs||'','Validado']);
+        var l=ve.leituras||[];
+        rows.push(base.concat([
+          i+1, ve.placa||'', ve.ano||'', gps(ve.gps),
+          ve.horaIni||'', ve.horaFim||'',
+          l[0]||'',l[1]||'',l[2]||'',l[3]||'',l[4]||'',
+          l[5]||'',l[6]||'',l[7]||'',l[8]||'',l[9]||'',
+          ve.obs||'', 'Validado'
+        ]));
       } else {
-        row=base.concat([i+1,ve.placa||'',gps(ve.gps),
+        rows.push(base.concat([
+          i+1, ve.placa||'', gps(ve.gps),
           b(ve.calibrado),b(ve.acel),b(ve.ensaio),b(ve.leitura3ok),b(ve.dados),
-          ve.obs||'','Validado']);
+          ve.obs||'', 'Validado'
+        ]));
       }
-      rows.push(row);
     });
-    return {sheet:sheet,rows:rows};
+    return {sheet:sub==='ringelmann'?'Opacidade - Ringelmann':'Opacidade - Opacímetro', rows:rows};
   }
 
+  // ── QAR INTERNO ───────────────────────────────────────────────────────
   if(dados.tipo==='qarint'){
     var rows=[];
     (dados.pontos||[]).forEach(function(p,i){
       rows.push(base.concat([
-        p.nAmbiente||'',p.nomeAmbiente||'',dados.area||'',(dados.pontos||[]).length,
-        i+1,p.nome||'',gps(p.gps),
-        p.horaIni||'',p.horaFim||'',
-        p.npessoas||'',b(p.taxaOcup),
+        p.nAmbiente||'', p.nomeAmbiente||'', dados.area||'', (dados.pontos||[]).length,
+        i+1, p.nome||'', gps(p.gps),
+        p.horaIni||'', p.horaFim||'',
+        p.npessoas||'', b(p.taxaOcup),
         b(p.plano),b(p.equip),b(p.posic),b(p.coleta),
         p.co2||'',p.temp||'',p.ur||'',p.vento||'',
         p.pm25||'',p.pm10||'',p.part||'',
         b(p.conformidade),b(p.amostras),
-        p.obs||'','Validado'
+        p.obs||'', 'Validado'
       ]));
     });
-    return {sheet:'QAR Interno',rows:rows};
+    return {sheet:'QAR Interno', rows:rows};
   }
 
-  return {sheet:'Outro',rows:[base.concat([
-    dados.tipoEspecifico||'',dados.objetivo||'',
-    '','',(dados.pontos||[]).map(function(p,i){return 'P'+(i+1)+':'+p.nome;}).join('; '),
-    dados.obsGeral||'','Validado'
+  // ── OUTRO ─────────────────────────────────────────────────────────────
+  return {sheet:'Outro', rows:[base.concat([
+    dados.tipoEspecifico||'', dados.objetivo||'',
+    1, '', (dados.pontos||[]).map(function(p,i){return 'P'+(i+1)+':'+p.nome;}).join('; '),
+    dados.obsGeral||'', 'Validado'
   ])]};
 }
-
 
 
 // ── PRÉ-CAMPO PLANILHA ────────────────────────────────────────────────────
@@ -2962,6 +3019,7 @@ function selEventualidade(pid, sim){
   if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
   if(desc)desc.style.display=sim?'block':'none';
 }
+
 
 
 
