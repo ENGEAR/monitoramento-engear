@@ -361,6 +361,7 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 
 
+
 const CFG={clientId:'756385e2-9a87-4997-a939-60129e4c1573',tenantId:'f84b416a-a586-42bf-b3ae-46d4d8e882da',clientSecret:'YOC8Q~~1S0wTi3f~qyeMq5VIbXkg31T3gIwjgc.4',siteHost:'engearlaboratorio.sharepoint.com',sitePath:'/sites/EngearLaboratorio',filePath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/monitoramento.xlsx',fotosPath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/Fotos',sheetName:'Plan1',senha:'campo26*',workerUrl:'https://engear-auth.red-cell-b560.workers.dev'};
 var token=null,tokenExp=0,nomeLogado='',tipoSel='',fotosAnexadas={};
 var pending=JSON.parse(localStorage.getItem('engear_pending')||'[]');
@@ -1105,6 +1106,40 @@ function renderRuido(){
 var _subRuido='';
 var _rpN=1,_rpIdx=1,_rpDados={};
 
+
+function renderAeroSub(val){
+  var w=document.getElementById('aero-checks-wrap');
+  var nw=document.getElementById('aero-npontos-wrap');
+  if(!w)return;
+  if(!val){w.innerHTML='';if(nw)nw.style.display='none';return;}
+  if(nw)nw.style.display='block';
+  if(val==='Receptores criticos'){
+    w.innerHTML='<div class="card"><div class="card-title blue">📋 Receptores Críticos — Requisitos</div>'+
+      chk('aero-rc-0','Altura entre 1,2 m e 1,5 m do solo')+chk('aero-rc-1','Para longa duração: microfone preferencialmente ≥ 4 m do solo')+chk('aero-rc-2','Distância mínima de 2 m de superfícies refletoras')+chk('aero-rc-3','Uso obrigatório de protetor de vento')+chk('aero-rc-4','Microfone direcionado para a trajetória das aeronaves')+chk('aero-rc-5','Configurar ponderação A e filtro de 1/3 de oitava')+chk('aero-rc-6','✅ Validação: ruído residual ≥ 10 dB abaixo do ruído das aeronaves')+chk('aero-rc-7','Se diferença < 10 dB: acompanhar e anotar influências das aeronaves')+
+      '</div>';
+  } else {
+    w.innerHTML='<div class="card"><div class="card-title blue">📋 Monitoramento Operacional — Requisitos</div>'+
+      chk('aero-op-0','Altura de 6 m do solo')+chk('aero-op-1','Distância mínima de 10 m de superfícies refletoras')+chk('aero-op-2','Uso obrigatório de protetor de vento')+chk('aero-op-3','Microfone direcionado para a trajetória das aeronaves')+chk('aero-op-4','Linha de visada livre para operações aéreas')+chk('aero-op-5','Configurar ponderação A e filtro de 1/3 de oitava')+chk('aero-op-6','Verificar cabo de extensão (quando aplicável)')+chk('aero-op-7','Instalar estrutura elevada e estável (quando aplicável)')+chk('aero-op-8','Conferir autonomia energética')+chk('aero-op-9','Verificar funcionamento da estação meteorológica')+chk('aero-op-10','Programar verificações elétricas automáticas')+chk('aero-op-11','Configurar armazenamento contínuo')+chk('aero-op-12','Validar sincronismo entre áudio, ruído e meteorologia')+chk('aero-op-13','Confirmar transmissão/coleta remota de dados')+chk('aero-op-14','✅ Validação: ruído residual ≥ 10 dB abaixo do ruído das aeronaves')+chk('aero-op-15','Se diferença < 10 dB: acompanhar e anotar influências das aeronaves')+
+      '</div>';
+  }
+}
+
+function renderFerroSub(val){
+  var w=document.getElementById('ferro-checks-wrap');
+  var nw=document.getElementById('ferro-npontos-wrap');
+  if(!w)return;
+  if(!val){w.innerHTML='';if(nw)nw.style.display='none';return;}
+  if(nw)nw.style.display='block';
+  if(val==='Passagem de composicao ferroviaria'){
+    w.innerHTML='<div class="card"><div class="card-title blue">📋 Passagem de Composição — Requisitos</div>'+
+      chk('ferro-pass-0','Altura entre 1,2 m e 1,5 m do solo')+chk('ferro-pass-1','Para longa duração: microfone preferencialmente ≥ 4 m do solo')+chk('ferro-pass-2','Distância mínima de 2 m de superfícies refletoras')+chk('ferro-pass-3','Uso obrigatório de protetor de vento')+chk('ferro-pass-4','Microfone direcionado para a trajetória do tráfego ferroviário')+chk('ferro-pass-5','Definir pontos de medição em locais críticos (casas, escolas, hospitais etc.)')+
+      '</div>';
+  } else {
+    w.innerHTML='<div class="card"><div class="card-title blue">📋 Pátios / Manobras / Cruzamentos — Requisitos</div>'+
+      chk('ferro-patio-0','Altura ≥ 4 m do solo')+chk('ferro-patio-1','Distância mínima de 2 m de superfícies refletoras')+chk('ferro-patio-2','Uso obrigatório de protetor de vento')+chk('ferro-patio-3','Microfone direcionado para o tráfego ferroviário')+
+      '</div>';
+  }
+}
 function selecionarSubRuido(el,sub){
   document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
   el.classList.add('selected');_subRuido=sub;
@@ -1162,14 +1197,17 @@ function _renderSubRuido(sub){
     h+='<div id="rpi-pontos-wrap" style="display:none;"><div id="rp-nav-wrap-int"></div><div id="rp-cont-int"></div></div>';
   } else if(sub==='ferroviario'){
     h+='<div class="card"><div class="card-title blue">Ruido Ferroviario</div>';
-    h+='<div class="field"><label>Finalidade do monitoramento</label><select id="r-finalidade-ferro" onchange="renderFerroSub(this.value)"><option value="">Selecione...</option><option>Passagem de composicao ferroviaria</option><option>Operacoes em patios / manobras / cruzamentos</option></select></div>';
+    h+='<div class="field"><label>Finalidade do monitoramento</label><select id="r-finalidade-ferro" onchange="renderFerroSub(this.value)"><option value="">Selecione...</option><option value="Passagem de composicao ferroviaria">Passagem de composição ferroviária</option><option value="Operacoes em patios / manobras / cruzamentos">Operações em pátios / manobras / cruzamentos</option></select></div>';
+    h+='<div id="ferro-checks-wrap"></div>';
+    h+='<div id="ferro-npontos-wrap" style="display:none;">';
     h+='<div id="ferro-form-cont"></div>';
     h+='<div class="field"><label>Quantidade de pontos</label><select id="r-npontos-ferro" onchange="_rpSetN(parseInt(this.value)||1,\'ferro\')"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>';
     h+='</div><div id="rp-nav-wrap-ferro"></div><div id="rp-cont-ferro"></div>';
   } else if(sub==='aeronautico'){
     h+='<div class="card"><div class="card-title blue">Ruido Aeronautico</div>';
-    h+='<div class="field"><label>Finalidade do monitoramento</label><select id="r-finalidade-aero"><option value="">Selecione...</option><option>Receptores criticos</option><option>Monitoramento operacional</option></select></div>';
-    h+='<div class="field"><label>Quantidade de pontos</label><select id="r-npontos-aero" onchange="_rpSetN(parseInt(this.value)||1,\'aero\')"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>';
+    h+='<div class="field"><label>Finalidade do monitoramento</label><select id="r-finalidade-aero" onchange="renderAeroSub(this.value)"><option value="">Selecione...</option><option value="Receptores criticos">Receptores críticos</option><option value="Monitoramento operacional">Monitoramento operacional</option></select></div>';
+    h+='<div id="aero-checks-wrap"></div>';
+    h+='<div id="aero-npontos-wrap" style="display:none;"><div class="field"><label>Quantidade de pontos</label><select id="r-npontos-aero" onchange="_rpSetN(parseInt(this.value)||1,\'aero\')"><option value="">Selecionar...</option><option value="1">1 ponto</option><option value="2">2 pontos</option><option value="3">3 pontos</option><option value="4">4 pontos</option><option value="5">5 pontos</option><option value="6">6 pontos</option><option value="7">7 pontos</option><option value="8">8 pontos</option><option value="9">9 pontos</option><option value="10">10 pontos</option><option value="11">11 pontos</option><option value="12">12 pontos</option><option value="13">13 pontos</option><option value="14">14 pontos</option><option value="15">15 pontos</option><option value="16">16 pontos</option><option value="17">17 pontos</option><option value="18">18 pontos</option><option value="19">19 pontos</option><option value="20">20 pontos</option></select></div>';
     h+='</div><div id="rp-nav-wrap-aero"></div><div id="rp-cont-aero"></div>';
   }
   return h;
@@ -1229,10 +1267,32 @@ function _rpPageHtml(idx,tipo){
     }
     h+=chkIniField(p);
     h+=fotoTela(p,'ini','Foto da tela do sonometro apos checagem inicial');
+    if(tipo==='ferro'){
+      var finalidadeFerro=document.getElementById('r-finalidade-ferro')?document.getElementById('r-finalidade-ferro').value:'';
+      if(finalidadeFerro==='Passagem de composicao ferroviaria'){
+        h+='<span class="passo-step">🚃 Som residual — Curto período</span>'+
+          chk(p+'-fp-rc-0','Pelo menos 15 min de medição (contínua ou não)')+chk(p+'-fp-rc-1','Monitoramento antes ou após a passagem da composição')+
+          '<span class="passo-step">🚃 Som residual — Longa duração</span>'+
+          chk(p+'-fp-rl-0','Instalar equipamento para monitoramento de longa duração')+chk(p+'-fp-rl-1','Diurno: pelo menos 60 min de medição (contínua ou não)')+chk(p+'-fp-rl-2','Noturno: pelo menos 30 min de medição (contínua ou não)')+
+          '<span class="passo-step">🚂 Som da passagem ferroviária</span>'+
+          chk(p+'-fp-pp-0','Considerar todo o tempo da passagem ferroviária')+chk(p+'-fp-pp-1','Mínimo de 3 passagens monitoradas')+chk(p+'-fp-pp-2','Pelo menos 1 passagem em cada sentido')+chk(p+'-fp-pp-3','Se densidade ≤ 3 composições/dia: medir pelo menos uma passagem')+chk(p+'-fp-pp-4','⚠️ NÃO realizar durante cruzamento em linha dupla')+chk(p+'-fp-pp-5','Sirenes, sinos, buzinas e campainhas = sons intrusivos');
+        h+=inp(p+'-composicoes','Características das composições (ex: trem de carga, passageiro...)','text','');
+      } else if(finalidadeFerro==='Operacoes em patios / manobras / cruzamentos'){
+        h+='<span class="passo-step">🚆 Monitoramento de som residual</span>'+
+          chk(p+'-fp-pr-0','Monitoramento 24h sugerido')+chk(p+'-fp-pr-1','Diurno: pelo menos 60 min de medição (contínua ou não)')+chk(p+'-fp-pr-2','Noturno: pelo menos 30 min de medição (contínua ou não)')+chk(p+'-fp-pr-3','Pontual: pelo menos 15 min de medição (contínua ou não)')+
+          '<span class="passo-step">🚧 Operações em pátios / manobras / cruzamentos</span>'+
+          chk(p+'-fp-po-0','Sugerido: monitoramento 24 horas')+chk(p+'-fp-po-1','Manobras: contemplar pelo menos uma manobra completa típica')+chk(p+'-fp-po-2','Atenção: sons de passagens durante manobras = sons intrusivos')+chk(p+'-fp-po-3','Composição parada: sem interferência de outras composições')+chk(p+'-fp-po-4','Cruzamentos/Ultrapassagens: uma parada, outra em movimento')+chk(p+'-fp-po-5','Atenção: sons de manobra = sons intrusivos durante cruzamentos')+chk(p+'-fp-po-6','Pelo menos 2 eventos de cruzamento ou ultrapassagem')+chk(p+'-fp-po-7','Mín. 30 eventos de engates em 60-240 min — registrar LAFmax de cada');
+      }
+      h+='<span class="passo-step">🌡️ Condições ambientais</span>'+
+        chk(p+'-nochuva','Não monitorar com chuva (exceto se aprovação prévia)')+
+        chk(p+'-novento','Não monitorar com vento > 5 m/s');
+    }
     h+=fotoBlock(p);
-    h+='<div class="row3">'+inp(p+'-temp','Temp. (C)','number','')+inp(p+'-umid','Umidade (%)','number','')+ventoField(p)+'</div>';
-    h+=chk(p+'-residual','Ruido residual monitorado');
-    h+=chk(p+'-total','Ruido total monitorado');
+    h+='<div class="row3">'+inp(p+'-temp','Temp. (°C)','number','')+inp(p+'-umid','Umidade (%)','number','')+ventoField(p)+'</div>';
+    if(tipo!=='ferro'){
+      h+=chk(p+'-residual','Ruído residual monitorado');
+      h+=chk(p+'-total','Ruído total monitorado');
+    }
     if(tipo==='externo'){
       h+=inp(p+'-fontes-empresa','Fontes percebidas da EMPRESA','text','');
       h+=inp(p+'-fontes-ambiente','Fontes percebidas do AMBIENTE','text','');
@@ -1242,16 +1302,24 @@ function _rpPageHtml(idx,tipo){
     h+=inp(p+'-obs','Observacoes do ponto','text','');
     h+=inp(p+'-hora-fim','Hora de termino do ponto','time','');
   } else if(tipo==='aero'){
+    var finalidadeAero=document.getElementById('r-finalidade-aero')?document.getElementById('r-finalidade-aero').value:'';
+    var isOp=finalidadeAero==='Monitoramento operacional';
     h+=chkIniField(p);
     h+=fotoTela(p,'ini','Foto checagem inicial');
     h+=fotoBlock(p);
-    h+='<div class="row3">'+inp(p+'-temp','Temp. (C)','number','')+inp(p+'-umid','Umidade (%)','number','')+ventoField(p)+'</div>';
-    h+=chk(p+'-residual','Ruido residual monitorado');
-    h+=chk(p+'-total','Ruido total monitorado');
+    if(!isOp){
+      h+='<div class="row3">'+inp(p+'-temp','Temp. (°C)','number','')+inp(p+'-umid','Umidade (%)','number','')+ventoField(p)+'</div>';
+      h+=chk(p+'-nochuva','Não monitorar com chuva (exceto se aprovação prévia)');
+      h+=chk(p+'-novento','Não monitorar com vento > 5 m/s');
+      h+=chk(p+'-residual','Ruído residual monitorado');
+      h+=chk(p+'-total','Ruído total monitorado');
+    } else {
+      h+=chk(p+'-estmet','Estação meteorológica funcionando');
+    }
     h+=chkFimField(p,p+'-chkini');
     h+=fotoTela(p,'fim','Foto checagem final');
-    h+=inp(p+'-obs','Observacoes do ponto','text','');
-    h+=inp(p+'-hora-fim','Hora de termino','time','');
+    h+=inp(p+'-obs','Observações do ponto','text','');
+    h+=inp(p+'-hora-fim','Hora de término','time','');
   }
   h+='</div></div>';
   setTimeout(function(){_rpRestore(tipo);},0);
@@ -2894,6 +2962,7 @@ function selEventualidade(pid, sim){
   if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
   if(desc)desc.style.display=sim?'block':'none';
 }
+
 
 
 
