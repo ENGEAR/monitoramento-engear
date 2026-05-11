@@ -345,6 +345,7 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 
 
+
 const CFG={clientId:'756385e2-9a87-4997-a939-60129e4c1573',tenantId:'f84b416a-a586-42bf-b3ae-46d4d8e882da',clientSecret:'YOC8Q~~1S0wTi3f~qyeMq5VIbXkg31T3gIwjgc.4',siteHost:'engearlaboratorio.sharepoint.com',sitePath:'/sites/EngearLaboratorio',filePath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/monitoramento.xlsx',fotosPath:'/Documentos Partilhados/LABORATÓRIO/SERVIÇOS/0 INFO CAMPO - APP/Fotos',sheetName:'Plan1',senha:'campo26*',workerUrl:'https://engear-auth.red-cell-b560.workers.dev'};
 var token=null,tokenExp=0,nomeLogado='',tipoSel='',fotosAnexadas={};
 var pending=JSON.parse(localStorage.getItem('engear_pending')||'[]');
@@ -2382,21 +2383,81 @@ function buscarCidadeGPS(){
   if(btn){btn.disabled=true;btn.textContent='📡 Buscando...';}
   toast('Buscando localização...');
   navigator.geolocation.getCurrentPosition(function(pos){
-    fetch('https://nominatim.openstreetmap.org/reverse?lat='+pos.coords.latitude+'&lon='+pos.coords.longitude+'&format=json&accept-language=pt')
-      .then(function(r){return r.json();})
+    var lat=pos.coords.latitude;
+    var lon=pos.coords.longitude;
+    // Tentar Nominatim primeiro
+    fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json&accept-language=pt',{headers:{'Accept':'application/json','User-Agent':'eCamp-App/1.0'}})
+      .then(function(r){
+        if(!r.ok)throw new Error('nominatim '+r.status);
+        return r.json();
+      })
       .then(function(d){
-        var cidade=d.address.city||d.address.town||d.address.village||d.address.municipality||'';
-        var estado=d.address.state||'';
-        var sigla={'Minas Gerais':'MG','São Paulo':'SP','Sao Paulo':'SP','Paraná':'PR','Goiás':'GO','Espírito Santo':'ES','Ceará':'CE','Pará':'PA','Maranhão':'MA','Rondônia':'RO','Amapá':'AP','Piauí':'PI','Paraíba':'PB','Rio de Janeiro':'RJ','Bahia':'BA','Parana':'PR','Rio Grande do Sul':'RS','Santa Catarina':'SC','Goias':'GO','Espirito Santo':'ES','Pernambuco':'PE','Ceara':'CE','Para':'PA','Maranhao':'MA','Mato Grosso':'MT','Mato Grosso do Sul':'MS','Amazonas':'AM','Acre':'AC','Rondonia':'RO','Roraima':'RR','Amapa':'AP','Tocantins':'TO','Sergipe':'SE','Alagoas':'AL','Paraiba':'PB','Rio Grande do Norte':'RN','Piaui':'PI','Distrito Federal':'DF'};
-        var estadoN=estado.normalize?estado.normalize('NFD').replace(/[\u0300-\u036f]/g,''):estado;var uf=sigla[estado]||sigla[estadoN]||estado.substring(0,2).toUpperCase();
+        var addr=d.address||{};
+        var cidade=addr.city||addr.town||addr.municipality||addr.county||addr.village||addr.suburb||addr.hamlet||'';
+        var estado=addr.state||addr['state_district']||'';
+        var sigla={
+          'Acre':'AC','Alagoas':'AL','Amapá':'AP','Amapa':'AP',
+          'Amazonas':'AM','Bahia':'BA','Ceará':'CE','Ceara':'CE',
+          'Distrito Federal':'DF','Espírito Santo':'ES','Espirito Santo':'ES',
+          'Goiás':'GO','Goias':'GO','Maranhão':'MA','Maranhao':'MA',
+          'Mato Grosso':'MT','Mato Grosso do Sul':'MS','Minas Gerais':'MG',
+          'Pará':'PA','Para':'PA','Paraíba':'PB','Paraiba':'PB',
+          'Paraná':'PR','Parana':'PR','Pernambuco':'PE','Piauí':'PI','Piaui':'PI',
+          'Rio de Janeiro':'RJ','Rio Grande do Norte':'RN','Rio Grande do Sul':'RS',
+          'Rondônia':'RO','Rondonia':'RO','Roraima':'RR','Santa Catarina':'SC',
+          'São Paulo':'SP','Sao Paulo':'SP','Sergipe':'SE','Tocantins':'TO'
+        };
+        var uf=sigla[estado]||(estado.length===2?estado.toUpperCase():estado.substring(0,2).toUpperCase());
         var el=document.getElementById('cidade');
-        if(el)el.value=cidade+(uf?' / '+uf:'');
-        if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
-        toast('Localizado: '+cidade,false,true);
-      }).catch(function(){toast('Erro ao buscar cidade',true);});
-  },function(){if(btn){btn.disabled=false;btn.textContent='📍 GPS';}toast('GPS negado ou tempo esgotado',true);},{enableHighAccuracy:true,timeout:10000});
+        if(el&&cidade){
+          el.value=cidade+(uf?' / '+uf:'');
+          if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
+          toast('📍 '+cidade+' / '+uf,false,true);
+        } else {
+          // Cidade não encontrada no Nominatim, tentar IBGE
+          _buscarCidadeIBGE(lat,lon,btn);
+        }
+      })
+      .catch(function(e){
+        console.log('Nominatim falhou:',e.message);
+        // Fallback: API do IBGE
+        _buscarCidadeIBGE(lat,lon,btn);
+      });
+  },function(err){
+    if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
+    toast('GPS negado. Ative o GPS e tente novamente.',true);
+  },{enableHighAccuracy:true,timeout:15000,maximumAge:0});
 }
 
+function _buscarCidadeIBGE(lat,lon,btn){
+  fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome')
+    .catch(function(){return null;});
+  // Fallback simples: usar API de geocodificação reversa do IBGE
+  fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=jsonv2&zoom=10&accept-language=pt')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var addr=d.address||{};
+      var cidade=addr.city||addr.town||addr.municipality||addr.county||addr.village||'';
+      var estado=addr.state||'';
+      if(!cidade&&d.display_name){
+        // Extrair do display_name
+        var parts=d.display_name.split(',');
+        cidade=parts[0]?parts[0].trim():'';
+      }
+      var el=document.getElementById('cidade');
+      if(el&&cidade){
+        el.value=cidade+(estado?' / '+estado.substring(0,2).toUpperCase():'');
+        toast('📍 '+cidade,false,true);
+      } else {
+        toast('Localização obtida mas cidade não identificada',true);
+      }
+      if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
+    })
+    .catch(function(){
+      if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
+      toast('Erro ao identificar cidade. Digite manualmente.',true);
+    });
+}
 function chkIniField(pid){return '<div class="field"><label>Valor da checagem inicial (dB)</label><div style="display:flex;gap:6px;"><select id="'+pid+'-chkini-sinal" style="width:60px;flex-shrink:0;"><option value="+">+</option><option value="-">-</option></select><input type="number" id="'+pid+'-chkini" placeholder="Ex: 0,20" step="0.1" style="flex:1;"/></div></div>';}
 function chkFimField(pid){return '<div class="field"><label>Valor da checagem final (dB)</label><div style="display:flex;gap:6px;"><select id="'+pid+'-chkfim-sinal" style="width:60px;flex-shrink:0;"><option value="+">+</option><option value="-">-</option></select><input type="number" id="'+pid+'-chkfim" placeholder="Ex: 0,20" step="0.1" style="flex:1;" oninput="validarChkDiff(\''+pid+'-chkini\',\''+pid+'-chkfim\',\''+pid+'-chkfim-alerta\')"/></div><div id="'+pid+'-chkfim-alerta" style="display:none;background:#fee2e2;border:1.5px solid #e53e3e;color:#b91c1c;border-radius:8px;padding:8px 12px;font-size:13px;margin-top:6px;">&#9888;&#65039; A diferenca entre as checagens deu maior ou igual a 0,5 dB. Repetir o monitoramento.</div></div>';}
 function ventoField(pid){return '<div class="field"><label>Vento (m/s)</label><input type="number" id="'+pid+'-vento" placeholder="m/s" step="0.1" oninput="ventoAlerta(\''+pid+'-vento\')"/><div id="'+pid+'-vento-alerta" style="display:none;background:#fef3c7;border:1.5px solid #f59e0b;color:#92400e;border-radius:8px;padding:8px 12px;font-size:13px;margin-top:6px;">&#9888;&#65039; Esperar o vento abaixar. Nao e aceito vento acima de 5 m/s.</div></div>';}
@@ -2719,6 +2780,7 @@ function selEventualidade(pid, sim){
   if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
   if(desc)desc.style.display=sim?'block':'none';
 }
+
 
 
 
