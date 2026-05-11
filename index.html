@@ -109,8 +109,8 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 .biblio-sub-item:last-child{border-bottom:none;}
 .biblio-sub-icon{font-size:20px;flex-shrink:0;}.biblio-sub-name{font-size:14px;color:var(--primary);font-weight:500;}
 .biblio-back{display:flex;align-items:center;gap:8px;color:var(--primary);font-weight:500;font-size:14px;cursor:pointer;margin-bottom:1rem;}
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:#2d3748;color:white;padding:12px 20px;border-radius:30px;font-size:13px;font-weight:500;z-index:9999999;transition:transform .3s;white-space:nowrap;max-width:90vw;text-align:center;}
-#toast.show{transform:translateX(-50%) translateY(0);}#toast.error{background:var(--danger);}#toast.success{background:var(--accent2);}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#2d3748;color:white;padding:12px 20px;border-radius:30px;font-size:13px;font-weight:500;z-index:9999999;white-space:nowrap;max-width:90vw;text-align:center;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;pointer-events:none;}
+#toast.show{opacity:1;visibility:visible;pointer-events:auto;}#toast.error{background:var(--danger);}#toast.success{background:var(--accent2);}
 .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .hidden{display:none!important;}
@@ -318,6 +318,10 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 <div id="toast"></div>
 <script>
+
+
+
+
 
 
 
@@ -994,7 +998,24 @@ function selecionarTipo(el,t){
   mostrarBtnRascunho(false);
 }
 
-function toast(msg,err,suc){var el=document.getElementById('toast');el.textContent=msg;el.className=(err?'error':suc?'success':'')+' show';clearTimeout(toastT);toastT=setTimeout(function(){el.className='';},3500);}
+function toast(msg,err,suc){
+  var el=document.getElementById('toast');
+  if(!el)return;
+  clearTimeout(toastT);
+  // Resetar primeiro para garantir que a animação reinicia
+  el.className='';
+  el.textContent=msg;
+  // Forçar reflow
+  void el.offsetWidth;
+  // Mostrar
+  el.className=(err?'error ':suc?'success ':'')+'show';
+  // Esconder após 3s
+  toastT=setTimeout(function(){
+    el.className=el.className.replace(' show','').replace('show','').trim();
+    // Garantir que some mesmo se a transição falhar
+    setTimeout(function(){el.className='';el.textContent='';},400);
+  },3000);
+}
 
 function toggleLembrar(cb){if(!cb.checked){localStorage.removeItem('engear_saved_senha');localStorage.removeItem('engear_saved_nome');}}
 
@@ -2382,80 +2403,78 @@ function buscarCidadeGPS(){
   var btn=document.getElementById('btn-gps-cidade');
   if(btn){btn.disabled=true;btn.textContent='📡 Buscando...';}
   toast('Buscando localização...');
-  navigator.geolocation.getCurrentPosition(function(pos){
-    var lat=pos.coords.latitude;
-    var lon=pos.coords.longitude;
-    // Tentar Nominatim primeiro
-    fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json&accept-language=pt',{headers:{'Accept':'application/json','User-Agent':'eCamp-App/1.0'}})
-      .then(function(r){
-        if(!r.ok)throw new Error('nominatim '+r.status);
-        return r.json();
-      })
-      .then(function(d){
-        var addr=d.address||{};
-        var cidade=addr.city||addr.town||addr.municipality||addr.county||addr.village||addr.suburb||addr.hamlet||'';
-        var estado=addr.state||addr['state_district']||'';
-        var sigla={
-          'Acre':'AC','Alagoas':'AL','Amapá':'AP','Amapa':'AP',
-          'Amazonas':'AM','Bahia':'BA','Ceará':'CE','Ceara':'CE',
-          'Distrito Federal':'DF','Espírito Santo':'ES','Espirito Santo':'ES',
-          'Goiás':'GO','Goias':'GO','Maranhão':'MA','Maranhao':'MA',
-          'Mato Grosso':'MT','Mato Grosso do Sul':'MS','Minas Gerais':'MG',
-          'Pará':'PA','Para':'PA','Paraíba':'PB','Paraiba':'PB',
-          'Paraná':'PR','Parana':'PR','Pernambuco':'PE','Piauí':'PI','Piaui':'PI',
-          'Rio de Janeiro':'RJ','Rio Grande do Norte':'RN','Rio Grande do Sul':'RS',
-          'Rondônia':'RO','Rondonia':'RO','Roraima':'RR','Santa Catarina':'SC',
-          'São Paulo':'SP','Sao Paulo':'SP','Sergipe':'SE','Tocantins':'TO'
-        };
-        var uf=sigla[estado]||(estado.length===2?estado.toUpperCase():estado.substring(0,2).toUpperCase());
-        var el=document.getElementById('cidade');
-        if(el&&cidade){
-          el.value=cidade+(uf?' / '+uf:'');
-          if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
-          toast('📍 '+cidade+' / '+uf,false,true);
-        } else {
-          // Cidade não encontrada no Nominatim, tentar IBGE
-          _buscarCidadeIBGE(lat,lon,btn);
-        }
-      })
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      var lat=pos.coords.latitude.toFixed(6);
+      var lon=pos.coords.longitude.toFixed(6);
+      toast('📡 Posição obtida! Identificando cidade...');
+      // Nominatim — permite CORS, gratuito
+      fetch(
+        'https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json&accept-language=pt',
+        {method:'GET', headers:{'Accept':'application/json'}}
+      )
+      .then(function(r){return r.json();})
+      .then(function(d){_preencherCidade(d,btn);})
       .catch(function(e){
-        console.log('Nominatim falhou:',e.message);
-        // Fallback: API do IBGE
-        _buscarCidadeIBGE(lat,lon,btn);
+        console.error('Nominatim erro:',e);
+        if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
+        // Mostrar coordenadas brutas se API falhar
+        var el=document.getElementById('cidade');
+        if(el)el.value='Lat:'+lat+' Lon:'+lon+' (edite manualmente)';
+        toast('API indisponível. Coordenadas: '+lat+', '+lon,true);
       });
-  },function(err){
-    if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
-    toast('GPS negado. Ative o GPS e tente novamente.',true);
-  },{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+    },
+    function(err){
+      if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
+      var msgs={
+        1:'❌ Permissão de GPS negada. Vá em Configurações → '+
+          'Privacidade → Localização e permita o acesso.',
+        2:'❌ GPS indisponível neste dispositivo.',
+        3:'❌ Tempo esgotado. Verifique se o GPS está ativo e tente novamente.'
+      };
+      toast(msgs[err.code]||'Erro no GPS: '+err.message,true);
+    },
+    {enableHighAccuracy:false, timeout:20000, maximumAge:60000}
+  );
 }
 
-function _buscarCidadeIBGE(lat,lon,btn){
-  fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome')
-    .catch(function(){return null;});
-  // Fallback simples: usar API de geocodificação reversa do IBGE
-  fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=jsonv2&zoom=10&accept-language=pt')
+
+function _preencherCidade(d,btn){
+  var a=d.address||d||{};
+  var cidade=a.city||a.cidade||a.town||a.municipality||a.county||a.village||a.suburb||a.hamlet||'';
+  var estado=a.state||a.estado||'';
+  var sigla={
+    'Acre':'AC','Alagoas':'AL','Amapá':'AP','Amapa':'AP','Amazonas':'AM',
+    'Bahia':'BA','Ceará':'CE','Ceara':'CE','Distrito Federal':'DF',
+    'Espírito Santo':'ES','Espirito Santo':'ES','Goiás':'GO','Goias':'GO',
+    'Maranhão':'MA','Maranhao':'MA','Mato Grosso':'MT','Mato Grosso do Sul':'MS',
+    'Minas Gerais':'MG','Pará':'PA','Para':'PA','Paraíba':'PB','Paraiba':'PB',
+    'Paraná':'PR','Parana':'PR','Pernambuco':'PE','Piauí':'PI','Piaui':'PI',
+    'Rio de Janeiro':'RJ','Rio Grande do Norte':'RN','Rio Grande do Sul':'RS',
+    'Rondônia':'RO','Rondonia':'RO','Roraima':'RR','Santa Catarina':'SC',
+    'São Paulo':'SP','Sao Paulo':'SP','Sergipe':'SE','Tocantins':'TO'
+  };
+  var estadoN=estado.normalize?estado.normalize('NFD').replace(/[\u0300-\u036f]/g,''):estado;
+  var uf=sigla[estado]||sigla[estadoN]||(estado.length===2?estado.toUpperCase():'');
+  // Se veio countrySubdivisionCode (BigDataCloud)
+  if(!uf&&d.countrySubdivisionCode)uf=d.countrySubdivisionCode.replace('BR-','');
+  var el=document.getElementById('cidade');
+  if(el&&cidade){
+    el.value=cidade+(uf?' / '+uf:'');
+    if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
+    toast('📍 '+cidade+(uf?' / '+uf:''),false,true);
+  } else {
+    if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
+    toast('Cidade não identificada. Digite manualmente.',true);
+  }
+}
+function _gpsNominatim(lat,lon,btn){
+  fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json&accept-language=pt')
     .then(function(r){return r.json();})
-    .then(function(d){
-      var addr=d.address||{};
-      var cidade=addr.city||addr.town||addr.municipality||addr.county||addr.village||'';
-      var estado=addr.state||'';
-      if(!cidade&&d.display_name){
-        // Extrair do display_name
-        var parts=d.display_name.split(',');
-        cidade=parts[0]?parts[0].trim():'';
-      }
-      var el=document.getElementById('cidade');
-      if(el&&cidade){
-        el.value=cidade+(estado?' / '+estado.substring(0,2).toUpperCase():'');
-        toast('📍 '+cidade,false,true);
-      } else {
-        toast('Localização obtida mas cidade não identificada',true);
-      }
-      if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
-    })
+    .then(function(d){_preencherCidade(d,btn);})
     .catch(function(){
       if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
-      toast('Erro ao identificar cidade. Digite manualmente.',true);
+      toast('Não foi possível identificar a cidade. Digite manualmente.',true);
     });
 }
 function chkIniField(pid){return '<div class="field"><label>Valor da checagem inicial (dB)</label><div style="display:flex;gap:6px;"><select id="'+pid+'-chkini-sinal" style="width:60px;flex-shrink:0;"><option value="+">+</option><option value="-">-</option></select><input type="number" id="'+pid+'-chkini" placeholder="Ex: 0,20" step="0.1" style="flex:1;"/></div></div>';}
@@ -2780,6 +2799,10 @@ function selEventualidade(pid, sim){
   if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
   if(desc)desc.style.display=sim?'block':'none';
 }
+
+
+
+
 
 
 
