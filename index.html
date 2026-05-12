@@ -224,7 +224,7 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
           <div class="tipo-btn" onclick="selecionarTipo(this,'outro')"><svg width="52" height="52" viewBox="0 0 56 56" fill="none"><rect x="12" y="10" width="28" height="36" rx="3" fill="#e8f0fe" stroke="#1e3a6e" stroke-width="1.8"/><rect x="22" y="7" width="8" height="7" rx="2" fill="#4a90b8" stroke="#1e3a6e" stroke-width="1.5"/><polyline points="18,22 20,24 24,19" stroke="#00b894" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><polyline points="18,28 20,30 24,25" stroke="#00b894" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><polyline points="18,34 20,36 24,31" stroke="#00b894" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="40" cy="42" r="8" fill="#e8f0fe" stroke="#1e3a6e" stroke-width="1.5"/><circle cx="40" cy="42" r="3.5" fill="#4a90b8"/></svg><span class="tn">Outro</span></div>
         </div>
       </div>
-      <button class="btn-outline" onclick="salvarRascunhoGeral()" style="width:100%;margin-bottom:8px;">💾 Salvar rascunho</button>
+      <button id="btn-rasc-p2" class="btn-outline" onclick="salvarRascunhoGeral()" style="width:100%;margin-bottom:8px;">💾 Salvar rascunho</button>
       <div class="btn-row">
         <button class="btn-back" onclick="irP1()">← Voltar</button>
         <button class="btn-next" onclick="irP3()">Próximo →</button>
@@ -241,7 +241,7 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
           ⏳ Checklist pré-campo em construção.
         </div>
       </div>
-      <button class="btn-outline" onclick="salvarRascunhoGeral()" style="width:100%;margin-bottom:8px;">💾 Salvar rascunho</button>
+      <button id="btn-rasc-p3" class="btn-outline" onclick="salvarRascunhoGeral()" style="width:100%;margin-bottom:8px;">💾 Salvar rascunho</button>
       <div class="btn-row">
         <button class="btn-back" onclick="irP2()">← Voltar</button>
         <button class="btn-next" onclick="irP4()">Próximo →</button>
@@ -330,6 +330,8 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 <div id="toast"></div>
 <script>
+
+
 
 
 
@@ -2662,47 +2664,71 @@ function mostrarTela(id) {
 }
 
 function buscarCidadeGPS(){
-  if(!navigator.geolocation){toast('GPS não disponível');return;}
+  if(!navigator.geolocation){toast('GPS não disponível neste dispositivo');return;}
   var btn=document.getElementById('btn-gps-cidade');
-  if(btn){btn.disabled=true;var _lbl=document.getElementById('btn-gps-label');if(_lbl)_lbl.textContent='📡 Buscando localização...';}
-  toast('Buscando localização...');
+  var lbl=document.getElementById('btn-gps-label');
+  if(btn)btn.disabled=true;
+  if(lbl)lbl.textContent='📡 Aguardando GPS...';
+  toast('Buscando sua localização...');
+  // Usar mesmos parâmetros do capturarGPS que funciona
   navigator.geolocation.getCurrentPosition(
     function(pos){
-      var lat=pos.coords.latitude.toFixed(6);
-      var lon=pos.coords.longitude.toFixed(6);
-      toast('📡 Posição obtida! Identificando cidade...');
-      // Nominatim — permite CORS, gratuito
-      fetch(
-        'https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json&accept-language=pt',
-        {method:'GET', headers:{'Accept':'application/json'}}
-      )
-      .then(function(r){return r.json();})
-      .then(function(d){_preencherCidade(d,btn,lat,lon);})
-      .catch(function(e){
-        console.error('Nominatim erro:',e);
-        if(btn){btn.disabled=false;}
-        var el=document.getElementById('cidade');
-        if(el)el.value='Lat:'+lat+', Lon:'+lon;
-        var wrap=document.getElementById('gps-resultado-wrap');
-        if(wrap)wrap.style.display='block';
-        var disp=document.getElementById('gps-endereco-display');
-        if(disp)disp.textContent='Lat: '+lat+', Lon: '+lon;
-        toast('API indisponível. Coordenadas salvas.',true);
-      });
+      var lat=pos.coords.latitude;
+      var lon=pos.coords.longitude;
+      var latS=lat.toFixed(6);
+      var lonS=lon.toFixed(6);
+      if(lbl)lbl.textContent='📡 GPS obtido! Buscando endereço...';
+      // Tentar BigDataCloud (sem problemas de CORS, gratuito)
+      var urlBDC='https://api.bigdatacloud.net/data/reverse-geocode-client?latitude='+latS+'&longitude='+lonS+'&localityLanguage=pt';
+      fetch(urlBDC)
+        .then(function(r){return r.json();})
+        .then(function(d){
+          // BigDataCloud retorna formato diferente do Nominatim
+          // Montar objeto compatível
+          var cidade=d.city||d.locality||d.principalSubdivision||'';
+          var uf=(d.countrySubdivisionCode||'').replace('BR-','');
+          // Para endereço completo precisamos do Nominatim
+          // Tentar Nominatim após BigDataCloud para rua e número
+          fetch('https://nominatim.openstreetmap.org/reverse?lat='+latS+'&lon='+lonS+'&format=json&accept-language=pt',
+            {headers:{'Accept':'application/json','User-Agent':'eCamp/1.0'}})
+            .then(function(r2){return r2.json();})
+            .then(function(d2){_preencherCidade(d2,btn,latS,lonS);})
+            .catch(function(){
+              // Fallback: usar BigDataCloud sem rua
+              _preencherCidade({
+                address:{city:cidade,state:d.principalSubdivision||'',
+                  road:'',suburb:d.locality||'',postcode:''},
+                countrySubdivisionCode:d.countrySubdivisionCode||''
+              },btn,latS,lonS);
+            });
+        })
+        .catch(function(){
+          // BigDataCloud falhou, tentar Nominatim direto
+          fetch('https://nominatim.openstreetmap.org/reverse?lat='+latS+'&lon='+lonS+'&format=json&accept-language=pt',
+            {headers:{'Accept':'application/json'}})
+            .then(function(r){return r.json();})
+            .then(function(d){_preencherCidade(d,btn,latS,lonS);})
+            .catch(function(e){
+              if(btn)btn.disabled=false;
+              if(lbl)lbl.textContent='❌ Erro — tente novamente';
+              toast('Não foi possível obter o endereço. Verifique sua conexão.',true);
+            });
+        });
     },
     function(err){
-      if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
+      if(btn)btn.disabled=false;
+      if(lbl)lbl.textContent='Capturar localização via GPS';
       var msgs={
-        1:'❌ Permissão de GPS negada. Vá em Configurações → '+
-          'Privacidade → Localização e permita o acesso.',
+        1:'❌ Permissão negada. Ative o GPS nas configurações.',
         2:'❌ GPS indisponível neste dispositivo.',
-        3:'❌ Tempo esgotado. Verifique se o GPS está ativo e tente novamente.'
+        3:'❌ Tempo esgotado. Verifique se o GPS está ativo.'
       };
-      toast(msgs[err.code]||'Erro no GPS: '+err.message,true);
+      toast(msgs[err.code]||'Erro GPS: '+err.message,true);
     },
-    {enableHighAccuracy:false, timeout:20000, maximumAge:60000}
+    {enableHighAccuracy:true, timeout:20000, maximumAge:0}
   );
 }
+
 
 
 function _preencherCidade(d,btn,lat,lon){
@@ -2936,6 +2962,8 @@ function salvarRascunhoGeral(){
         if(_wrap&&_wrap.style.display!=='none') btnRasc=_wrap.querySelector('button');
       } else {
         btnRasc=document.getElementById('btn-rasc-p'+(_pi+1));
+        // Fallback: qualquer botão de rascunho no passo visível
+        if(!btnRasc) btnRasc=_pEl.querySelector('button.btn-outline[onclick*="salvarRascunho"]');
       }
       break;
     }
@@ -3153,6 +3181,8 @@ function selEventualidade(pid, sim){
   if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
   if(desc)desc.style.display=sim?'block':'none';
 }
+
+
 
 
 
