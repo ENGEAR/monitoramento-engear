@@ -190,12 +190,20 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
         <div class="field"><label>Nome do técnico</label><input type="text" id="tecnico" placeholder="Nome completo"/></div>
         <div class="field"><label>Nome do cliente</label><input type="text" id="cliente" placeholder="Nome do cliente"/></div>
         <div class="field">
-          <label>Cidade / Estado</label>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="text" id="cidade" placeholder="Aguardando GPS..." style="flex:1;" readonly onclick="this.readOnly=false;this.placeholder='Ex: Belo Horizonte / MG'"/>
-            <button id="btn-gps-cidade" onclick="buscarCidadeGPS()" style="flex-shrink:0;background:#2d7db3;color:white;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;white-space:nowrap;">📍 Buscar GPS</button>
+          <label>Localização</label>
+          <button id="btn-gps-cidade" onclick="buscarCidadeGPS()" style="width:100%;background:linear-gradient(135deg,#1e5f8a,#2d7db3);color:white;border:none;border-radius:10px;padding:12px 16px;font-size:14px;font-weight:600;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <span>📍</span><span id="btn-gps-label">Capturar localização via GPS</span>
+          </button>
+          <div id="gps-resultado-wrap" style="display:none;margin-top:8px;background:#f0fdf4;border:1.5px solid #22c55e;border-radius:10px;padding:10px 14px;">
+            <div style="font-size:11px;color:#16a34a;font-weight:600;margin-bottom:4px;">📍 Localização capturada</div>
+            <div id="gps-endereco-display" style="font-size:13px;color:#1a202c;font-weight:500;margin-bottom:6px;"></div>
+            <div style="display:flex;gap:6px;">
+              <input type="text" id="cidade" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;" placeholder="Endereço completo"/>
+              <button onclick="buscarCidadeGPS()" style="background:none;border:1px solid #2d7db3;border-radius:8px;padding:6px 10px;font-size:11px;color:#2d7db3;cursor:pointer;white-space:nowrap;">🔄 Atualizar</button>
+            </div>
           </div>
-          <p style="font-size:11px;color:#a0aec0;margin-top:4px;">Toque em "Buscar GPS" para localizar automaticamente. Ou edite manualmente.</p>
+          <input type="hidden" id="cidade-lat"/>
+          <input type="hidden" id="cidade-lon"/>
         </div>
         <div class="field"><label>Nº da OS</label><input type="text" id="num-os" placeholder="Ex: OS-2024-001" maxlength="30"/></div>
       </div>
@@ -322,6 +330,11 @@ input,select,textarea{color:#1a202c!important;background:#fff!important;-webkit-
 
 <div id="toast"></div>
 <script>
+
+
+
+
+
 
 
 
@@ -768,7 +781,8 @@ function irP4(){
     fotosAnexadas={};renderForm();
     if(fd)fd.setAttribute('data-tipo',tipoSel);
   }
-  if(!jaRenderizado) mostrarBtnRascunho(false);
+  // Mostrar botão rascunho sempre ao entrar no passo 4
+  mostrarBtnRascunho(true);
   mostrar('passo4');atualizarSteps(4);
 }
 
@@ -964,6 +978,13 @@ chk('rom-880474','Celular carregado e carregador')+
 }
 
 function novoRegistro(){
+  // Resetar GPS
+  var wrap=document.getElementById('gps-resultado-wrap');
+  if(wrap)wrap.style.display='none';
+  var lbl=document.getElementById('btn-gps-label');
+  if(lbl)lbl.textContent='Capturar localização via GPS';
+  var elCidade=document.getElementById('cidade');
+  if(elCidade){elCidade.value='';elCidade.readOnly=false;}
   tipoSel='';fotosAnexadas={};
   document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
   document.querySelectorAll('input[type=text],input[type=number],textarea').forEach(function(el){if(el.id!=='tecnico')el.value='';});
@@ -1713,7 +1734,39 @@ function _qarintPage(idx){
   setTimeout(function(){_qarintRestore();},0);
   return h;
 }
-function coletarQarint(){_qarintSave();var pontos=[];for(var i=1;i<=_qarintN;i++){var saved=_qarintDados[i]||{};var p='qarintp'+i;pontos.push({nome:saved[p+'-nome']||'',gps:getGPSFromSaved(saved,p),plano:saved[p+'-plano__checked']||false,equip:saved[p+'-equip__checked']||false,posic:saved[p+'-posic__checked']||false,coleta:saved[p+'-coleta__checked']||false,co2:saved[p+'-co2']||'',temp:saved[p+'-temp']||'',ur:saved[p+'-ur']||'',vento:saved[p+'-vento']||'',conformidade:saved[p+'-conformidade__checked']||false,amostras:saved[p+'-amostras__checked']||false,obs:saved[p+'-obs']||''});}return pontos;}
+function coletarQarint(){
+  _qarintSave();
+  var pontos=[];
+  for(var i=1;i<=_qarintN;i++){
+    var saved=_qarintDados[i]||{};var p='qarintp'+i;
+    var isExt=(i===_qarintN);
+    pontos.push({
+      nAmbiente:isExt?'EXT':i,
+      nomeAmbiente:saved[p+'-nome']||'',
+      nome:saved[p+'-nome']||'',
+      gps:getGPSFromSaved(saved,p),
+      horaIni:saved[p+'-hora-ini']||'',
+      horaFim:saved[p+'-hora-fim']||'',
+      npessoas:saved[p+'-npessoas']||'',
+      taxaOcup:saved[p+'-taxa-ocup__checked']||false,
+      plano:saved[p+'-plano__checked']||false,
+      equip:saved[p+'-equip__checked']||false,
+      posic:saved[p+'-posic__checked']||false,
+      coleta:saved[p+'-coleta__checked']||false,
+      co2:saved[p+'-co2']||'',
+      temp:saved[p+'-temp']||'',
+      ur:saved[p+'-ur']||'',
+      vento:saved[p+'-vento']||'',
+      pm25:saved[p+'-pm25']||'',
+      pm10:saved[p+'-pm10']||'',
+      part:saved[p+'-part']||'',
+      conformidade:saved[p+'-conformidade__checked']||false,
+      amostras:saved[p+'-amostras__checked']||false,
+      obs:saved[p+'-obs']||''
+    });
+  }
+  return pontos;
+}
 
 // OUTRO
 var _outroN=1,_outroIdx=1,_outroDados={};
@@ -1755,27 +1808,74 @@ function coletarDados(){
     esp.finalidade=v('r-finalidade')==='Outros'?v('r-finalidade-outro'):v('r-finalidade');
     // Salvar o ponto atual no _rpDados antes de coletar
     if(typeof _rpSave==='function') try{_rpSave(esp.subTipo);}catch(e){}
+    // Checks internos (posicionamento e montagem)
+    if(esp.subTipo==='interno'){
+      esp.esquadria=v('r-esquadria');esp.ambienteCond=v('r-ambiente-cond');esp.area=v('r-area-int');
+      esp.pos1=isChk('rpi-pos1');esp.pos2=isChk('rpi-pos2');esp.pos3=isChk('rpi-pos3');
+      esp.pos4=isChk('rpi-pos4');esp.pos5=isChk('rpi-pos5');esp.pos6=isChk('rpi-pos6');
+      esp.pos7=isChk('rpi-pos7');esp.pos8=isChk('rpi-pos8');esp.pos9=isChk('rpi-pos9');
+      esp.mont1=isChk('rpi-mont1');esp.mont2=isChk('rpi-mont2');esp.mont3=isChk('rpi-mont3');
+      esp.mont4=isChk('rpi-mont4');esp.mont5=isChk('rpi-mont5');
+    }
     var nP=_rpN||parseInt(v('r-npontos'))||0;esp.pontos=[];
+    // Salvar ponto interno atual antes de coletar
+    if(esp.subTipo==='interno'&&typeof _rpiSave==='function') try{_rpiSave();}catch(e){}
     for(var i=1;i<=nP;i++){
       var p='rp'+esp.subTipo+i; // ID correto com subtipo
-      var saved=_rpDados[i]||{};
-      function gv(id){var el=document.getElementById(id);return el?el.value:(saved[id]||'');}
-      function gi(id){var el=document.getElementById(id);if(el)return el.classList.contains('checked');return saved[id+'__chk']||false;}
+      var saved=(esp.subTipo==='interno'?_rpiDados[i]:_rpDados[i])||{};
+      function gv(id){var el=document.getElementById(id);return el?el.value:(saved[id]||saved[id.replace(/^rp[a-z]+\d+/,function(m){return 'rpi'+i;})]||'');}
+      function gi(id){var el=document.getElementById(id);if(el)return el.classList.contains('checked');return saved[id+'__chk']||saved[id+'__checked']||false;}
       esp.pontos.push({
         nome:gv(p+'-nome'),horaIni:gv(p+'-hora-ini'),horaFim:gv(p+'-hora-fim'),
         gps:{e:gv('gps-e-'+p),n:gv('gps-n-'+p),zona:gv('gps-zona-'+p)},
         chkIniSinal:gv(p+'-chkini-sinal'),chkIni:gv(p+'-chkini'),
         chkFimSinal:gv(p+'-chkfim-sinal'),chkFim:gv(p+'-chkfim'),
         temp:gv(p+'-temp'),umid:gv(p+'-umid'),vento:gv(p+'-vento'),
+        nochuva:gi(p+'-nochuva'),novento:gi(p+'-novento'),
         residual:gi(p+'-residual'),total:gi(p+'-total'),
+        estmet:gi(p+'-estmet'),
         fontesEmpresa:gv(p+'-fontes-empresa'),fontesAmbiente:gv(p+'-fontes-ambiente'),
+        composicoes:gv(p+'-composicoes'),
         obs:gv(p+'-obs')
       });
     }
   } else if(tipoSel==='sismo'){
-    esp.objetivo=v('s-objetivo');esp.finalidade=v('s-finalidade');
+    esp.objetivo=v('s-objetivo');
+    // Checks gerais (fora dos pontos)
+    esp.cfg1=isChk('s-cfg1');esp.cfg2=isChk('s-cfg2');esp.cfg3=isChk('s-cfg3');
+    esp.pre1=isChk('s-pre1');esp.pre2=isChk('s-pre2');esp.pre3=isChk('s-pre3');
+    esp.pre4=isChk('s-pre4');esp.pre5=isChk('s-pre5');esp.pre6=isChk('s-pre6');
     _sismoSave();esp.pontos=[];
-    for(var i=1;i<=_sismoN;i++){var saved=_sismoDados[i]||{};var p='sp'+i;esp.pontos.push({nome:saved[p+'-nome']||'',gps:getGPSFromSaved(saved,p),fonte:saved[p+'-fonte']||'',autov:saved[p+'-autov__checked']||false,temp:saved[p+'-temp']||'',umid:saved[p+'-umid']||'',trigger:saved[p+'-trigger__checked']||false,mem:saved[p+'-mem__checked']||false,prog:saved[p+'-prog__checked']||false,capt:saved[p+'-capt__checked']||false,interc:saved[p+'-interc-sel']==='sim'?(saved[p+'-interc']||''):'Nenhuma'});}
+    for(var i=1;i<=_sismoN;i++){
+      var saved=_sismoDados[i]||{};var p='sp'+i;
+      function sc(k){return saved[k+'__checked']||false;}
+      esp.pontos.push({
+        nome:saved[p+'-nome']||'',
+        horaIni:saved[p+'-hora-ini']||'',
+        horaFim:saved[p+'-hora-fim']||'',
+        gps:getGPSFromSaved(saved,p),
+        tipoEquip:saved[p+'-tipoequip-sismo']==='Outro'?(saved[p+'-tipoequip-sismo-outro']||''):(saved[p+'-tipoequip-sismo']||''),
+        numEquip:saved[p+'-numequip-sismo']||'',
+        fonte:saved[p+'-fonte']||'',
+        // Escolha do local
+        loc1:sc(p+'-loc1'),loc2:sc(p+'-loc2'),loc3:sc(p+'-loc3'),
+        loc4:sc(p+'-loc4'),loc5:sc(p+'-loc5'),loc6:sc(p+'-loc6'),
+        loc7:sc(p+'-loc7'),loc8:sc(p+'-loc8'),loc9:sc(p+'-loc9'),
+        // Geofone solo
+        geo1:sc(p+'-geo1'),geo2:sc(p+'-geo2'),geo3:sc(p+'-geo3'),geo4:sc(p+'-geo4'),
+        // Geofone solo rígido
+        geo5:sc(p+'-geo5'),geo6:sc(p+'-geo6'),geo7:sc(p+'-geo7'),
+        geo8:sc(p+'-geo8'),geo9:sc(p+'-geo9'),geo10:sc(p+'-geo10'),
+        // Microfone
+        mic1:sc(p+'-mic1'),mic2:sc(p+'-mic2'),mic3:sc(p+'-mic3'),
+        mic4:sc(p+'-mic4'),mic5:sc(p+'-mic5'),mic6:sc(p+'-mic6'),
+        // Auto verificação e durante monitoramento
+        autov:sc(p+'-autov'),
+        dur1:sc(p+'-dur1'),dur2:sc(p+'-dur2'),dur3:sc(p+'-dur3'),
+        dur4:sc(p+'-dur4'),dur5:sc(p+'-dur5'),
+        interc:saved[p+'-interc-sel']==='sim'?(saved[p+'-interc']||'Sim'):'Nenhuma'
+      });
+    }
   } else if(tipoSel==='qar'){
     esp.objetivo=v('qar-objetivo');esp.qar=true;
     var nP=parseInt(v('qar-npontos'))||0;esp.pontos=[];
@@ -2564,7 +2664,7 @@ function mostrarTela(id) {
 function buscarCidadeGPS(){
   if(!navigator.geolocation){toast('GPS não disponível');return;}
   var btn=document.getElementById('btn-gps-cidade');
-  if(btn){btn.disabled=true;btn.textContent='📡 Buscando...';}
+  if(btn){btn.disabled=true;var _lbl=document.getElementById('btn-gps-label');if(_lbl)_lbl.textContent='📡 Buscando localização...';}
   toast('Buscando localização...');
   navigator.geolocation.getCurrentPosition(
     function(pos){
@@ -2577,14 +2677,17 @@ function buscarCidadeGPS(){
         {method:'GET', headers:{'Accept':'application/json'}}
       )
       .then(function(r){return r.json();})
-      .then(function(d){_preencherCidade(d,btn);})
+      .then(function(d){_preencherCidade(d,btn,lat,lon);})
       .catch(function(e){
         console.error('Nominatim erro:',e);
-        if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
-        // Mostrar coordenadas brutas se API falhar
+        if(btn){btn.disabled=false;}
         var el=document.getElementById('cidade');
-        if(el)el.value='Lat:'+lat+' Lon:'+lon+' (edite manualmente)';
-        toast('API indisponível. Coordenadas: '+lat+', '+lon,true);
+        if(el)el.value='Lat:'+lat+', Lon:'+lon;
+        var wrap=document.getElementById('gps-resultado-wrap');
+        if(wrap)wrap.style.display='block';
+        var disp=document.getElementById('gps-endereco-display');
+        if(disp)disp.textContent='Lat: '+lat+', Lon: '+lon;
+        toast('API indisponível. Coordenadas salvas.',true);
       });
     },
     function(err){
@@ -2602,10 +2705,13 @@ function buscarCidadeGPS(){
 }
 
 
-function _preencherCidade(d,btn){
+function _preencherCidade(d,btn,lat,lon){
   var a=d.address||d||{};
   var cidade=a.city||a.cidade||a.town||a.municipality||a.county||a.village||a.suburb||a.hamlet||'';
   var estado=a.state||a.estado||'';
+  var bairro=a.suburb||a.neighbourhood||a.quarter||'';
+  var rua=a.road||a.pedestrian||a.footway||'';
+  var cep=a.postcode||'';
   var sigla={
     'Acre':'AC','Alagoas':'AL','Amapá':'AP','Amapa':'AP','Amazonas':'AM',
     'Bahia':'BA','Ceará':'CE','Ceara':'CE','Distrito Federal':'DF',
@@ -2619,16 +2725,38 @@ function _preencherCidade(d,btn){
   };
   var estadoN=estado.normalize?estado.normalize('NFD').replace(/[\u0300-\u036f]/g,''):estado;
   var uf=sigla[estado]||sigla[estadoN]||(estado.length===2?estado.toUpperCase():'');
-  // Se veio countrySubdivisionCode (BigDataCloud)
   if(!uf&&d.countrySubdivisionCode)uf=d.countrySubdivisionCode.replace('BR-','');
-  var el=document.getElementById('cidade');
-  if(el&&cidade){
-    el.value=cidade+(uf?' / '+uf:'');el.readOnly=false;
-    if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
-    toast('📍 '+cidade+(uf?' / '+uf:''),false,true);
+  
+  // Montar endereço completo
+  var partes=[];
+  if(rua)partes.push(rua);
+  if(bairro&&bairro!==rua)partes.push(bairro);
+  if(cidade)partes.push(cidade);
+  if(uf)partes.push(uf);
+  if(cep)partes.push('CEP: '+cep);
+  var endCompleto=partes.join(', ');
+  var cidadeUF=cidade+(uf?' / '+uf:'');
+  
+  var elCidade=document.getElementById('cidade');
+  var elDisplay=document.getElementById('gps-endereco-display');
+  var wrap=document.getElementById('gps-resultado-wrap');
+  var btnLabel=document.getElementById('btn-gps-label');
+  var elLat=document.getElementById('cidade-lat');
+  var elLon=document.getElementById('cidade-lon');
+  
+  if(btn){btn.disabled=false;}
+  
+  if(cidade){
+    if(elCidade)elCidade.value=endCompleto||cidadeUF;
+    if(elDisplay)elDisplay.textContent=endCompleto||cidadeUF;
+    if(wrap)wrap.style.display='block';
+    if(btnLabel)btnLabel.textContent='📍 '+cidadeUF+' — Toque para atualizar';
+    if(elLat&&lat)elLat.value=lat;
+    if(elLon&&lon)elLon.value=lon;
+    toast('📍 '+cidadeUF,false,true);
   } else {
-    if(btn){btn.disabled=false;btn.textContent='📍 GPS';}
-    toast('Cidade não identificada. Digite manualmente.',true);
+    if(btnLabel)btnLabel.textContent='Capturar localização via GPS';
+    toast('Cidade não identificada. Edite manualmente.',true);
   }
 }
 function _gpsNominatim(lat,lon,btn){
@@ -2797,14 +2925,20 @@ function salvarRascunhoGeral(){
     _salvarRascunhoExcel(dados).catch(function(e){console.log('Nao foi possivel salvar rascunho no Excel:',e.message);});
   }
   // Feedback visual: encontrar o botão de rascunho que está visível agora
-  var btnRasc=document.querySelector('#btn-rasc-p1:not([style*="display:none"])')||
-              document.querySelector('#btn-rasc-p2:not([style*="display:none"])')||
-              document.querySelector('#btn-rasc-p3:not([style*="display:none"])')||
-              document.querySelector('#rascunho-btn-wrap button');
-  // Buscar o botão no passo atual visível
-  if(!btnRasc){
-    var passoVisivel=document.querySelector('#passo1:not(.hidden),#passo2:not(.hidden),#passo3:not(.hidden)');
-    if(passoVisivel)btnRasc=passoVisivel.querySelector('button.btn-outline');
+  // Encontrar o botão de rascunho no passo VISÍVEL
+  var btnRasc=null;
+  var _passosRasc=['passo1','passo2','passo3','passo4'];
+  for(var _pi=0;_pi<_passosRasc.length;_pi++){
+    var _pEl=document.getElementById(_passosRasc[_pi]);
+    if(_pEl&&!_pEl.classList.contains('hidden')){
+      if(_passosRasc[_pi]==='passo4'){
+        var _wrap=document.getElementById('rascunho-btn-wrap');
+        if(_wrap&&_wrap.style.display!=='none') btnRasc=_wrap.querySelector('button');
+      } else {
+        btnRasc=document.getElementById('btn-rasc-p'+(_pi+1));
+      }
+      break;
+    }
   }
   if(btnRasc){
     var textoOrig=btnRasc.innerHTML;
@@ -3019,6 +3153,11 @@ function selEventualidade(pid, sim){
   if(btnNao){btnNao.style.background=sim?'#f0fdf4':'';btnNao.style.borderColor=sim?'#e2e8f0':'#22c55e';}
   if(desc)desc.style.display=sim?'block':'none';
 }
+
+
+
+
+
 
 
 
